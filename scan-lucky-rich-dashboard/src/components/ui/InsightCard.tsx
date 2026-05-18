@@ -6,19 +6,18 @@ interface InsightCardProps {
 }
 
 export default function InsightCard({ html, severity = 'info' }: InsightCardProps) {
-  const borderColor = severity === 'danger' ? 'var(--danger)' : severity === 'warn' ? 'var(--gold)' : 'var(--primary)'
-  const bgGrad = severity === 'danger' ? 'from-red-50' : severity === 'warn' ? 'from-amber-50' : 'from-emerald-50'
-
   return (
-    <div
-      className={`bg-gradient-to-br ${bgGrad} to-white rounded-r-[10px] p-4 px-5 mb-5 text-[13px] leading-[1.7] text-[var(--text)]`}
-      style={{ borderLeft: `4px solid ${borderColor}` }}
-    >
-      <h4 className="text-[13px] font-bold mb-1.5 flex items-center gap-1.5">
-        <i className="ti ti-rocket text-base" />
+    <div className="card p-4 px-5 mt-4 text-[13px] leading-[1.75]"
+         style={{
+           background: 'linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%)',
+           borderLeft: '4px solid var(--primary)',
+         }}>
+      <h4 className="text-[13px] font-bold mb-2 flex items-center gap-2 text-[var(--dark)]">
+        <i className="ti ti-rocket text-lg text-[var(--primary)]" />
         Actions แนะนำ
+        <span className="chip ml-auto">QUEST</span>
       </h4>
-      <div dangerouslySetInnerHTML={{ __html: html }} />
+      <div className="text-[var(--text)]" dangerouslySetInnerHTML={{ __html: html }} />
     </div>
   )
 }

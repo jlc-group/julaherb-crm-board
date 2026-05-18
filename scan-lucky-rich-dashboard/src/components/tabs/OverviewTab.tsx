@@ -29,7 +29,8 @@ import * as mock from '@/lib/mock-data'
 ChartJS.register(CategoryScale, LinearScale, BarElement, LineElement, PointElement, ArcElement, Tooltip, Legend, Filler)
 ChartJS.defaults.font.family = "'Noto Sans Thai', sans-serif"
 ChartJS.defaults.font.size = 11
-ChartJS.defaults.color = '#6c757d'
+ChartJS.defaults.color = '#6b7280'
+ChartJS.defaults.borderColor = '#e5e7eb'
 
 // ── Trend data ──
 const TREND = {
@@ -174,7 +175,7 @@ export default function OverviewTab() {
                   {
                     label: 'เมื่อวาน',
                     data: yesterdayHourly,
-                    borderColor: '#ccc',
+                    borderColor: '#cbd5e1',
                     borderDash: [4,4],
                     fill: false,
                     tension: .35,
@@ -189,7 +190,7 @@ export default function OverviewTab() {
                 plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 10 } } } },
                 scales: {
                   x: { grid: { display: false } },
-                  y: { beginAtZero: true, grid: { color: '#f1f1f1' } },
+                  y: { beginAtZero: true, grid: { color: '#f1f5f9' } },
                 },
               }}
             />
@@ -233,10 +234,10 @@ export default function OverviewTab() {
             <button
               key={key}
               onClick={() => setTrendMode(key)}
-              className={`px-3 py-1 rounded-full text-[11px] font-medium transition-colors ${
+              className={`px-3 py-1 rounded-full text-[11px] font-bold transition-all ${
                 trendMode === key
-                  ? 'bg-[var(--primary)] text-white'
-                  : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                  ? 'bg-[var(--primary)] text-white shadow-sm'
+                  : 'bg-[var(--bg-soft)] text-[var(--text-secondary)] hover:bg-[var(--green-50)] hover:text-[var(--green-700)] border border-[var(--border)]'
               }`}
             >
               {label}
@@ -276,7 +277,7 @@ export default function OverviewTab() {
               plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 10 } } } },
               scales: {
                 x: { grid: { display: false } },
-                y: { beginAtZero: true, grid: { color: '#f1f1f1' } },
+                y: { beginAtZero: true, grid: { color: '#f1f5f9' } },
               },
             }}
           />
@@ -287,19 +288,18 @@ export default function OverviewTab() {
       {/* ── Scan Log ── */}
       <ChartCard title={isToday ? 'Scan Log วันนี้' : isOneDay ? `Scan Log ${dateRange.from}` : `Scan Log (${dateRange.from} → ${dateRange.to})`} icon="ti-list-details" full>
         <div className="flex items-center justify-between mb-3">
-          <span className="text-[11px] text-gray-500">{numFmt(scanLog.length)} รายการ</span>
-          <button className="text-[11px] px-3 py-1 rounded bg-gray-100 hover:bg-gray-200 text-gray-600">
-            {/* TODO: implement CSV export */}
-            Export CSV
+          <span className="text-[11px] text-[var(--text-secondary)]"><span className="live-dot mr-2" />{numFmt(scanLog.length)} รายการ</span>
+          <button className="text-[11px] font-semibold px-3 py-1 rounded-full border border-[var(--green-200)] text-[var(--green-700)] hover:bg-[var(--green-50)] transition">
+            <i className="ti ti-download mr-1" /> Export CSV
           </button>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2">
           {pageData.map(entry => (
-            <div key={entry.id} className="border border-gray-100 rounded-lg p-2.5 text-[11px] bg-gray-50/50">
-              <div className="font-semibold text-[var(--dark)] truncate">{entry.customerName}</div>
-              <div className="text-gray-400 font-mono text-[10px]">{entry.scanCode}</div>
-              <div className="truncate text-gray-600 mt-0.5">{entry.productName}</div>
-              <div className="text-gray-400 mt-0.5">{maskPhone(entry.phone)}</div>
+            <div key={entry.id} className="rounded-lg p-2.5 text-[11px] bg-[var(--bg-soft)] border border-[var(--border-soft)] hover:border-[var(--green-200)] transition">
+              <div className="font-bold text-[var(--dark)] truncate">{entry.customerName}</div>
+              <div className="text-[var(--primary)] font-mono text-[10px]">{entry.scanCode}</div>
+              <div className="truncate text-[var(--text)] mt-0.5">{entry.productName}</div>
+              <div className="text-[var(--text-muted)] mt-0.5">{maskPhone(entry.phone)}</div>
             </div>
           ))}
         </div>
@@ -308,17 +308,17 @@ export default function OverviewTab() {
             <button
               disabled={scanLogPage === 0}
               onClick={() => setScanLogPage(p => p - 1)}
-              className="px-2 py-1 rounded bg-gray-100 text-[11px] disabled:opacity-30"
+              className="px-3 py-1 rounded-full text-[11px] font-semibold border border-[var(--border)] bg-white text-[var(--text-secondary)] hover:border-[var(--green-200)] hover:text-[var(--green-700)] disabled:opacity-40 disabled:cursor-not-allowed"
             >
               &laquo; ก่อนหน้า
             </button>
-            <span className="text-[11px] text-gray-500">
-              หน้า {scanLogPage + 1} / {totalPages}
+            <span className="text-[11px] text-[var(--text-secondary)] num">
+              หน้า <b className="text-[var(--dark)]">{scanLogPage + 1}</b> / {totalPages}
             </span>
             <button
               disabled={scanLogPage >= totalPages - 1}
               onClick={() => setScanLogPage(p => p + 1)}
-              className="px-2 py-1 rounded bg-gray-100 text-[11px] disabled:opacity-30"
+              className="px-3 py-1 rounded-full text-[11px] font-semibold border border-[var(--border)] bg-white text-[var(--text-secondary)] hover:border-[var(--green-200)] hover:text-[var(--green-700)] disabled:opacity-40 disabled:cursor-not-allowed"
             >
               ถัดไป &raquo;
             </button>
@@ -329,18 +329,9 @@ export default function OverviewTab() {
       {/* ── Anomaly Card ── */}
       <ChartCard title="Anomaly Detection" icon="ti-alert-triangle" full>
         <div className="grid grid-cols-3 gap-3">
-          <div className="text-center p-3 rounded-lg bg-red-50">
-            <div className="text-2xl font-bold text-[var(--danger)]">2</div>
-            <div className="text-[11px] text-gray-600">Velocity Alerts</div>
-          </div>
-          <div className="text-center p-3 rounded-lg bg-amber-50">
-            <div className="text-2xl font-bold text-[var(--gold)]">3</div>
-            <div className="text-[11px] text-gray-600">Flagged Users</div>
-          </div>
-          <div className="text-center p-3 rounded-lg bg-blue-50">
-            <div className="text-2xl font-bold text-blue-600">5</div>
-            <div className="text-[11px] text-gray-600">Geo Mismatches</div>
-          </div>
+          <AnomalyTile icon="ti-bolt"     color="#ef4444" value="2" label="Velocity Alerts" />
+          <AnomalyTile icon="ti-flag"     color="#f5c536" value="3" label="Flagged Users" />
+          <AnomalyTile icon="ti-map-pin"  color="#60a5fa" value="5" label="Geo Mismatches" />
         </div>
       </ChartCard>
 
@@ -350,6 +341,16 @@ export default function OverviewTab() {
         <b>2. Push สิทธิ์:</b> สิทธิ์เฉลี่ย 4.2/คน ยังมีช่องว่าง — ทำ bundle "ซอง+หลอด ได้สิทธิ์ x2"<br/>
         <b>3. New customer:</b> ยังดี แต่ต้องเตรียม retention plan ให้คนใหม่กลับมา
       `} />
+    </div>
+  )
+}
+
+function AnomalyTile({ icon, color, value, label }: { icon: string; color: string; value: string; label: string }) {
+  return (
+    <div className="text-center p-4 rounded-xl border" style={{ background: `${color}0d`, borderColor: `${color}33` }}>
+      <i className={`ti ${icon} text-2xl`} style={{ color }} />
+      <div className="text-3xl num mt-1" style={{ color }}>{value}</div>
+      <div className="text-[11px] text-[var(--text-secondary)] uppercase tracking-wider font-semibold">{label}</div>
     </div>
   )
 }

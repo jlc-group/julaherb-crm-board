@@ -43,7 +43,7 @@ export default function RightsPerUserHistogram() {
             },
             scales: {
               x: { grid: { display: false }, title: { display: true, text: 'สิทธิ์/คน', font: { size: 10 } } },
-              y: { beginAtZero: true, grid: { color: '#f1f1f1' } },
+              y: { beginAtZero: true, grid: { color: '#f1f5f9' } },
             },
           }}
         />

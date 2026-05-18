@@ -2,29 +2,244 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700;800;900&family=Mali:wght@500;600;700&display=swap');
 @import url('https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css');
 
 :root {
-  --dark: #085041;
-  --mid: #0F6E56;
-  --primary: #1D9E75;
-  --light: #E1F5EE;
-  --gold: #EF9F27;
-  --danger: #e74c3c;
-  --border: #e5e7eb;
-  --text: #334155;
-  --text-secondary: #64748b;
-  --sidebar-width: 220px;
+  /* Light fresh palette — matched to poster */
+  --bg:           #ffffff;
+  --bg-soft:      #f8fafc;
+  --surface:      #ffffff;
+  --card-shadow:  0 1px 2px rgba(20, 83, 45, 0.04), 0 4px 12px rgba(20, 83, 45, 0.06);
+  --card-hover:   0 4px 8px rgba(20, 83, 45, 0.08), 0 12px 24px rgba(20, 83, 45, 0.10);
+
+  /* Greens — bright & fresh */
+  --green-50:     #f0fdf4;
+  --green-100:    #dcfce7;
+  --green-200:    #bbf7d0;
+  --green-500:    #22c55e;   /* bright vivid */
+  --green-600:    #16a34a;   /* primary */
+  --green-700:    #15803d;
+  --green-800:    #166534;
+  --green-900:    #14532d;   /* deep — for headings */
+
+  /* Brand aliases */
+  --primary:      var(--green-600);
+  --primary-soft: var(--green-100);
+  --dark:         var(--green-900);
+  --mid:          var(--green-700);
+  --accent:       var(--green-500);
+
+  /* Accents (used sparingly) */
+  --yellow:       #facc15;   /* prize / highlight */
+  --yellow-soft:  #fef9c3;
+  --red:          #ef4444;   /* danger */
+  --red-soft:     #fee2e2;
+  --blue:         #3b82f6;
+  --blue-soft:    #dbeafe;
+
+  /* Text */
+  --text:           #1f2937;
+  --text-secondary: #6b7280;
+  --text-muted:     #9ca3af;
+  --border:         #e5e7eb;
+  --border-soft:    #f1f5f9;
+
+  --sidebar-width:  240px;
 }
 
 body {
   font-family: 'Noto Sans Thai', sans-serif;
-  background: #f1f5f9;
+  background: var(--bg);
   color: var(--text);
+  min-height: 100vh;
 }
 
 /* Scrollbar */
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--green-500); }
 ::-webkit-scrollbar-track { background: transparent; }
+
+/* ============================================================
+   Card system — white with soft green shadow
+============================================================ */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: var(--card-shadow);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+  position: relative;
+}
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--card-hover);
+  border-color: var(--green-200);
+}
+
+/* Special card variants */
+.card-hero {
+  background: linear-gradient(135deg, var(--green-600) 0%, var(--green-500) 60%, var(--green-700) 100%);
+  color: #fff;
+  border: none;
+  box-shadow: 0 4px 16px rgba(22, 163, 74, 0.25), 0 1px 3px rgba(20, 83, 45, 0.15);
+}
+.card-hero:hover {
+  box-shadow: 0 8px 24px rgba(22, 163, 74, 0.35), 0 2px 6px rgba(20, 83, 45, 0.2);
+  border-color: transparent;
+}
+
+.card-accent-top {
+  position: relative;
+  overflow: hidden;
+}
+.card-accent-top::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: var(--green-500);
+  border-radius: 14px 14px 0 0;
+}
+.card-accent-top.is-yellow::before { background: var(--yellow); }
+.card-accent-top.is-red::before    { background: var(--red); }
+.card-accent-top.is-blue::before   { background: var(--blue); }
+
+/* ============================================================
+   Typography helpers
+============================================================ */
+.num {
+  font-family: 'Mali', 'Noto Sans Thai', sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+/* ============================================================
+   Live dot — red pulse
+============================================================ */
+@keyframes pulse-dot {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.55); }
+  50%      { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
+}
+.live-dot {
+  display: inline-block;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--red);
+  animation: pulse-dot 1.8s infinite;
+  vertical-align: middle;
+}
+
+/* ============================================================
+   Progress bar — green w/ subtle shine
+============================================================ */
+@keyframes progress-shine {
+  0%   { background-position: -150% 0; }
+  100% { background-position: 250% 0; }
+}
+.progress {
+  height: 8px;
+  background: var(--green-50);
+  border-radius: 999px;
+  overflow: hidden;
+  border: 1px solid var(--border-soft);
+}
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--green-500), var(--green-600));
+  border-radius: 999px;
+  transition: width 0.5s cubic-bezier(.34,1.4,.64,1);
+  position: relative;
+  overflow: hidden;
+}
+.progress-fill::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent);
+  background-size: 30% 100%;
+  background-repeat: no-repeat;
+  animation: progress-shine 2.4s linear infinite;
+}
+.progress-fill.is-yellow { background: linear-gradient(90deg, #fde047, var(--yellow)); }
+.progress-fill.is-red    { background: linear-gradient(90deg, #fca5a5, var(--red)); }
+
+/* ============================================================
+   Badges / chips
+============================================================ */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  font-weight: 700;
+  background: var(--green-100);
+  color: var(--green-800);
+}
+.chip-yellow { background: var(--yellow-soft); color: #854d0e; }
+.chip-red    { background: var(--red-soft);    color: #991b1b; }
+.chip-blue   { background: var(--blue-soft);   color: #1e40af; }
+.chip-gray   { background: var(--border-soft); color: var(--text-secondary); }
+
+/* Rank badge — emoji medal style */
+.rank {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  font-weight: 800;
+  font-size: 11px;
+  background: var(--green-100);
+  color: var(--green-800);
+  border: 2px solid var(--green-200);
+}
+.rank-1 { background: linear-gradient(135deg, #fbbf24, #f59e0b); color: #fff; border-color: #fde68a; }
+.rank-2 { background: linear-gradient(135deg, #d4d4d8, #a1a1aa); color: #fff; border-color: #e4e4e7; }
+.rank-3 { background: linear-gradient(135deg, #fb923c, #ea580c); color: #fff; border-color: #fed7aa; }
+
+/* ============================================================
+   Sidebar tab — light variant of active
+============================================================ */
+.nav-tab {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  margin: 2px 8px;
+  border-radius: 10px;
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  position: relative;
+}
+.nav-tab:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+.nav-tab-active {
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  font-weight: 700;
+}
+.nav-tab-active::before {
+  content: '';
+  position: absolute;
+  left: -8px; top: 8px; bottom: 8px;
+  width: 3px;
+  background: var(--accent);
+  border-radius: 0 4px 4px 0;
+}
+
+/* ============================================================
+   Float-up entrance animation (subtle)
+============================================================ */
+@keyframes float-up {
+  0%   { opacity: 0; transform: translateY(8px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+.float-up { animation: float-up 0.4s ease-out backwards; }

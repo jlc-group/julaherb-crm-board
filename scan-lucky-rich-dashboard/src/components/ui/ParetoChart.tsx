@@ -62,7 +62,7 @@ export default function ParetoChart() {
                 position: 'left',
                 beginAtZero: true,
                 title: { display: true, text: '% สิทธิ์ต่อ SKU', font: { size: 10 } },
-                grid: { color: '#f1f1f1' },
+                grid: { color: '#f1f5f9' },
               },
               y1: {
                 position: 'right',

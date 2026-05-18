@@ -99,13 +99,12 @@ export default function DateRangeFilter({ value, onChange, minDate = '2026-05-16
   const rangeLabel = isSameDay ? thaiShort(value.from) : `${thaiShort(value.from)} – ${thaiShort(value.to)}`
 
   return (
-    <div className="bg-white border border-gray-100 rounded-lg p-3 flex flex-wrap items-center gap-3">
-      {/* Icon + label */}
-      <div className="flex items-center gap-2 pr-3 border-r border-gray-100">
+    <div className="card p-3 flex flex-wrap items-center gap-3">
+      <div className="flex items-center gap-2 pr-3 border-r border-[var(--border-soft)]">
         <i className="ti ti-calendar-event text-[var(--primary)] text-lg" />
         <div>
-          <div className="text-[10px] text-gray-400 leading-tight">ช่วงเวลา</div>
-          <div className="text-[12px] font-semibold text-[var(--dark)] leading-tight">{rangeLabel}</div>
+          <div className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider leading-tight">ช่วงเวลา</div>
+          <div className="text-[13px] font-bold text-[var(--dark)] leading-tight num">{rangeLabel}</div>
         </div>
       </div>
 
@@ -117,10 +116,10 @@ export default function DateRangeFilter({ value, onChange, minDate = '2026-05-16
             <button
               key={p.key}
               onClick={() => applyPreset(p.key)}
-              className={`px-3 py-1 rounded-full text-[11px] font-medium transition-colors ${
+              className={`px-3 py-1 rounded-full text-[11px] font-bold transition-all ${
                 active
                   ? 'bg-[var(--primary)] text-white shadow-sm'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  : 'bg-[var(--bg-soft)] text-[var(--text-secondary)] hover:bg-[var(--green-50)] hover:text-[var(--green-700)] border border-[var(--border)]'
               }`}
             >
               {p.key === 'custom' && <i className="ti ti-adjustments mr-1" />}
@@ -169,9 +168,8 @@ export default function DateRangeFilter({ value, onChange, minDate = '2026-05-16
       </div>
 
       {/* Spacer + compare toggle (placeholder for future) */}
-      <div className="ml-auto flex items-center gap-2 text-[11px] text-gray-400">
-        <i className="ti ti-info-circle" />
-        <span>เปรียบเทียบกับช่วงก่อนหน้าอัตโนมัติ</span>
+      <div className="ml-auto flex items-center gap-2 text-[11px] text-[var(--text-muted)]">
+        <span className="live-dot" /> <span>Live data</span>
       </div>
     </div>
   )
