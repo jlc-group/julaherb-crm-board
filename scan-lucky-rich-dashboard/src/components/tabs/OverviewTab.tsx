@@ -1,7 +1,15 @@
 'use client'
 import { useState, useMemo } from 'react'
 import DateRangeFilter, { computeRange, type DateRange } from '@/components/ui/DateRangeFilter'
-import DailyBrief from '@/components/ui/DailyBrief'
+import HeroSkuCard from '@/components/ui/HeroSkuCard'
+import ParetoChart from '@/components/ui/ParetoChart'
+import CrossSizeMatrix from '@/components/ui/CrossSizeMatrix'
+import MomentumGauge from '@/components/ui/MomentumGauge'
+import RightsPerUserHistogram from '@/components/ui/RightsPerUserHistogram'
+import FirstScanCard from '@/components/ui/FirstScanCard'
+import DeadSkuPanel from '@/components/ui/DeadSkuPanel'
+import TierMixDonut from '@/components/ui/TierMixDonut'
+import { REAL_CAMPAIGN } from '@/lib/real-data'
 import {
   Chart as ChartJS,
   CategoryScale, LinearScale, BarElement, LineElement, PointElement, ArcElement,
@@ -110,15 +118,37 @@ export default function OverviewTab() {
         maxDate="2026-05-18"
       />
 
-      {/* ── KPI Grid ── */}
+      {/* ── KPI Grid (using REAL data) ── */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-        <KpiCard label={scanLabel}  value={numFmt(scanLog.length)} badge="+12.3%" />
-        <KpiCard label={userLabel}  value={numFmt(uniqueUsers)} badge="+8.7%" sub={`${rangeDays} วัน`} />
-        <KpiCard label={rightLabel} value={numFmt(filteredRights)} badge="+15.1%" sub={`เฉลี่ย ${(filteredRights / Math.max(1, uniqueUsers)).toFixed(1)} สิทธิ์/คน`} />
+        <KpiCard label="สิทธิ์รวม 2 วันแรก" value={numFmt(REAL_CAMPAIGN.totalRights)} badge={`+${REAL_CAMPAIGN.growthPct}%`} sub="16-17 พ.ค." />
+        <KpiCard label="Unique Users" value={numFmt(REAL_CAMPAIGN.uniqueUsers)} sub={`เฉลี่ย ${(REAL_CAMPAIGN.totalRights / REAL_CAMPAIGN.uniqueUsers).toFixed(2)} สิทธิ์/คน`} />
+        <KpiCard label="SKU ที่มียอด" value={`${REAL_CAMPAIGN.activeSkus}/${REAL_CAMPAIGN.totalSkus}`} sub={`Dead ${REAL_CAMPAIGN.deadSkus} SKU`} />
         <KpiCard label="สิทธิ์สะสม" value={numFmt(48370)} sub="จาก 11,520 คน" />
         <KpiCard label="สินค้าร่วมรายการ" value="97" gold sub="จาก 8 กลุ่มราคา" />
         <KpiCard label="รางวัลคงเหลือ" value="198" gold sub="มูลค่า 5,670,000 ฿" />
       </div>
+
+      {/* ── Hero SKU + Concentration Risk ── */}
+      <HeroSkuCard />
+
+      {/* ── Pareto Chart ── */}
+      <ParetoChart />
+
+      {/* ── 3-col: Momentum + Dead SKU + Entry Product ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+        <MomentumGauge />
+        <DeadSkuPanel />
+        <FirstScanCard />
+      </div>
+
+      {/* ── Tier Mix + Rights-per-User Distribution ── */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <TierMixDonut />
+        <RightsPerUserHistogram />
+      </div>
+
+      {/* ── Cross-Size Matrix ── */}
+      <CrossSizeMatrix />
 
       <InsightInline html="Momentum ดีมาก สแกน <b>+12.3%</b> จากเมื่อวาน | ลูกค้าใหม่ <b>56.7%</b> — ยังดึงคนใหม่ได้ดี | สิทธิ์เฉลี่ย <b>4.2/คน</b> สูงกว่า baseline 3.0 | Projection ถึงสิ้นแคมเปญ: <b>645,923</b> สแกน" />
 
