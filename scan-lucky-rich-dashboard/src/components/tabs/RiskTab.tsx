@@ -7,6 +7,7 @@ import ChartCard from '@/components/ui/ChartCard'
 import InsightInline from '@/components/ui/InsightInline'
 import InsightCard from '@/components/ui/InsightCard'
 import DataTable from '@/components/ui/DataTable'
+import VerificationPanel from '@/components/ui/VerificationPanel'
 import { numFmt } from '@/lib/utils'
 import * as mock from '@/lib/mock-data'
 
@@ -141,37 +142,10 @@ export default function RiskTab() {
       </ChartCard>
 
       {/* ── Chart Grid ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
-        {/* Flag Growth Trend */}
-        <ChartCard title="Flag Growth Trend (14 วัน)" icon="ti-chart-line">
-          <div style={{ height: 260 }}>
-            <Line
-              data={{
-                labels: TREND_LABELS,
-                datasets: [{
-                  label: 'Flags',
-                  data: FLAG_TREND,
-                  borderColor: '#e74c3c',
-                  backgroundColor: 'rgba(231,76,60,0.1)',
-                  tension: 0.3,
-                  fill: true,
-                  pointRadius: 3,
-                  pointBackgroundColor: '#e74c3c',
-                }],
-              }}
-              options={{
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                scales: {
-                  x: { grid: { display: false }, ticks: { font: { size: 10 } } },
-                  y: { grid: { color: '#f0f0f0' }, ticks: { font: { size: 11 }, stepSize: 1 }, beginAtZero: true },
-                },
-              }}
-            />
-          </div>
-        </ChartCard>
+      {/* Verification Panel (moved from Overview) */}
+      <VerificationPanel />
 
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
         {/* Risk Score Ranking (Top 10) */}
         <ChartCard title="Risk Score Ranking (Top 10)" icon="ti-shield-exclamation">
           <div className="overflow-x-auto">

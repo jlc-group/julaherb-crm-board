@@ -11,6 +11,8 @@ import ChartCard from '@/components/ui/ChartCard'
 import InsightInline from '@/components/ui/InsightInline'
 import InsightCard from '@/components/ui/InsightCard'
 import DataTable from '@/components/ui/DataTable'
+import RetentionCohort from '@/components/ui/RetentionCohort'
+import ScanFunnel from '@/components/ui/ScanFunnel'
 import { numFmt, maskPhone } from '@/lib/utils'
 import { PRODUCTS } from '@/config/products'
 import { PRIZES } from '@/config/campaign'
@@ -86,62 +88,11 @@ export default function CustomersTab() {
           <InsightInline html="Heavy 24 คน (5.5%) แต่สร้างสิทธิ์ ~33% — ควรมี <b>VIP program</b> รักษากลุ่มนี้" />
         </ChartCard>
 
-        {/* 3-Tier Customer */}
-        <ChartCard title="3-Tier Customer" icon="ti-users-group">
-          <div style={{height: 260}}>
-            <Bar
-              data={{
-                labels: ['New-to-JLC','Reactivated','Active'],
-                datasets: [{
-                  label: 'จำนวนคน',
-                  data: [247, 52, 137],
-                  backgroundColor: ['#1D9E75','#EF9F27','#085041'],
-                  borderRadius: 4,
-                  barPercentage: .5,
-                }],
-              }}
-              options={{
-                responsive: true,
-                maintainAspectRatio: false,
-                indexAxis: 'y',
-                plugins: { legend: { display: false } },
-                scales: {
-                  x: { beginAtZero: true, grid: { color: '#f1f1f1' } },
-                  y: { grid: { display: false } },
-                },
-              }}
-            />
-          </div>
-          <InsightInline html="ลูกค้าใหม่ <b>247 คน</b> (56.7%) — Campaign ยังดึงคนใหม่ได้ดี แต่ Reactivated มีแค่ <b>52 คน</b>" />
-        </ChartCard>
+        {/* RetentionCohort (moved from Overview) */}
+        <RetentionCohort />
 
-        {/* Repeat Rate Gauge */}
-        <ChartCard title="Repeat Rate Gauge" icon="ti-gauge">
-          <div style={{height: 200}} className="flex items-center justify-center">
-            <div style={{width: 240, height: 140}}>
-              <Doughnut
-                data={{
-                  labels: ['Repeat','Non-Repeat'],
-                  datasets: [{
-                    data: [38.2, 61.8],
-                    backgroundColor: ['#1D9E75','#e5e7eb'],
-                    borderWidth: 0,
-                  }],
-                }}
-                options={{
-                  responsive: true,
-                  maintainAspectRatio: false,
-                  rotation: -90,
-                  circumference: 180,
-                  cutout: '75%',
-                  plugins: { legend: { display: false }, tooltip: { enabled: false } },
-                }}
-                plugins={[gaugeTextPlugin]}
-              />
-            </div>
-          </div>
-          <InsightInline html="Repeat Rate <b>38.2%</b> สูงกว่า industry avg 25-30% — แสดงว่าแคมเปญทำให้เกิดพฤติกรรมซื้อซ้ำ" />
-        </ChartCard>
+        {/* ScanFunnel (moved from Overview) */}
+        <ScanFunnel />
 
         {/* Cohort Retention */}
         <ChartCard title="Cohort Retention" icon="ti-table">

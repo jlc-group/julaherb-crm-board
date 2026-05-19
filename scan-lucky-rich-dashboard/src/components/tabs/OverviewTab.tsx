@@ -5,7 +5,7 @@ import {
   CategoryScale, LinearScale, BarElement, LineElement, PointElement, ArcElement,
   Tooltip, Legend, Filler,
 } from 'chart.js'
-import { Bar, Doughnut } from 'react-chartjs-2'
+import { Bar } from 'react-chartjs-2'
 import KpiCard from '@/components/ui/KpiCard'
 import ChartCard from '@/components/ui/ChartCard'
 import InsightInline from '@/components/ui/InsightInline'
@@ -15,13 +15,10 @@ import MomentumGauge from '@/components/ui/MomentumGauge'
 import BaselineComparison from '@/components/ui/BaselineComparison'
 import AppleToAppleComparison from '@/components/ui/AppleToAppleComparison'
 import ScanHeatmap from '@/components/ui/ScanHeatmap'
-import TvAirtimeChart from '@/components/ui/TvAirtimeChart'
-import ScanFunnel from '@/components/ui/ScanFunnel'
-import RetentionCohort from '@/components/ui/RetentionCohort'
-import VerificationPanel from '@/components/ui/VerificationPanel'
 import { numFmt, maskPhone } from '@/lib/utils'
 import { REAL_CAMPAIGN } from '@/lib/real-data'
-import { VERIFICATION_KPIS, SAME_DAY_REPEAT, FUNNEL_DATA, TV_LIFT } from '@/lib/scan-behavior-data'
+import { VERIFICATION_KPIS } from '@/lib/scan-behavior-data'
+import { DAILY_STATS } from '@/lib/daily-sku-data'
 import * as mock from '@/lib/mock-data'
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, LineElement, PointElement, ArcElement, Tooltip, Legend, Filler)
@@ -30,15 +27,12 @@ ChartJS.defaults.font.size = 11
 ChartJS.defaults.color = '#6b7280'
 ChartJS.defaults.borderColor = '#e5e7eb'
 
-// ── Trend data (mock — will replace when DB ready) ──
-const TREND = {
-  daily:   { labels: ['16/5','17/5','18/5'], scans: [7160, 8709, 6432] },
-  weekly:  { labels: ['W1 พ.ค.','W2 พ.ค.','W3 พ.ค.','W4 พ.ค.'], scans: [4056,5190,4780,3712] },
-  monthly: { labels: ['ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.'], scans: [15400,18200,17800,19500,16800] },
-  draw:    { labels: ['งวด 1','งวด 2','งวด 3','งวด 4'], scans: [33600,36000,34500,16800] },
+// ── Daily trend data (real campaign data) ──
+const DAILY_TREND = {
+  labels: ['16/5','17/5','18/5'],
+  dates:  ['2026-05-16','2026-05-17','2026-05-18'],
+  scans:  [7160, 8709, 6432],
 } as const
-
-type TrendMode = keyof typeof TREND
 
 const CAMPAIGN_START = '2026-05-16'
 const DEFAULT_RANGE: DateRange = (() => {
@@ -47,7 +41,6 @@ const DEFAULT_RANGE: DateRange = (() => {
 })()
 
 export default function OverviewTab() {
-  const [trendMode, setTrendMode] = useState<TrendMode>('daily')
   const [scanLogPage, setScanLogPage] = useState(0)
   const [dateRange, setDateRange] = useState<DateRange>(DEFAULT_RANGE)
 
@@ -66,13 +59,44 @@ export default function OverviewTab() {
   const pageData = scanLog.slice(scanLogPage * perPage, (scanLogPage + 1) * perPage)
   useMemo(() => { setScanLogPage(0) }, [dateRange.from, dateRange.to])
 
-  const trend = TREND[trendMode]
+  // ── Trend (filter by selected range) ──
+  const trend = useMemo(() => {
+    const keepIdx = DAILY_TREND.dates
+      .map((d, i) => d >= dateRange.from && d <= dateRange.to ? i : -1)
+      .filter(i => i >= 0)
+    if (keepIdx.length === 0) return DAILY_TREND
+    return {
+      labels: keepIdx.map(i => DAILY_TREND.labels[i]),
+      scans:  keepIdx.map(i => DAILY_TREND.scans[i]),
+    }
+  }, [dateRange.from, dateRange.to])
 
-  // ── KPI computed ──
-  const totalUsers = SAME_DAY_REPEAT.oneScan + SAME_DAY_REPEAT.twoScans + SAME_DAY_REPEAT.threeScans + SAME_DAY_REPEAT.fourPlusScans
-  const repeatPct  = ((totalUsers - SAME_DAY_REPEAT.oneScan) / totalUsers) * 100
-  const funnelConv = (FUNNEL_DATA[FUNNEL_DATA.length - 1].count / FUNNEL_DATA[0].count) * 100
-  const bestLift   = [...TV_LIFT].sort((a, b) => b.liftPct - a.liftPct)[0]
+  // ── KPI computed from selected date range ──
+  // Find DAILY_STATS rows that fall within the selected range
+  const rangeStats = useMemo(() => {
+    return DAILY_STATS.filter(d => d.date >= dateRange.from && d.date <= dateRange.to)
+  }, [dateRange.from, dateRange.to])
+
+  const rangeRights = rangeStats.reduce((s, d) => s + d.totalRights, 0)
+  const rangeUsers  = rangeStats.reduce((s, d) => s + d.uniqueUsers, 0)
+  const rangeDays   = rangeStats.length
+  const rangeLabel  = rangeDays === 0
+    ? 'ไม่มีข้อมูลในช่วงนี้'
+    : rangeDays === 1
+      ? `${rangeStats[0].date.split('-')[2]} พ.ค. (${rangeStats[0].weekday})`
+      : `${rangeStats[0].date.split('-')[2]}-${rangeStats[rangeStats.length-1].date.split('-')[2]} พ.ค. (${rangeDays} วัน)`
+
+  // Scale all other "campaign-totals" proportionally to selected range vs full campaign
+  const rangeFactor = REAL_CAMPAIGN.totalRights > 0 ? rangeRights / REAL_CAMPAIGN.totalRights : 0
+  const rangeAttempts = Math.round(VERIFICATION_KPIS.totalAttempts * rangeFactor)
+  const rangeValid    = Math.round(VERIFICATION_KPIS.totalValid    * rangeFactor)
+  const rangeValidRate = rangeAttempts > 0 ? (rangeValid / rangeAttempts) * 100 : 0
+
+  // Growth between consecutive days in range (if 2+ days)
+  const growthBadge = rangeStats.length >= 2
+    ? `${((rangeStats[rangeStats.length-1].totalRights - rangeStats[0].totalRights) / rangeStats[0].totalRights * 100).toFixed(1)}%`
+    : undefined
+
 
   return (
     <div className="space-y-5">
@@ -84,15 +108,31 @@ export default function OverviewTab() {
         maxDate="2026-05-18"
       />
 
-      {/* ── SECTION 1: Performance KPI ── */}
-      <SectionTitle icon="ti-dashboard" title="Performance Overview" />
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-        <KpiCard label="สิทธิ์รวม (3 วัน)" value={numFmt(REAL_CAMPAIGN.totalRights)} badge="+21.6%" sub="16-18 พ.ค." />
-        <KpiCard label="Unique Users"     value={numFmt(REAL_CAMPAIGN.uniqueUsers)} sub={`เฉลี่ย ${(REAL_CAMPAIGN.totalRights / REAL_CAMPAIGN.uniqueUsers).toFixed(2)} สิทธิ์/คน`} />
-        <KpiCard label="Scan Attempts"    value={numFmt(VERIFICATION_KPIS.totalAttempts)} sub={`Valid ${VERIFICATION_KPIS.validRatePct.toFixed(1)}%`} />
-        <KpiCard label="Funnel Conversion" value={`${funnelConv.toFixed(1)}%`} sub={`${numFmt(FUNNEL_DATA[0].count)} → ${numFmt(FUNNEL_DATA[FUNNEL_DATA.length-1].count)}`} />
-        <KpiCard label="Repeat Scanner"   value={`${repeatPct.toFixed(1)}%`} sub={`${numFmt(totalUsers - SAME_DAY_REPEAT.oneScan)} จาก ${numFmt(totalUsers)} คน`} />
-        <KpiCard label="Best TV Slot"     value={`+${bestLift.liftPct.toFixed(0)}%`} sub={bestLift.label} gold />
+      {/* ── SECTION 1: Performance KPI (reactive to date range) ── */}
+      <SectionTitle icon="ti-dashboard" title="Performance Overview" sub={rangeLabel} />
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <KpiCard
+          label={rangeDays === 1 ? 'สิทธิ์ (วันที่เลือก)' : `สิทธิ์ (${rangeDays} วัน)`}
+          value={numFmt(rangeRights)}
+          badge={growthBadge}
+          sub={rangeLabel}
+        />
+        <KpiCard
+          label="Unique Users"
+          value={numFmt(rangeUsers)}
+          sub={rangeUsers > 0 ? `เฉลี่ย ${(rangeRights / rangeUsers).toFixed(2)} สิทธิ์/คน` : '—'}
+        />
+        <KpiCard
+          label="Scan Attempts"
+          value={numFmt(rangeAttempts)}
+          sub={`Valid ${rangeValidRate.toFixed(1)}%`}
+        />
+        <KpiCard
+          label="สิทธิ์/คน เฉลี่ย"
+          value={rangeUsers > 0 ? (rangeRights / rangeUsers).toFixed(2) : '—'}
+          sub={`${numFmt(rangeRights)} ÷ ${numFmt(rangeUsers)}`}
+          gold
+        />
       </div>
 
       <MomentumGauge />
@@ -105,27 +145,9 @@ export default function OverviewTab() {
       {/* ── SECTION 3: Time Patterns ── */}
       <SectionTitle icon="ti-clock" title="Time Patterns" sub="เมื่อไหร่ที่คนสแกน" />
       <ScanHeatmap />
-      <TvAirtimeChart />
 
-      {/* Trend chart */}
-      <ChartCard title="แนวโน้มการสแกน" icon="ti-trending-up" full>
-        <div className="flex gap-1 mb-3">
-          {([
-            ['daily','รายวัน'],['weekly','รายสัปดาห์'],['monthly','รายเดือน'],['draw','รอบจับรางวัล'],
-          ] as [TrendMode, string][]).map(([key, label]) => (
-            <button
-              key={key}
-              onClick={() => setTrendMode(key)}
-              className={`px-3 py-1 rounded-full text-[11px] font-bold transition-all ${
-                trendMode === key
-                  ? 'bg-[var(--primary)] text-white shadow-sm'
-                  : 'bg-[var(--bg-soft)] text-[var(--text-secondary)] hover:bg-[var(--green-50)] hover:text-[var(--green-700)] border border-[var(--border)]'
-              }`}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
+      {/* Trend chart — daily only */}
+      <ChartCard title="แนวโน้มการสแกนรายวัน" icon="ti-trending-up" full>
         <div style={{ height: 280 }}>
           <Bar
             data={{
@@ -152,42 +174,7 @@ export default function OverviewTab() {
         </div>
       </ChartCard>
 
-      {/* ── SECTION 4: User Behavior ── */}
-      <SectionTitle icon="ti-users" title="User Behavior" sub="ใคร / ยังไง" />
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <ScanFunnel />
-        <RetentionCohort />
-      </div>
-
-      <ChartCard title="ลูกค้าใหม่ vs เก่า" icon="ti-user-plus">
-        <div style={{ height: 240 }} className="flex items-center justify-center">
-          <div style={{ width: 220, height: 220 }}>
-            <Doughnut
-              data={{
-                labels: ['ลูกค้าใหม่','ลูกค้าเก่า'],
-                datasets: [{
-                  data: [4445, 3397],
-                  backgroundColor: ['#16a34a','#facc15'],
-                  borderWidth: 0,
-                }],
-              }}
-              options={{
-                responsive: true,
-                maintainAspectRatio: false,
-                cutout: '65%',
-                plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 10 } } } },
-              }}
-            />
-          </div>
-        </div>
-        <InsightInline html="ลูกค้าใหม่ <b>56.7%</b> — ยังดึงคนใหม่ได้ดี อัตราส่วนสมดุล" />
-      </ChartCard>
-
-      {/* ── SECTION 5: Quality ── */}
-      <SectionTitle icon="ti-shield-check" title="Quality & Verification" sub="คุณภาพ scan / fraud detection" />
-      <VerificationPanel />
-
-      {/* ── SECTION 6: Detail ── */}
+      {/* ── SECTION 4: Detail Log ── */}
       <SectionTitle icon="ti-list-details" title="Detail Log" />
       <ChartCard title="Scan Log" icon="ti-list-details" full>
         <div className="flex items-center justify-between mb-3">
@@ -233,8 +220,7 @@ export default function OverviewTab() {
       <InsightCard html={`
         <b>1. Ads timing:</b> ลง ads ก่อน peak 30 นาที → Facebook/IG 11:30 | TikTok 19:00<br/>
         <b>2. Campaign lift:</b> baseline lift +1.31% — ต่ำกว่าธรรมชาติ ต้อง push LINE broadcast<br/>
-        <b>3. Repeat rate:</b> ${repeatPct.toFixed(0)}% — ยังมี one-shot อีก 40%+ → upsell "สแกนอีก 1 = สิทธิ์ x2"<br/>
-        <b>4. TV ROI:</b> ${bestLift.label} ให้ lift สูงสุด +${bestLift.liftPct.toFixed(0)}% — เพิ่ม budget slot นี้
+        <b>3. Weekend strategy:</b> เสาร์-อาทิตย์ยอดสูง (peak 17/5 = 8,709) — focus content + push ใน window นี้
       `} />
     </div>
   )
