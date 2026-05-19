@@ -1,0 +1,3443 @@
+{
+  "_meta": {
+    "date": "2026-05-16",
+    "generated_at": "2026-05-19T14:13:11+07:00",
+    "campaign": "สแกนลุ้นรวย สวยลุ้นล้าน",
+    "total_sku": 93,
+    "sections": 22
+  },
+  "section_01_kpi_strip": {
+    "tickets": 7160,
+    "users": 2624,
+    "sku_active": 75,
+    "tix_per_user": 2.73,
+    "sku_total": 93
+  },
+  "section_02_scan_funnel": {
+    "success": 7163,
+    "duplicate_self": 660,
+    "duplicate_other": 259,
+    "total": 8082,
+    "success_rate_pct": 88.6
+  },
+  "section_03_customer_mix": {
+    "new_signup": 345,
+    "existing": 2279,
+    "profile_completion_pct": 100.0
+  },
+  "section_04_engagement": {
+    "returned_count": 1390,
+    "median_gap_min": 0.8,
+    "avg_gap_min": 161.9
+  },
+  "section_05_hero_sku": {
+    "top_3": [
+      {
+        "sku": "ดีดีครีมแตงโม (L3-8G)",
+        "tickets": 2452,
+        "pct_of_day": 34.2
+      },
+      {
+        "sku": "เซรั่มลำไย (L4-8G)",
+        "tickets": 659,
+        "pct_of_day": 9.2
+      },
+      {
+        "sku": "เซรั่มแครอท (L6-8G)",
+        "tickets": 499,
+        "pct_of_day": 7.0
+      }
+    ],
+    "top_3_concentration_pct": 50.4
+  },
+  "section_06_first_scan_sku": [
+    {
+      "rank": 1,
+      "sku": "ดีดีครีมแตงโม (L3-8G)",
+      "new_users": 103
+    },
+    {
+      "rank": 2,
+      "sku": "ครีมกุหลาบน้ำเงิน (L13-10G)",
+      "new_users": 38
+    },
+    {
+      "rank": 3,
+      "sku": "กันแดดแตงโม 3D ออร่า (L10-7G)",
+      "new_users": 36
+    },
+    {
+      "rank": 4,
+      "sku": "เซรั่มลำไย (L4-8G)",
+      "new_users": 32
+    },
+    {
+      "rank": 5,
+      "sku": "เซรั่มแครอท (L6-8G)",
+      "new_users": 31
+    }
+  ],
+  "section_07_sku_momentum": {
+    "top_risers": [],
+    "top_fallers": [],
+    "note": "no baseline (first day in range)"
+  },
+  "section_08_top_provinces_compact": [
+    {
+      "rank": 1,
+      "province": "กรุงเทพมหานคร",
+      "users": 366,
+      "tickets": 976
+    },
+    {
+      "rank": 2,
+      "province": "ชลบุรี",
+      "users": 107,
+      "tickets": 278
+    },
+    {
+      "rank": 3,
+      "province": "นครราชสีมา",
+      "users": 97,
+      "tickets": 264
+    },
+    {
+      "rank": 4,
+      "province": "ระยอง",
+      "users": 57,
+      "tickets": 237
+    },
+    {
+      "rank": 5,
+      "province": "สมุทรปราการ",
+      "users": 108,
+      "tickets": 221
+    }
+  ],
+  "section_09_retention_cohort": [
+    {
+      "bucket": "1",
+      "users": 1339
+    },
+    {
+      "bucket": "10+",
+      "users": 90
+    },
+    {
+      "bucket": "2",
+      "users": 519
+    },
+    {
+      "bucket": "3",
+      "users": 243
+    },
+    {
+      "bucket": "4-5",
+      "users": 243
+    },
+    {
+      "bucket": "6-10",
+      "users": 190
+    }
+  ],
+  "section_10_hourly_heatmap": [
+    {
+      "hour": 0,
+      "tickets": 140
+    },
+    {
+      "hour": 1,
+      "tickets": 138
+    },
+    {
+      "hour": 2,
+      "tickets": 20
+    },
+    {
+      "hour": 3,
+      "tickets": 14
+    },
+    {
+      "hour": 4,
+      "tickets": 30
+    },
+    {
+      "hour": 5,
+      "tickets": 64
+    },
+    {
+      "hour": 6,
+      "tickets": 280
+    },
+    {
+      "hour": 7,
+      "tickets": 347
+    },
+    {
+      "hour": 8,
+      "tickets": 337
+    },
+    {
+      "hour": 9,
+      "tickets": 377
+    },
+    {
+      "hour": 10,
+      "tickets": 483
+    },
+    {
+      "hour": 11,
+      "tickets": 425
+    },
+    {
+      "hour": 12,
+      "tickets": 379
+    },
+    {
+      "hour": 13,
+      "tickets": 317
+    },
+    {
+      "hour": 14,
+      "tickets": 338
+    },
+    {
+      "hour": 15,
+      "tickets": 304
+    },
+    {
+      "hour": 16,
+      "tickets": 254
+    },
+    {
+      "hour": 17,
+      "tickets": 295
+    },
+    {
+      "hour": 18,
+      "tickets": 445
+    },
+    {
+      "hour": 19,
+      "tickets": 433
+    },
+    {
+      "hour": 20,
+      "tickets": 516
+    },
+    {
+      "hour": 21,
+      "tickets": 603
+    },
+    {
+      "hour": 22,
+      "tickets": 419
+    },
+    {
+      "hour": 23,
+      "tickets": 202
+    }
+  ],
+  "section_11_cross_size_matrix": [
+    {
+      "size": "8G",
+      "tickets": 4292
+    },
+    {
+      "size": "7G",
+      "tickets": 642
+    },
+    {
+      "size": "6G",
+      "tickets": 575
+    },
+    {
+      "size": "40G",
+      "tickets": 512
+    },
+    {
+      "size": "70G",
+      "tickets": 414
+    },
+    {
+      "size": "10G",
+      "tickets": 332
+    },
+    {
+      "size": "30G",
+      "tickets": 142
+    },
+    {
+      "size": "15G",
+      "tickets": 61
+    },
+    {
+      "size": "4G",
+      "tickets": 61
+    },
+    {
+      "size": "35G",
+      "tickets": 39
+    },
+    {
+      "size": "48G",
+      "tickets": 27
+    },
+    {
+      "size": "2G",
+      "tickets": 18
+    },
+    {
+      "size": "other",
+      "tickets": 15
+    },
+    {
+      "size": "5G",
+      "tickets": 13
+    },
+    {
+      "size": "400G",
+      "tickets": 9
+    },
+    {
+      "size": "capsule",
+      "tickets": 4
+    },
+    {
+      "size": "100G",
+      "tickets": 2
+    },
+    {
+      "size": "150G",
+      "tickets": 1
+    },
+    {
+      "size": "120G",
+      "tickets": 1
+    }
+  ],
+  "section_12_velocity_alert": {
+    "users_20plus": 23,
+    "users_30plus": 9,
+    "users_50plus": 3,
+    "top_user_scans": 54
+  },
+  "section_13_zombie_sku": {
+    "never_scanned": 18,
+    "active_today": 75
+  },
+  "section_14_apple_to_apple": {
+    "today": 7163,
+    "same_dow_avg": 7798,
+    "delta_pct": -8.2,
+    "dow": "Saturday",
+    "baseline_count": 5
+  },
+  "section_15_cumulative_forecast": {
+    "to_date": 7163,
+    "daily_avg": null,
+    "days_to_draw": 216,
+    "forecast_low": null,
+    "forecast_high": null
+  },
+  "section_16_sku_daily_matrix": [
+    {
+      "rank": 1,
+      "sku": "ดีดีครีมแตงโม (L3-8G)",
+      "scans": 2452,
+      "users": 1023,
+      "rights": 2452
+    },
+    {
+      "rank": 2,
+      "sku": "เซรั่มลำไย (L4-8G)",
+      "scans": 659,
+      "users": 359,
+      "rights": 659
+    },
+    {
+      "rank": 3,
+      "sku": "เซรั่มแครอท (L6-8G)",
+      "scans": 499,
+      "users": 281,
+      "rights": 499
+    },
+    {
+      "rank": 4,
+      "sku": "กันแดดแตงโม 3D ออร่า (L10-7G)",
+      "scans": 471,
+      "users": 285,
+      "rights": 471
+    },
+    {
+      "rank": 5,
+      "sku": "ครีมกุหลาบน้ำเงิน (L13-10G)",
+      "scans": 328,
+      "users": 194,
+      "rights": 328
+    },
+    {
+      "rank": 6,
+      "sku": "โดสส้มแดงกลูต้าซีไฮยา (L7-6G)",
+      "scans": 302,
+      "users": 166,
+      "rights": 302
+    },
+    {
+      "rank": 7,
+      "sku": "เซรั่มขิงดำซิงก์ (C4-8G)",
+      "scans": 255,
+      "users": 132,
+      "rights": 255
+    },
+    {
+      "rank": 8,
+      "sku": "ดีดีครีมแตงโม (L3-40G)",
+      "scans": 223,
+      "users": 190,
+      "rights": 223
+    },
+    {
+      "rank": 9,
+      "sku": "มอยส์เจลฉ่ำบัว (L19-8G)",
+      "scans": 205,
+      "users": 142,
+      "rights": 205
+    },
+    {
+      "rank": 10,
+      "sku": "อีอีคูชั่นแตงโม 02 Natural (L8B-6G)",
+      "scans": 134,
+      "users": 90,
+      "rights": 134
+    },
+    {
+      "rank": 11,
+      "sku": "ยาสีฟันเจเด้นท์ สูตรลดกลิ่นปาก (D3-70G)",
+      "scans": 132,
+      "users": 77,
+      "rights": 132
+    },
+    {
+      "rank": 12,
+      "sku": "กันแดดทานตะวัน (L20-7G)",
+      "scans": 94,
+      "users": 68,
+      "rights": 94
+    },
+    {
+      "rank": 13,
+      "sku": "บีบีโลชั่นแตงโม (JHA1-40G)",
+      "scans": 87,
+      "users": 65,
+      "rights": 87
+    },
+    {
+      "rank": 14,
+      "sku": "สบู่ลำไย (JH906-70G)",
+      "scans": 80,
+      "users": 56,
+      "rights": 80
+    },
+    {
+      "rank": 15,
+      "sku": "อีอีคูชั่นแตงโม 01 Light (L8A-6G)",
+      "scans": 79,
+      "users": 54,
+      "rights": 79
+    },
+    {
+      "rank": 16,
+      "sku": "เซรั่มลำไย (L4-40G)",
+      "scans": 79,
+      "users": 67,
+      "rights": 79
+    },
+    {
+      "rank": 17,
+      "sku": "กันแดดน้ำนมเมลอน (C3-7G)",
+      "scans": 74,
+      "users": 45,
+      "rights": 74
+    },
+    {
+      "rank": 18,
+      "sku": "กันแดดแตงโม 3D ออร่า (L10-30G)",
+      "scans": 71,
+      "users": 59,
+      "rights": 71
+    },
+    {
+      "rank": 19,
+      "sku": "สบู่แตงโม (JH905-70G)",
+      "scans": 69,
+      "users": 50,
+      "rights": 69
+    },
+    {
+      "rank": 20,
+      "sku": "เซรั่มแครอท (L6-40G)",
+      "scans": 67,
+      "users": 55,
+      "rights": 67
+    },
+    {
+      "rank": 21,
+      "sku": "สบู่ดาวเรือง (JH904-70G)",
+      "scans": 64,
+      "users": 41,
+      "rights": 64
+    },
+    {
+      "rank": 22,
+      "sku": "มาก์สลำไยทองคำ (JHM2-4G)",
+      "scans": 61,
+      "users": 25,
+      "rights": 61
+    },
+    {
+      "rank": 23,
+      "sku": "ดีดีครีมแตงโม (JH703-8G)",
+      "scans": 40,
+      "users": 21,
+      "rights": 40
+    },
+    {
+      "rank": 24,
+      "sku": "มอยส์เจอร์อโวคาโด (L9-8G)",
+      "scans": 40,
+      "users": 31,
+      "rights": 40
+    },
+    {
+      "rank": 25,
+      "sku": "เซรั่มมะรุมเปบไทด์ (C2-8G)",
+      "scans": 40,
+      "users": 27,
+      "rights": 40
+    },
+    {
+      "rank": 26,
+      "sku": "ยาสีฟันเจเด้นท์ สูตรลดเสียวฟัน (D2-70G)",
+      "scans": 39,
+      "users": 31,
+      "rights": 39
+    },
+    {
+      "rank": 27,
+      "sku": "น้ำตบแตงโมคอลลาเจน (L5-15G)",
+      "scans": 34,
+      "users": 17,
+      "rights": 34
+    },
+    {
+      "rank": 28,
+      "sku": "เจลดาวเรือง คาเลนดูล่า (C1-6G)",
+      "scans": 32,
+      "users": 24,
+      "rights": 32
+    },
+    {
+      "rank": 29,
+      "sku": "เซรั่มขิงดำซิงก์ (C4-35G)",
+      "scans": 28,
+      "users": 24,
+      "rights": 28
+    },
+    {
+      "rank": 30,
+      "sku": "เซรั่มขิงดำ (JH707-8G)",
+      "scans": 27,
+      "users": 10,
+      "rights": 27
+    },
+    {
+      "rank": 31,
+      "sku": "เจลมะรุม (JHK2-8G)",
+      "scans": 24,
+      "users": 18,
+      "rights": 24
+    },
+    {
+      "rank": 32,
+      "sku": "กันแดดทานตะวัน (L20-30G)",
+      "scans": 22,
+      "users": 21,
+      "rights": 22
+    },
+    {
+      "rank": 33,
+      "sku": "โดสส้มแดงกลูต้าซีไฮยา (L7-30G)",
+      "scans": 20,
+      "users": 16,
+      "rights": 20
+    },
+    {
+      "rank": 34,
+      "sku": "กลูต้าไฮยา บูสเตอร์เซรั่ม (JHK3-6G)",
+      "scans": 19,
+      "users": 9,
+      "rights": 19
+    },
+    {
+      "rank": 35,
+      "sku": "โลชั่นโดสส้มแดง (L11-40G)",
+      "scans": 19,
+      "users": 14,
+      "rights": 19
+    },
+    {
+      "rank": 36,
+      "sku": "มอยส์เจอร์อโวคาโด (JHK4-8G)",
+      "scans": 18,
+      "users": 18,
+      "rights": 18
+    },
+    {
+      "rank": 37,
+      "sku": "วิปโฟมแตงโม (L14-40G)",
+      "scans": 17,
+      "users": 12,
+      "rights": 17
+    },
+    {
+      "rank": 38,
+      "sku": "กันแดดน้ำนมเมลอน (C3-30G)",
+      "scans": 15,
+      "users": 13,
+      "rights": 15
+    },
+    {
+      "rank": 39,
+      "sku": "มอยส์เจลฉ่ำบัว (L19-48G)",
+      "scans": 15,
+      "users": 15,
+      "rights": 15
+    },
+    {
+      "rank": 40,
+      "sku": "น้ำตบแตงโมคอลลาเจน (JHK5-15G)",
+      "scans": 14,
+      "users": 9,
+      "rights": 14
+    },
+    {
+      "rank": 41,
+      "sku": "วิปโฟมแตงโม (L14-70G)",
+      "scans": 14,
+      "users": 11,
+      "rights": 14
+    },
+    {
+      "rank": 42,
+      "sku": "ครีมกุหลาบน้ำเงิน (L13-40G)",
+      "scans": 13,
+      "users": 13,
+      "rights": 13
+    },
+    {
+      "rank": 43,
+      "sku": "สบู่แครอท (S4-70G)",
+      "scans": 13,
+      "users": 12,
+      "rights": 13
+    },
+    {
+      "rank": 44,
+      "sku": "เจลดาวเรือง คาเลนดูล่า (C1-15G)",
+      "scans": 13,
+      "users": 10,
+      "rights": 13
+    },
+    {
+      "rank": 45,
+      "sku": "แป้งพัฟแตงโม (T6A-5G)",
+      "scans": 13,
+      "users": 13,
+      "rights": 13
+    },
+    {
+      "rank": 46,
+      "sku": "มอยส์เจอร์อโวคาโด (JHK4-48G)",
+      "scans": 12,
+      "users": 11,
+      "rights": 12
+    },
+    {
+      "rank": 47,
+      "sku": "เซรั่มลำไย (JH704-8G)",
+      "scans": 12,
+      "users": 8,
+      "rights": 12
+    },
+    {
+      "rank": 48,
+      "sku": "เจลดาวเรือง (JHK1-8G)",
+      "scans": 11,
+      "users": 6,
+      "rights": 11
+    },
+    {
+      "rank": 49,
+      "sku": "เซรั่มมะรุมเปบไทด์ (C2-35G)",
+      "scans": 11,
+      "users": 10,
+      "rights": 11
+    },
+    {
+      "rank": 50,
+      "sku": "เซรั่มแครอท (JH706-8G)",
+      "scans": 10,
+      "users": 6,
+      "rights": 10
+    },
+    {
+      "rank": 51,
+      "sku": "อีอีคูชั่นแตงโม (JH708-6G)",
+      "scans": 9,
+      "users": 9,
+      "rights": 9
+    },
+    {
+      "rank": 52,
+      "sku": "โลชั่นโดสส้มแดง (L11-400G)",
+      "scans": 9,
+      "users": 8,
+      "rights": 9
+    },
+    {
+      "rank": 53,
+      "sku": "แทททูลิปเซรั่ม 02 Burgundy (T5B-2.5G)",
+      "scans": 6,
+      "users": 6,
+      "rights": 6
+    },
+    {
+      "rank": 54,
+      "sku": "แทททูลิปเซรั่ม 03 Little Darling (T5C-2G)",
+      "scans": 6,
+      "users": 6,
+      "rights": 6
+    },
+    {
+      "rank": 55,
+      "sku": "เซรั่มลำไย (JH704-40G)",
+      "scans": 5,
+      "users": 3,
+      "rights": 5
+    },
+    {
+      "rank": 56,
+      "sku": "แทททูลิปเซรั่ม 01 All Sweet (T5A-2.5G)",
+      "scans": 5,
+      "users": 5,
+      "rights": 5
+    },
+    {
+      "rank": 57,
+      "sku": "กลูต้าไฮยา บูสเตอร์เซรั่ม (JHK3-30G)",
+      "scans": 4,
+      "users": 4,
+      "rights": 4
+    },
+    {
+      "rank": 58,
+      "sku": "จาร์วิต กลูต้า (V1-14C)",
+      "scans": 4,
+      "users": 3,
+      "rights": 4
+    },
+    {
+      "rank": 59,
+      "sku": "แทททูลิปเซรั่ม 01 All Sweet (T5A-2G)",
+      "scans": 4,
+      "users": 4,
+      "rights": 4
+    },
+    {
+      "rank": 60,
+      "sku": "แทททูลิปเซรั่ม 03 Little Darling (T5C-2.5G)",
+      "scans": 4,
+      "users": 4,
+      "rights": 4
+    },
+    {
+      "rank": 61,
+      "sku": "แป้งพัฟแตงโม (T6A-10G)",
+      "scans": 4,
+      "users": 4,
+      "rights": 4
+    },
+    {
+      "rank": 62,
+      "sku": "กันแดดน้ำนมเมลอน (JHK6-7G)",
+      "scans": 3,
+      "users": 2,
+      "rights": 3
+    },
+    {
+      "rank": 63,
+      "sku": "มาก์สลำไยทองคำ (JHM2-30G)",
+      "scans": 3,
+      "users": 3,
+      "rights": 3
+    },
+    {
+      "rank": 64,
+      "sku": "ยาสีฟันเจเดนท์ สูตรลดกลิ่นปาก (JHD1-70G)",
+      "scans": 3,
+      "users": 3,
+      "rights": 3
+    },
+    {
+      "rank": 65,
+      "sku": "ลิปทินท์แตงโม 01 Sun Orange (JHT3-2G)",
+      "scans": 3,
+      "users": 2,
+      "rights": 3
+    },
+    {
+      "rank": 66,
+      "sku": "อีอีคูชั่นแตงโม 01 Light (L8A-30G)",
+      "scans": 3,
+      "users": 3,
+      "rights": 3
+    },
+    {
+      "rank": 67,
+      "sku": "อีอีคูชั่นแตงโม 02 Natural (L8B-30G)",
+      "scans": 3,
+      "users": 3,
+      "rights": 3
+    },
+    {
+      "rank": 68,
+      "sku": "แทททูลิปเซรั่ม 02 Burgundy (T5B-2G)",
+      "scans": 3,
+      "users": 3,
+      "rights": 3
+    },
+    {
+      "rank": 69,
+      "sku": "กันแดดทานตะวันทาตัว (L21-100G)",
+      "scans": 2,
+      "users": 2,
+      "rights": 2
+    },
+    {
+      "rank": 70,
+      "sku": "ลิปทินท์แตงโม 01 Golden Queen (JHT1-2G)",
+      "scans": 2,
+      "users": 2,
+      "rights": 2
+    },
+    {
+      "rank": 71,
+      "sku": "ดีดีครีมแตงโม (JH703-40G)",
+      "scans": 1,
+      "users": 1,
+      "rights": 1
+    },
+    {
+      "rank": 72,
+      "sku": "บีบีโลชั่นแตงโม (L1-150G)",
+      "scans": 1,
+      "users": 1,
+      "rights": 1
+    },
+    {
+      "rank": 73,
+      "sku": "เซรั่มแครอท (JH706-40G)",
+      "scans": 1,
+      "users": 1,
+      "rights": 1
+    },
+    {
+      "rank": 74,
+      "sku": "เรตินอล (R1-30G)",
+      "scans": 1,
+      "users": 1,
+      "rights": 1
+    },
+    {
+      "rank": 75,
+      "sku": "โลชั่นมะหาด (JHM1-120G)",
+      "scans": 1,
+      "users": 1,
+      "rights": 1
+    },
+    {
+      "rank": 76,
+      "sku": "น้ำตบแตงโมคอลลาเจน (L5-90G)",
+      "scans": 0,
+      "users": 0,
+      "rights": 0
+    },
+    {
+      "rank": 77,
+      "sku": "น้ำตบแตงโมคอลลาเจน (L5A-90G)",
+      "scans": 0,
+      "users": 0,
+      "rights": 0
+    },
+    {
+      "rank": 78,
+      "sku": "ลิปทินท์แตงโม 01 Sugar Baby (JHT2-2G)",
+      "scans": 0,
+      "users": 0,
+      "rights": 0
+    },
+    {
+      "rank": 79,
+      "sku": "สครับเกลือแตงโม (JHP2-200G)",
+      "scans": 0,
+      "users": 0,
+      "rights": 0
+    },
+    {
+      "rank": 80,
+      "sku": "สครับแตงโม (JHA2-40G)",
+      "scans": 0,
+      "users": 0,
+      "rights": 0
+    },
+    {
+      "rank": 81,
+      "sku": "สบู่อาบน้ำส้มแดง (L12-400G)",
+      "scans": 0,
+      "users": 0,
+      "rights": 0
+    },
+    {
+      "rank": 82,
+      "sku": "อีอีคูชั่นแตงโม 01 Light (JHQ1-30G)",
+      "scans": 0,
+      "users": 0,
+      "rights": 0
+    },
+    {
+      "rank": 83,
+      "sku": "อีอีคูชั่นแตงโม 02 Natural (JHQ2-30G)",
+      "scans": 0,
+      "users": 0,
+      "rights": 0
+    },
+    {
+      "rank": 84,
+      "sku": "เจลดาวเรือง (JH701-40G)",
+      "scans": 0,
+      "users": 0,
+      "rights": 0
+    },
+    {
+      "rank": 85,
+      "sku": "เจลดาวเรือง (JH701-8G)",
+      "scans": 0,
+      "users": 0,
+      "rights": 0
+    },
+    {
+      "rank": 86,
+      "sku": "เจลดาวเรือง (JHK1-40G)",
+      "scans": 0,
+      "users": 0,
+      "rights": 0
+    },
+    {
+      "rank": 87,
+      "sku": "เจลมะรุม (JH702-40G)",
+      "scans": 0,
+      "users": 0,
+      "rights": 0
+    },
+    {
+      "rank": 88,
+      "sku": "เจลมะรุม (JH702-8G)",
+      "scans": 0,
+      "users": 0,
+      "rights": 0
+    },
+    {
+      "rank": 89,
+      "sku": "เจลมะรุม (JHK2-40G)",
+      "scans": 0,
+      "users": 0,
+      "rights": 0
+    },
+    {
+      "rank": 90,
+      "sku": "เจลแตงโม (JHP1-80G)",
+      "scans": 0,
+      "users": 0,
+      "rights": 0
+    },
+    {
+      "rank": 91,
+      "sku": "เซรั่มขิงดำ (JH707-40G)",
+      "scans": 0,
+      "users": 0,
+      "rights": 0
+    },
+    {
+      "rank": 92,
+      "sku": "เซรั่มมะม่วง (JH705-40G)",
+      "scans": 0,
+      "users": 0,
+      "rights": 0
+    },
+    {
+      "rank": 93,
+      "sku": "เซรั่มมะม่วง (JH705-8G)",
+      "scans": 0,
+      "users": 0,
+      "rights": 0
+    }
+  ],
+  "section_17_rfm_segments": [
+    {
+      "segment": "Other",
+      "users": 2306,
+      "pct": 27.6
+    },
+    {
+      "segment": "At Risk",
+      "users": 1960,
+      "pct": 23.4
+    },
+    {
+      "segment": "Champion",
+      "users": 1389,
+      "pct": 16.6
+    },
+    {
+      "segment": "Lost",
+      "users": 1384,
+      "pct": 16.6
+    },
+    {
+      "segment": "Loyal",
+      "users": 1321,
+      "pct": 15.8
+    }
+  ],
+  "section_18_cohort_retention": [
+    {
+      "cohort_date": "2026-05-14",
+      "cohort_size": 2,
+      "d0_pct": 100.0,
+      "d1_pct": 0.0,
+      "d2_pct": 50.0,
+      "d3_pct": 0.0
+    },
+    {
+      "cohort_date": "2026-05-16",
+      "cohort_size": 2623,
+      "d0_pct": 100.0,
+      "d1_pct": 4.1,
+      "d2_pct": 2.4,
+      "d3_pct": 0.8
+    },
+    {
+      "cohort_date": "2026-05-17",
+      "cohort_size": 2861,
+      "d0_pct": 100.0,
+      "d1_pct": 3.1,
+      "d2_pct": 0.5,
+      "d3_pct": 0.0
+    },
+    {
+      "cohort_date": "2026-05-18",
+      "cohort_size": 2357,
+      "d0_pct": 100.0,
+      "d1_pct": 1.3,
+      "d2_pct": 0.0,
+      "d3_pct": 0.0
+    }
+  ],
+  "section_19_top_provinces_full": [
+    {
+      "rank": 1,
+      "province": "กรุงเทพมหานคร",
+      "users": 366,
+      "tickets": 976
+    },
+    {
+      "rank": 2,
+      "province": "ชลบุรี",
+      "users": 107,
+      "tickets": 278
+    },
+    {
+      "rank": 3,
+      "province": "นครราชสีมา",
+      "users": 97,
+      "tickets": 264
+    },
+    {
+      "rank": 4,
+      "province": "ระยอง",
+      "users": 57,
+      "tickets": 237
+    },
+    {
+      "rank": 5,
+      "province": "สมุทรปราการ",
+      "users": 108,
+      "tickets": 221
+    },
+    {
+      "rank": 6,
+      "province": "เชียงราย",
+      "users": 50,
+      "tickets": 217
+    },
+    {
+      "rank": 7,
+      "province": "เชียงใหม่",
+      "users": 89,
+      "tickets": 215
+    },
+    {
+      "rank": 8,
+      "province": "สงขลา",
+      "users": 71,
+      "tickets": 205
+    },
+    {
+      "rank": 9,
+      "province": "ปทุมธานี",
+      "users": 69,
+      "tickets": 187
+    },
+    {
+      "rank": 10,
+      "province": "สมุทรสาคร",
+      "users": 42,
+      "tickets": 176
+    }
+  ],
+  "section_20_top_scanners": [
+    {
+      "rank": 1,
+      "user_hash": "02854cd3",
+      "name_masked": "สุพรรณิการ์ โ*****",
+      "phone_masked": "xxx-xxx-9192",
+      "province": "เชียงราย",
+      "scans_today": 54,
+      "last_scan_at": "2026-05-15 18:49:11.812881+00"
+    },
+    {
+      "rank": 2,
+      "user_hash": "81313ac2",
+      "name_masked": "เพ็ญพิชชา ม********",
+      "phone_masked": "xxx-xxx-9463",
+      "province": "ระยอง",
+      "scans_today": 53,
+      "last_scan_at": "2026-05-16 08:11:15.379233+00"
+    },
+    {
+      "rank": 3,
+      "user_hash": "0a3fbb7f",
+      "name_masked": "สุพัตรา ค******",
+      "phone_masked": "xxx-xxx-6871",
+      "province": "ปทุมธานี",
+      "scans_today": 50,
+      "last_scan_at": "2026-05-16 15:27:05.489657+00"
+    },
+    {
+      "rank": 4,
+      "user_hash": "9df77750",
+      "name_masked": "พิจิตตา แ******",
+      "phone_masked": "xxx-xxx-0096",
+      "province": "สกลนคร",
+      "scans_today": 46,
+      "last_scan_at": "2026-05-16 07:06:34.122885+00"
+    },
+    {
+      "rank": 5,
+      "user_hash": "234cefd6",
+      "name_masked": "พรนิภา ท****",
+      "phone_masked": "xxx-xxx-1464",
+      "province": "ลำปาง",
+      "scans_today": 39,
+      "last_scan_at": "2026-05-16 14:27:20.559938+00"
+    },
+    {
+      "rank": 6,
+      "user_hash": "c05d792d",
+      "name_masked": "ณัฏฐกานต์ บ********",
+      "phone_masked": "xxx-xxx-5531",
+      "province": "ลำพูน",
+      "scans_today": 36,
+      "last_scan_at": "2026-05-16 04:37:03.510301+00"
+    },
+    {
+      "rank": 7,
+      "user_hash": "d3c40898",
+      "name_masked": "ยุวธิดา เ********",
+      "phone_masked": "xxx-xxx-0828",
+      "province": "นครราชสีมา",
+      "scans_today": 35,
+      "last_scan_at": "2026-05-16 12:40:37.423597+00"
+    },
+    {
+      "rank": 8,
+      "user_hash": "0342fa6b",
+      "name_masked": "วันดี โ*******",
+      "phone_masked": "xxx-xxx-1074",
+      "province": "กรุงเทพมหานคร",
+      "scans_today": 35,
+      "last_scan_at": "2026-05-16 11:01:51.655472+00"
+    },
+    {
+      "rank": 9,
+      "user_hash": "72503ee0",
+      "name_masked": "นุรอัยนี ส****",
+      "phone_masked": "xxx-xxx-7981",
+      "province": "สตูล",
+      "scans_today": 30,
+      "last_scan_at": "2026-05-16 13:55:53.660673+00"
+    },
+    {
+      "rank": 10,
+      "user_hash": "4b2a16bb",
+      "name_masked": "วรรณิดา ม****",
+      "phone_masked": "xxx-xxx-7359",
+      "province": "เชียงราย",
+      "scans_today": 26,
+      "last_scan_at": "2026-05-16 02:26:32.6648+00"
+    },
+    {
+      "rank": 11,
+      "user_hash": "9abdac79",
+      "name_masked": "จันทร์ประภา แ********",
+      "phone_masked": "xxx-xxx-5658",
+      "province": "พิษณุโลก",
+      "scans_today": 26,
+      "last_scan_at": "2026-05-16 07:35:02.526286+00"
+    },
+    {
+      "rank": 12,
+      "user_hash": "603cbc39",
+      "name_masked": "กัลยา ข*******",
+      "phone_masked": "xxx-xxx-9671",
+      "province": "ระยอง",
+      "scans_today": 25,
+      "last_scan_at": "2026-05-16 06:45:38.249814+00"
+    },
+    {
+      "rank": 13,
+      "user_hash": "50bce070",
+      "name_masked": "ชนัญญา ช****",
+      "phone_masked": "xxx-xxx-3123",
+      "province": "สมุทรสาคร",
+      "scans_today": 24,
+      "last_scan_at": "2026-05-16 14:16:12.949857+00"
+    },
+    {
+      "rank": 14,
+      "user_hash": "33ba0241",
+      "name_masked": "จริยา อ********",
+      "phone_masked": "xxx-xxx-8373",
+      "province": "เลย",
+      "scans_today": 24,
+      "last_scan_at": "2026-05-16 14:15:46.174862+00"
+    },
+    {
+      "rank": 15,
+      "user_hash": "772641c7",
+      "name_masked": "อนุสรา ท********",
+      "phone_masked": "xxx-xxx-5665",
+      "province": "กรุงเทพมหานคร",
+      "scans_today": 24,
+      "last_scan_at": "2026-05-16 13:33:13.292812+00"
+    },
+    {
+      "rank": 16,
+      "user_hash": "7e206948",
+      "name_masked": "อมรรัตน์ อ********",
+      "phone_masked": "xxx-xxx-0402",
+      "province": "พระนครศรีอยุธยา",
+      "scans_today": 23,
+      "last_scan_at": "2026-05-16 16:23:31.374065+00"
+    },
+    {
+      "rank": 17,
+      "user_hash": "9fc17897",
+      "name_masked": "เกวลิน ล*****",
+      "phone_masked": "xxx-xxx-1204",
+      "province": "กรุงเทพมหานคร",
+      "scans_today": 22,
+      "last_scan_at": "2026-05-16 13:31:26.284911+00"
+    },
+    {
+      "rank": 18,
+      "user_hash": "d9bf03f2",
+      "name_masked": "จันทร์ศรี ม********",
+      "phone_masked": "xxx-xxx-0937",
+      "province": "สมุทรสาคร",
+      "scans_today": 22,
+      "last_scan_at": "2026-05-15 17:51:22.26237+00"
+    },
+    {
+      "rank": 19,
+      "user_hash": "bfce6e3b",
+      "name_masked": "ธิดา ง****",
+      "phone_masked": "xxx-xxx-7118",
+      "province": "สุราษฎร์ธานี",
+      "scans_today": 21,
+      "last_scan_at": "2026-05-16 11:42:18.780065+00"
+    },
+    {
+      "rank": 20,
+      "user_hash": "e4ca3a37",
+      "name_masked": "ปาฏิหาริย์ เ************",
+      "phone_masked": "xxx-xxx-9064",
+      "province": "เชียงใหม่",
+      "scans_today": 21,
+      "last_scan_at": "2026-05-15 18:58:44.381674+00"
+    }
+  ],
+  "section_21_scan_log_latest": [
+    {
+      "scan_id_short": "c7135d77f3f0",
+      "user_hash": "bab956f6",
+      "name_masked": "นางสาว ชลลดา ว***",
+      "phone_masked": "xxx-xxx-2112",
+      "sku": "โดสส้มแดงกลูต้าซีไฮยา (L7-6G)",
+      "ticket_number": "338162",
+      "scanned_at": "2026-05-16 23:59:46.041849",
+      "province": "มุกดาหาร"
+    },
+    {
+      "scan_id_short": "1a128388509a",
+      "user_hash": "4dc1d925",
+      "name_masked": "Minzawoo M***",
+      "phone_masked": "xxx-xxx-9572",
+      "sku": "เซรั่มลำไย (L4-8G)",
+      "ticket_number": "338161",
+      "scanned_at": "2026-05-16 23:59:36.360321",
+      "province": "กรุงเทพมหานคร"
+    },
+    {
+      "scan_id_short": "cd384f5f3290",
+      "user_hash": "4dc1d925",
+      "name_masked": "Minzawoo M***",
+      "phone_masked": "xxx-xxx-9572",
+      "sku": "กันแดดแตงโม 3D ออร่า (L10-7G)",
+      "ticket_number": "338160",
+      "scanned_at": "2026-05-16 23:59:21.554765",
+      "province": "กรุงเทพมหานคร"
+    },
+    {
+      "scan_id_short": "1c837253dadf",
+      "user_hash": "7f3ea71f",
+      "name_masked": "ธวัชชัย ช***",
+      "phone_masked": "xxx-xxx-5118",
+      "sku": "สบู่ดาวเรือง (JH904-70G)",
+      "ticket_number": "338159",
+      "scanned_at": "2026-05-16 23:59:18.591917",
+      "province": "ขอนแก่น"
+    },
+    {
+      "scan_id_short": "96c50a41f5cf",
+      "user_hash": "42c29d58",
+      "name_masked": "คงกระพัน ต***",
+      "phone_masked": "xxx-xxx-8695",
+      "sku": "เซรั่มลำไย (L4-8G)",
+      "ticket_number": "338158",
+      "scanned_at": "2026-05-16 23:56:56.327364",
+      "province": "กรุงเทพมหานคร"
+    },
+    {
+      "scan_id_short": "02322a660485",
+      "user_hash": "42c29d58",
+      "name_masked": "คงกระพัน ต***",
+      "phone_masked": "xxx-xxx-8695",
+      "sku": "เซรั่มลำไย (L4-8G)",
+      "ticket_number": "338157",
+      "scanned_at": "2026-05-16 23:56:02.234406",
+      "province": "กรุงเทพมหานคร"
+    },
+    {
+      "scan_id_short": "d2624e1da463",
+      "user_hash": "f3f6f92e",
+      "name_masked": "ปาลิตา ส***",
+      "phone_masked": "xxx-xxx-2363",
+      "sku": "ดีดีครีมแตงโม (L3-8G)",
+      "ticket_number": "338156",
+      "scanned_at": "2026-05-16 23:53:11.365763",
+      "province": "ชัยภูมิ"
+    },
+    {
+      "scan_id_short": "cc04d06b2f10",
+      "user_hash": "2475937c",
+      "name_masked": "วีนัส เ***",
+      "phone_masked": "xxx-xxx-3604",
+      "sku": "อีอีคูชั่นแตงโม 02 Natural (L8B-6G)",
+      "ticket_number": "338155",
+      "scanned_at": "2026-05-16 23:53:07.833935",
+      "province": "กรุงเทพมหานคร"
+    },
+    {
+      "scan_id_short": "70c2b5b7832d",
+      "user_hash": "f3f6f92e",
+      "name_masked": "ปาลิตา ส***",
+      "phone_masked": "xxx-xxx-2363",
+      "sku": "ดีดีครีมแตงโม (L3-8G)",
+      "ticket_number": "338154",
+      "scanned_at": "2026-05-16 23:53:00.706763",
+      "province": "ชัยภูมิ"
+    },
+    {
+      "scan_id_short": "230381419810",
+      "user_hash": "f3f6f92e",
+      "name_masked": "ปาลิตา ส***",
+      "phone_masked": "xxx-xxx-2363",
+      "sku": "ดีดีครีมแตงโม (L3-8G)",
+      "ticket_number": "338153",
+      "scanned_at": "2026-05-16 23:52:50.198484",
+      "province": "ชัยภูมิ"
+    },
+    {
+      "scan_id_short": "083a5227229c",
+      "user_hash": "f3f6f92e",
+      "name_masked": "ปาลิตา ส***",
+      "phone_masked": "xxx-xxx-2363",
+      "sku": "ดีดีครีมแตงโม (L3-8G)",
+      "ticket_number": "338152",
+      "scanned_at": "2026-05-16 23:52:40.212195",
+      "province": "ชัยภูมิ"
+    },
+    {
+      "scan_id_short": "7dd6ff3aa207",
+      "user_hash": "f3f6f92e",
+      "name_masked": "ปาลิตา ส***",
+      "phone_masked": "xxx-xxx-2363",
+      "sku": "ดีดีครีมแตงโม (L3-8G)",
+      "ticket_number": "338151",
+      "scanned_at": "2026-05-16 23:52:31.596283",
+      "province": "ชัยภูมิ"
+    },
+    {
+      "scan_id_short": "13018b9e02c8",
+      "user_hash": "f3f6f92e",
+      "name_masked": "ปาลิตา ส***",
+      "phone_masked": "xxx-xxx-2363",
+      "sku": "ดีดีครีมแตงโม (L3-8G)",
+      "ticket_number": "338150",
+      "scanned_at": "2026-05-16 23:52:21.606549",
+      "province": "ชัยภูมิ"
+    },
+    {
+      "scan_id_short": "3fd07a35ece8",
+      "user_hash": "4dc1d925",
+      "name_masked": "Minzawoo M***",
+      "phone_masked": "xxx-xxx-9572",
+      "sku": "เซรั่มขิงดำซิงก์ (C4-8G)",
+      "ticket_number": "338149",
+      "scanned_at": "2026-05-16 23:50:05.409245",
+      "province": "กรุงเทพมหานคร"
+    },
+    {
+      "scan_id_short": "4073ed741bb5",
+      "user_hash": "f3f6f92e",
+      "name_masked": "ปาลิตา ส***",
+      "phone_masked": "xxx-xxx-2363",
+      "sku": "ดีดีครีมแตงโม (L3-8G)",
+      "ticket_number": "338148",
+      "scanned_at": "2026-05-16 23:49:23.133496",
+      "province": "ชัยภูมิ"
+    },
+    {
+      "scan_id_short": "cefa1fe33b62",
+      "user_hash": "4dc1d925",
+      "name_masked": "Minzawoo M***",
+      "phone_masked": "xxx-xxx-9572",
+      "sku": "อีอีคูชั่นแตงโม 01 Light (L8A-6G)",
+      "ticket_number": "338147",
+      "scanned_at": "2026-05-16 23:49:16.395312",
+      "province": "กรุงเทพมหานคร"
+    },
+    {
+      "scan_id_short": "97325499f5d7",
+      "user_hash": "c7643620",
+      "name_masked": "สกานต์ ช***",
+      "phone_masked": "xxx-xxx-7207",
+      "sku": "ดีดีครีมแตงโม (L3-8G)",
+      "ticket_number": "338146",
+      "scanned_at": "2026-05-16 23:48:56.75527",
+      "province": "ชลบุรี"
+    },
+    {
+      "scan_id_short": "7411ecb25b7a",
+      "user_hash": "0ea7680c",
+      "name_masked": "นันท์มนัส ช***",
+      "phone_masked": "xxx-xxx-8884",
+      "sku": "ดีดีครีมแตงโม (L3-8G)",
+      "ticket_number": "338145",
+      "scanned_at": "2026-05-16 23:47:38.876401",
+      "province": "นครนายก"
+    },
+    {
+      "scan_id_short": "8c8ff539a96d",
+      "user_hash": "01ffb757",
+      "name_masked": "ธเนศ ต***",
+      "phone_masked": "xxx-xxx-6398",
+      "sku": "เซรั่มขิงดำซิงก์ (C4-35G)",
+      "ticket_number": "338144",
+      "scanned_at": "2026-05-16 23:47:03.016382",
+      "province": "นนทบุรี"
+    },
+    {
+      "scan_id_short": "8323dbf9480a",
+      "user_hash": "b04c49e7",
+      "name_masked": "ศศิภา อ***",
+      "phone_masked": "xxx-xxx-5020",
+      "sku": "กันแดดแตงโม 3D ออร่า (L10-7G)",
+      "ticket_number": "338143",
+      "scanned_at": "2026-05-16 23:46:52.318996",
+      "province": "ร้อยเอ็ด"
+    },
+    {
+      "scan_id_short": "2d0d05265e09",
+      "user_hash": "c9eafb07",
+      "name_masked": "กันยกร ส***",
+      "phone_masked": "xxx-xxx-2615",
+      "sku": "อีอีคูชั่นแตงโม 02 Natural (L8B-6G)",
+      "ticket_number": "338142",
+      "scanned_at": "2026-05-16 23:44:16.754591",
+      "province": "ฉะเชิงเทรา"
+    },
+    {
+      "scan_id_short": "cffb46ec7259",
+      "user_hash": "14a77169",
+      "name_masked": "ปฏิวัติ ค***",
+      "phone_masked": "xxx-xxx-9384",
+      "sku": "เซรั่มลำไย (L4-8G)",
+      "ticket_number": "338141",
+      "scanned_at": "2026-05-16 23:43:58.723933",
+      "province": "มหาสารคาม"
+    },
+    {
+      "scan_id_short": "caddbd1f53d9",
+      "user_hash": "4dc1d925",
+      "name_masked": "Minzawoo M***",
+      "phone_masked": "xxx-xxx-9572",
+      "sku": "กันแดดแตงโม 3D ออร่า (L10-7G)",
+      "ticket_number": "338140",
+      "scanned_at": "2026-05-16 23:43:46.52916",
+      "province": "กรุงเทพมหานคร"
+    },
+    {
+      "scan_id_short": "fd3adf6be7dd",
+      "user_hash": "0b1deca8",
+      "name_masked": "ณนนท์ ฐ***",
+      "phone_masked": "xxx-xxx-6584",
+      "sku": "ดีดีครีมแตงโม (L3-8G)",
+      "ticket_number": "338139",
+      "scanned_at": "2026-05-16 23:43:13.703797",
+      "province": "แพร่"
+    },
+    {
+      "scan_id_short": "56aadccecb66",
+      "user_hash": "4dc1d925",
+      "name_masked": "Minzawoo M***",
+      "phone_masked": "xxx-xxx-9572",
+      "sku": "ดีดีครีมแตงโม (L3-8G)",
+      "ticket_number": "338138",
+      "scanned_at": "2026-05-16 23:43:10.335034",
+      "province": "กรุงเทพมหานคร"
+    },
+    {
+      "scan_id_short": "2bc273ce541e",
+      "user_hash": "0b1deca8",
+      "name_masked": "ณนนท์ ฐ***",
+      "phone_masked": "xxx-xxx-6584",
+      "sku": "เซรั่มแครอท (L6-8G)",
+      "ticket_number": "338137",
+      "scanned_at": "2026-05-16 23:42:49.764683",
+      "province": "แพร่"
+    },
+    {
+      "scan_id_short": "ed537df95458",
+      "user_hash": "c9eafb07",
+      "name_masked": "กันยกร ส***",
+      "phone_masked": "xxx-xxx-2615",
+      "sku": "ดีดีครีมแตงโม (L3-8G)",
+      "ticket_number": "338136",
+      "scanned_at": "2026-05-16 23:42:39.945769",
+      "province": "ฉะเชิงเทรา"
+    },
+    {
+      "scan_id_short": "3af02d3272e7",
+      "user_hash": "4dc1d925",
+      "name_masked": "Minzawoo M***",
+      "phone_masked": "xxx-xxx-9572",
+      "sku": "ดีดีครีมแตงโม (L3-8G)",
+      "ticket_number": "338135",
+      "scanned_at": "2026-05-16 23:42:37.193447",
+      "province": "กรุงเทพมหานคร"
+    },
+    {
+      "scan_id_short": "b56b727543be",
+      "user_hash": "0b1deca8",
+      "name_masked": "ณนนท์ ฐ***",
+      "phone_masked": "xxx-xxx-6584",
+      "sku": "มอยส์เจอร์อโวคาโด (L9-8G)",
+      "ticket_number": "338134",
+      "scanned_at": "2026-05-16 23:42:29.981056",
+      "province": "แพร่"
+    },
+    {
+      "scan_id_short": "c8aa10689794",
+      "user_hash": "c8535efa",
+      "name_masked": "ญาณิศา เ***",
+      "phone_masked": "xxx-xxx-2035",
+      "sku": "สบู่แตงโม (JH905-70G)",
+      "ticket_number": "338133",
+      "scanned_at": "2026-05-16 23:42:24.089113",
+      "province": "นนทบุรี"
+    },
+    {
+      "scan_id_short": "a748e9f3ec5e",
+      "user_hash": "1d3a4a91",
+      "name_masked": "ช่อทิพย์ พ***",
+      "phone_masked": "xxx-xxx-2793",
+      "sku": "ดีดีครีมแตงโม (L3-8G)",
+      "ticket_number": "338132",
+      "scanned_at": "2026-05-16 23:41:51.584221",
+      "province": "กรุงเทพมหานคร"
+    },
+    {
+      "scan_id_short": "23fba7ea25c5",
+      "user_hash": "c9eafb07",
+      "name_masked": "กันยกร ส***",
+      "phone_masked": "xxx-xxx-2615",
+      "sku": "อีอีคูชั่นแตงโม 02 Natural (L8B-6G)",
+      "ticket_number": "338131",
+      "scanned_at": "2026-05-16 23:41:48.589861",
+      "province": "ฉะเชิงเทรา"
+    },
+    {
+      "scan_id_short": "a5da0b6a3ce0",
+      "user_hash": "0b1deca8",
+      "name_masked": "ณนนท์ ฐ***",
+      "phone_masked": "xxx-xxx-6584",
+      "sku": "ดีดีครีมแตงโม (L3-8G)",
+      "ticket_number": "338130",
+      "scanned_at": "2026-05-16 23:41:16.305008",
+      "province": "แพร่"
+    },
+    {
+      "scan_id_short": "1f40954c535b",
+      "user_hash": "4dc1d925",
+      "name_masked": "Minzawoo M***",
+      "phone_masked": "xxx-xxx-9572",
+      "sku": "เซรั่มแครอท (L6-8G)",
+      "ticket_number": "338129",
+      "scanned_at": "2026-05-16 23:41:01.064245",
+      "province": "กรุงเทพมหานคร"
+    },
+    {
+      "scan_id_short": "6a53af145265",
+      "user_hash": "4dc1d925",
+      "name_masked": "Minzawoo M***",
+      "phone_masked": "xxx-xxx-9572",
+      "sku": "ดีดีครีมแตงโม (L3-8G)",
+      "ticket_number": "338128",
+      "scanned_at": "2026-05-16 23:40:24.773265",
+      "province": "กรุงเทพมหานคร"
+    },
+    {
+      "scan_id_short": "c95641084112",
+      "user_hash": "c9eafb07",
+      "name_masked": "กันยกร ส***",
+      "phone_masked": "xxx-xxx-2615",
+      "sku": "ดีดีครีมแตงโม (L3-8G)",
+      "ticket_number": "338127",
+      "scanned_at": "2026-05-16 23:40:14.915397",
+      "province": "ฉะเชิงเทรา"
+    },
+    {
+      "scan_id_short": "80cfcede1199",
+      "user_hash": "4dc1d925",
+      "name_masked": "Minzawoo M***",
+      "phone_masked": "xxx-xxx-9572",
+      "sku": "อีอีคูชั่นแตงโม 02 Natural (L8B-6G)",
+      "ticket_number": "338126",
+      "scanned_at": "2026-05-16 23:39:32.306735",
+      "province": "กรุงเทพมหานคร"
+    },
+    {
+      "scan_id_short": "297d2fd9a24e",
+      "user_hash": "f2d504c8",
+      "name_masked": "ยามีหล๊ะ ส***",
+      "phone_masked": "xxx-xxx-7357",
+      "sku": "เซรั่มแครอท (L6-8G)",
+      "ticket_number": "338125",
+      "scanned_at": "2026-05-16 23:38:37.834544",
+      "province": "ปัตตานี"
+    },
+    {
+      "scan_id_short": "f0a664b9cfb8",
+      "user_hash": "84bda257",
+      "name_masked": "เจนจิรา โ***",
+      "phone_masked": "xxx-xxx-4591",
+      "sku": "เซรั่มแครอท (L6-40G)",
+      "ticket_number": "338124",
+      "scanned_at": "2026-05-16 23:38:27.208832",
+      "province": "ปทุมธานี"
+    },
+    {
+      "scan_id_short": "fa82918e7ae8",
+      "user_hash": "4dc1d925",
+      "name_masked": "Minzawoo M***",
+      "phone_masked": "xxx-xxx-9572",
+      "sku": "เซรั่มแครอท (L6-8G)",
+      "ticket_number": "338123",
+      "scanned_at": "2026-05-16 23:38:14.687287",
+      "province": "กรุงเทพมหานคร"
+    },
+    {
+      "scan_id_short": "e87a653c6b74",
+      "user_hash": "7f511f00",
+      "name_masked": "จุฑามาศ น***",
+      "phone_masked": "xxx-xxx-0639",
+      "sku": "ครีมกุหลาบน้ำเงิน (L13-10G)",
+      "ticket_number": "338122",
+      "scanned_at": "2026-05-16 23:38:07.511211",
+      "province": "อุดรธานี"
+    },
+    {
+      "scan_id_short": "a460cf2040ac",
+      "user_hash": "c9eafb07",
+      "name_masked": "กันยกร ส***",
+      "phone_masked": "xxx-xxx-2615",
+      "sku": "บีบีโลชั่นแตงโม (JHA1-40G)",
+      "ticket_number": "338121",
+      "scanned_at": "2026-05-16 23:38:05.283256",
+      "province": "ฉะเชิงเทรา"
+    },
+    {
+      "scan_id_short": "2127bb374c44",
+      "user_hash": "f2d504c8",
+      "name_masked": "ยามีหล๊ะ ส***",
+      "phone_masked": "xxx-xxx-7357",
+      "sku": "มอยส์เจอร์อโวคาโด (JHK4-8G)",
+      "ticket_number": "338120",
+      "scanned_at": "2026-05-16 23:37:43.338845",
+      "province": "ปัตตานี"
+    },
+    {
+      "scan_id_short": "9e5f58be604b",
+      "user_hash": "f2d504c8",
+      "name_masked": "ยามีหล๊ะ ส***",
+      "phone_masked": "xxx-xxx-7357",
+      "sku": "กันแดดแตงโม 3D ออร่า (L10-7G)",
+      "ticket_number": "338119",
+      "scanned_at": "2026-05-16 23:37:22.947849",
+      "province": "ปัตตานี"
+    },
+    {
+      "scan_id_short": "a93227ef2ab9",
+      "user_hash": "9d202aca",
+      "name_masked": "วรพงศ์ น***",
+      "phone_masked": "xxx-xxx-6294",
+      "sku": "โลชั่นโดสส้มแดง (L11-40G)",
+      "ticket_number": "338118",
+      "scanned_at": "2026-05-16 23:37:15.136222",
+      "province": "กรุงเทพมหานคร"
+    },
+    {
+      "scan_id_short": "08d19e691afb",
+      "user_hash": "5cd8dcf5",
+      "name_masked": "สุชัญญา ว***",
+      "phone_masked": "xxx-xxx-9232",
+      "sku": "เซรั่มขิงดำซิงก์ (C4-8G)",
+      "ticket_number": "338117",
+      "scanned_at": "2026-05-16 23:36:56.436943",
+      "province": "นนทบุรี"
+    },
+    {
+      "scan_id_short": "f43c03fa70be",
+      "user_hash": "9d202aca",
+      "name_masked": "วรพงศ์ น***",
+      "phone_masked": "xxx-xxx-6294",
+      "sku": "โลชั่นโดสส้มแดง (L11-40G)",
+      "ticket_number": "338116",
+      "scanned_at": "2026-05-16 23:36:50.082624",
+      "province": "กรุงเทพมหานคร"
+    },
+    {
+      "scan_id_short": "ca031aa28f80",
+      "user_hash": "1d3a4a91",
+      "name_masked": "ช่อทิพย์ พ***",
+      "phone_masked": "xxx-xxx-2793",
+      "sku": "ดีดีครีมแตงโม (L3-8G)",
+      "ticket_number": "338115",
+      "scanned_at": "2026-05-16 23:36:42.936689",
+      "province": "กรุงเทพมหานคร"
+    },
+    {
+      "scan_id_short": "31056b1cec1f",
+      "user_hash": "1d3a4a91",
+      "name_masked": "ช่อทิพย์ พ***",
+      "phone_masked": "xxx-xxx-2793",
+      "sku": "ดีดีครีมแตงโม (L3-8G)",
+      "ticket_number": "338114",
+      "scanned_at": "2026-05-16 23:36:23.200081",
+      "province": "กรุงเทพมหานคร"
+    },
+    {
+      "scan_id_short": "189d494db69a",
+      "user_hash": "9d202aca",
+      "name_masked": "วรพงศ์ น***",
+      "phone_masked": "xxx-xxx-6294",
+      "sku": "โลชั่นโดสส้มแดง (L11-40G)",
+      "ticket_number": "338113",
+      "scanned_at": "2026-05-16 23:36:21.280967",
+      "province": "กรุงเทพมหานคร"
+    },
+    {
+      "scan_id_short": "b2931d81d558",
+      "user_hash": "1d3a4a91",
+      "name_masked": "ช่อทิพย์ พ***",
+      "phone_masked": "xxx-xxx-2793",
+      "sku": "ดีดีครีมแตงโม (L3-8G)",
+      "ticket_number": "338112",
+      "scanned_at": "2026-05-16 23:36:11.605203",
+      "province": "กรุงเทพมหานคร"
+    },
+    {
+      "scan_id_short": "1d165c1831d2",
+      "user_hash": "1d3a4a91",
+      "name_masked": "ช่อทิพย์ พ***",
+      "phone_masked": "xxx-xxx-2793",
+      "sku": "ดีดีครีมแตงโม (L3-8G)",
+      "ticket_number": "338111",
+      "scanned_at": "2026-05-16 23:36:02.981403",
+      "province": "กรุงเทพมหานคร"
+    },
+    {
+      "scan_id_short": "366307f30fe0",
+      "user_hash": "9d202aca",
+      "name_masked": "วรพงศ์ น***",
+      "phone_masked": "xxx-xxx-6294",
+      "sku": "มอยส์เจอร์อโวคาโด (L9-8G)",
+      "ticket_number": "338110",
+      "scanned_at": "2026-05-16 23:35:58.142424",
+      "province": "กรุงเทพมหานคร"
+    },
+    {
+      "scan_id_short": "3671204dcf87",
+      "user_hash": "1d3a4a91",
+      "name_masked": "ช่อทิพย์ พ***",
+      "phone_masked": "xxx-xxx-2793",
+      "sku": "ดีดีครีมแตงโม (L3-8G)",
+      "ticket_number": "338109",
+      "scanned_at": "2026-05-16 23:35:45.723308",
+      "province": "กรุงเทพมหานคร"
+    },
+    {
+      "scan_id_short": "9d5c32431976",
+      "user_hash": "9d202aca",
+      "name_masked": "วรพงศ์ น***",
+      "phone_masked": "xxx-xxx-6294",
+      "sku": "กันแดดแตงโม 3D ออร่า (L10-7G)",
+      "ticket_number": "338108",
+      "scanned_at": "2026-05-16 23:35:41.6522",
+      "province": "กรุงเทพมหานคร"
+    },
+    {
+      "scan_id_short": "df65efc47ca9",
+      "user_hash": "7c7d6084",
+      "name_masked": "กัลยาณี เ***",
+      "phone_masked": "xxx-xxx-7042",
+      "sku": "สบู่ลำไย (JH906-70G)",
+      "ticket_number": "338107",
+      "scanned_at": "2026-05-16 23:35:36.341613",
+      "province": "กรุงเทพมหานคร"
+    },
+    {
+      "scan_id_short": "7b9b67ecdf4e",
+      "user_hash": "9d202aca",
+      "name_masked": "วรพงศ์ น***",
+      "phone_masked": "xxx-xxx-6294",
+      "sku": "ครีมกุหลาบน้ำเงิน (L13-10G)",
+      "ticket_number": "338106",
+      "scanned_at": "2026-05-16 23:35:23.069985",
+      "province": "กรุงเทพมหานคร"
+    },
+    {
+      "scan_id_short": "bfbc56145ff5",
+      "user_hash": "9d202aca",
+      "name_masked": "วรพงศ์ น***",
+      "phone_masked": "xxx-xxx-6294",
+      "sku": "ครีมกุหลาบน้ำเงิน (L13-10G)",
+      "ticket_number": "338105",
+      "scanned_at": "2026-05-16 23:35:07.923952",
+      "province": "กรุงเทพมหานคร"
+    },
+    {
+      "scan_id_short": "4924f248728b",
+      "user_hash": "76360026",
+      "name_masked": "นูรฮารีซาห์ เ***",
+      "phone_masked": "xxx-xxx-0997",
+      "sku": "กันแดดแตงโม 3D ออร่า (L10-7G)",
+      "ticket_number": "338104",
+      "scanned_at": "2026-05-16 23:34:26.329918",
+      "province": "สงขลา"
+    },
+    {
+      "scan_id_short": "70c662ecad94",
+      "user_hash": "3f0d36b4",
+      "name_masked": "ศลิษา แ***",
+      "phone_masked": "xxx-xxx-0921",
+      "sku": "กันแดดแตงโม 3D ออร่า (L10-7G)",
+      "ticket_number": "338103",
+      "scanned_at": "2026-05-16 23:34:14.657352",
+      "province": "สงขลา"
+    },
+    {
+      "scan_id_short": "ff60194f9a4c",
+      "user_hash": "76360026",
+      "name_masked": "นูรฮารีซาห์ เ***",
+      "phone_masked": "xxx-xxx-0997",
+      "sku": "กันแดดแตงโม 3D ออร่า (L10-7G)",
+      "ticket_number": "338102",
+      "scanned_at": "2026-05-16 23:34:07.469971",
+      "province": "สงขลา"
+    },
+    {
+      "scan_id_short": "72f7c0303fec",
+      "user_hash": "8f221b2e",
+      "name_masked": "จิรพิพรรธ ท***",
+      "phone_masked": "xxx-xxx-8614",
+      "sku": "เซรั่มลำไย (L4-8G)",
+      "ticket_number": "338101",
+      "scanned_at": "2026-05-16 23:33:58.847306",
+      "province": "กรุงเทพมหานคร"
+    },
+    {
+      "scan_id_short": "d7431394c11b",
+      "user_hash": "c64e5d98",
+      "name_masked": "จิราพร ก***",
+      "phone_masked": "xxx-xxx-4578",
+      "sku": "กันแดดแตงโม 3D ออร่า (L10-7G)",
+      "ticket_number": "338100",
+      "scanned_at": "2026-05-16 23:33:55.606086",
+      "province": "เชียงราย"
+    },
+    {
+      "scan_id_short": "9c9f59711942",
+      "user_hash": "e0325e34",
+      "name_masked": "อรษา พ***",
+      "phone_masked": "xxx-xxx-1071",
+      "sku": "ดีดีครีมแตงโม (L3-8G)",
+      "ticket_number": "338099",
+      "scanned_at": "2026-05-16 23:33:47.984597",
+      "province": "กรุงเทพมหานคร"
+    },
+    {
+      "scan_id_short": "1049e3e211a0",
+      "user_hash": "8f221b2e",
+      "name_masked": "จิรพิพรรธ ท***",
+      "phone_masked": "xxx-xxx-8614",
+      "sku": "ครีมกุหลาบน้ำเงิน (L13-10G)",
+      "ticket_number": "338098",
+      "scanned_at": "2026-05-16 23:33:46.475723",
+      "province": "กรุงเทพมหานคร"
+    },
+    {
+      "scan_id_short": "d3033c77a65b",
+      "user_hash": "c64e5d98",
+      "name_masked": "จิราพร ก***",
+      "phone_masked": "xxx-xxx-4578",
+      "sku": "เซรั่มแครอท (L6-8G)",
+      "ticket_number": "338097",
+      "scanned_at": "2026-05-16 23:33:44.973613",
+      "province": "เชียงราย"
+    },
+    {
+      "scan_id_short": "003a73667f99",
+      "user_hash": "3f0d36b4",
+      "name_masked": "ศลิษา แ***",
+      "phone_masked": "xxx-xxx-0921",
+      "sku": "กันแดดแตงโม 3D ออร่า (L10-7G)",
+      "ticket_number": "338096",
+      "scanned_at": "2026-05-16 23:33:37.840751",
+      "province": "สงขลา"
+    },
+    {
+      "scan_id_short": "cee3ca68eede",
+      "user_hash": "f8d8d0f6",
+      "name_masked": "วรรณภา ช***",
+      "phone_masked": "xxx-xxx-2173",
+      "sku": "เซรั่มแครอท (L6-40G)",
+      "ticket_number": "338095",
+      "scanned_at": "2026-05-16 23:33:33.518152",
+      "province": "นนทบุรี"
+    },
+    {
+      "scan_id_short": "16ae909802da",
+      "user_hash": "c64e5d98",
+      "name_masked": "จิราพร ก***",
+      "phone_masked": "xxx-xxx-4578",
+      "sku": "เซรั่มแครอท (L6-8G)",
+      "ticket_number": "338094",
+      "scanned_at": "2026-05-16 23:33:31.43811",
+      "province": "เชียงราย"
+    },
+    {
+      "scan_id_short": "ebc2daf6ce82",
+      "user_hash": "3f0d36b4",
+      "name_masked": "ศลิษา แ***",
+      "phone_masked": "xxx-xxx-0921",
+      "sku": "เซรั่มลำไย (L4-8G)",
+      "ticket_number": "338093",
+      "scanned_at": "2026-05-16 23:32:43.775625",
+      "province": "สงขลา"
+    },
+    {
+      "scan_id_short": "f718f700190b",
+      "user_hash": "3f0d36b4",
+      "name_masked": "ศลิษา แ***",
+      "phone_masked": "xxx-xxx-0921",
+      "sku": "ดีดีครีมแตงโม (L3-8G)",
+      "ticket_number": "338092",
+      "scanned_at": "2026-05-16 23:32:33.767899",
+      "province": "สงขลา"
+    },
+    {
+      "scan_id_short": "c4503bdc137c",
+      "user_hash": "f8d8d0f6",
+      "name_masked": "วรรณภา ช***",
+      "phone_masked": "xxx-xxx-2173",
+      "sku": "เซรั่มลำไย (L4-40G)",
+      "ticket_number": "338091",
+      "scanned_at": "2026-05-16 23:32:05.573574",
+      "province": "นนทบุรี"
+    },
+    {
+      "scan_id_short": "580e580da8f3",
+      "user_hash": "3f0d36b4",
+      "name_masked": "ศลิษา แ***",
+      "phone_masked": "xxx-xxx-0921",
+      "sku": "กันแดดแตงโม 3D ออร่า (L10-7G)",
+      "ticket_number": "338090",
+      "scanned_at": "2026-05-16 23:31:39.475725",
+      "province": "สงขลา"
+    },
+    {
+      "scan_id_short": "a996b228f666",
+      "user_hash": "e5e27ba7",
+      "name_masked": "ตาลติมา ก***",
+      "phone_masked": "xxx-xxx-1773",
+      "sku": "เซรั่มลำไย (L4-8G)",
+      "ticket_number": "338089",
+      "scanned_at": "2026-05-16 23:30:50.584514",
+      "province": "สงขลา"
+    },
+    {
+      "scan_id_short": "b06c1f19a193",
+      "user_hash": "e5e27ba7",
+      "name_masked": "ตาลติมา ก***",
+      "phone_masked": "xxx-xxx-1773",
+      "sku": "เซรั่มลำไย (L4-8G)",
+      "ticket_number": "338088",
+      "scanned_at": "2026-05-16 23:30:35.915087",
+      "province": "สงขลา"
+    },
+    {
+      "scan_id_short": "e312cf6dd523",
+      "user_hash": "e5e27ba7",
+      "name_masked": "ตาลติมา ก***",
+      "phone_masked": "xxx-xxx-1773",
+      "sku": "กันแดดแตงโม 3D ออร่า (L10-7G)",
+      "ticket_number": "338087",
+      "scanned_at": "2026-05-16 23:30:22.697841",
+      "province": "สงขลา"
+    },
+    {
+      "scan_id_short": "631b87b3d6b8",
+      "user_hash": "ff0f222c",
+      "name_masked": "วิภาดา อ***",
+      "phone_masked": "xxx-xxx-7750",
+      "sku": "ดีดีครีมแตงโม (L3-8G)",
+      "ticket_number": "338086",
+      "scanned_at": "2026-05-16 23:30:03.64271",
+      "province": "เลย"
+    },
+    {
+      "scan_id_short": "654efe70dd81",
+      "user_hash": "3f0d36b4",
+      "name_masked": "ศลิษา แ***",
+      "phone_masked": "xxx-xxx-0921",
+      "sku": "ดีดีครีมแตงโม (L3-8G)",
+      "ticket_number": "338085",
+      "scanned_at": "2026-05-16 23:29:49.255209",
+      "province": "สงขลา"
+    },
+    {
+      "scan_id_short": "6e65546bf088",
+      "user_hash": "1f449bf6",
+      "name_masked": "ปริศนา โ***",
+      "phone_masked": "xxx-xxx-9496",
+      "sku": "มอยส์เจอร์อโวคาโด (L9-8G)",
+      "ticket_number": "338084",
+      "scanned_at": "2026-05-16 23:29:44.13661",
+      "province": "ลพบุรี"
+    },
+    {
+      "scan_id_short": "1d2121f1b2dd",
+      "user_hash": "e5e27ba7",
+      "name_masked": "ตาลติมา ก***",
+      "phone_masked": "xxx-xxx-1773",
+      "sku": "กันแดดแตงโม 3D ออร่า (L10-7G)",
+      "ticket_number": "338083",
+      "scanned_at": "2026-05-16 23:29:39.752017",
+      "province": "สงขลา"
+    },
+    {
+      "scan_id_short": "e12b4a5c0e33",
+      "user_hash": "ff0f222c",
+      "name_masked": "วิภาดา อ***",
+      "phone_masked": "xxx-xxx-7750",
+      "sku": "ดีดีครีมแตงโม (L3-8G)",
+      "ticket_number": "338082",
+      "scanned_at": "2026-05-16 23:29:33.377978",
+      "province": "เลย"
+    },
+    {
+      "scan_id_short": "7eff53fdf1b2",
+      "user_hash": "ff0f222c",
+      "name_masked": "วิภาดา อ***",
+      "phone_masked": "xxx-xxx-7750",
+      "sku": "ดีดีครีมแตงโม (L3-8G)",
+      "ticket_number": "338081",
+      "scanned_at": "2026-05-16 23:29:23.918172",
+      "province": "เลย"
+    },
+    {
+      "scan_id_short": "df40556c3345",
+      "user_hash": "ff0f222c",
+      "name_masked": "วิภาดา อ***",
+      "phone_masked": "xxx-xxx-7750",
+      "sku": "ดีดีครีมแตงโม (L3-8G)",
+      "ticket_number": "338080",
+      "scanned_at": "2026-05-16 23:29:00.270213",
+      "province": "เลย"
+    },
+    {
+      "scan_id_short": "b640f9659360",
+      "user_hash": "8127e97e",
+      "name_masked": "สุนิสา ด***",
+      "phone_masked": "xxx-xxx-7391",
+      "sku": "ดีดีครีมแตงโม (L3-40G)",
+      "ticket_number": "338079",
+      "scanned_at": "2026-05-16 23:28:57.656219",
+      "province": "กรุงเทพมหานคร"
+    },
+    {
+      "scan_id_short": "f5d693c76d0a",
+      "user_hash": "ff0f222c",
+      "name_masked": "วิภาดา อ***",
+      "phone_masked": "xxx-xxx-7750",
+      "sku": "ดีดีครีมแตงโม (L3-8G)",
+      "ticket_number": "338078",
+      "scanned_at": "2026-05-16 23:28:50.362656",
+      "province": "เลย"
+    },
+    {
+      "scan_id_short": "905977a0f587",
+      "user_hash": "d573a5e2",
+      "name_masked": "นิตยา ย***",
+      "phone_masked": "xxx-xxx-3827",
+      "sku": "เซรั่มลำไย (L4-8G)",
+      "ticket_number": "338077",
+      "scanned_at": "2026-05-16 23:28:37.969257",
+      "province": "กรุงเทพมหานคร"
+    },
+    {
+      "scan_id_short": "a558bfa95626",
+      "user_hash": "ff0f222c",
+      "name_masked": "วิภาดา อ***",
+      "phone_masked": "xxx-xxx-7750",
+      "sku": "ดีดีครีมแตงโม (L3-8G)",
+      "ticket_number": "338076",
+      "scanned_at": "2026-05-16 23:28:36.564645",
+      "province": "เลย"
+    },
+    {
+      "scan_id_short": "e775bbc54ad7",
+      "user_hash": "ff0f222c",
+      "name_masked": "วิภาดา อ***",
+      "phone_masked": "xxx-xxx-7750",
+      "sku": "ดีดีครีมแตงโม (L3-8G)",
+      "ticket_number": "338075",
+      "scanned_at": "2026-05-16 23:28:25.335366",
+      "province": "เลย"
+    },
+    {
+      "scan_id_short": "491fe4fcb7f2",
+      "user_hash": "ff0f222c",
+      "name_masked": "วิภาดา อ***",
+      "phone_masked": "xxx-xxx-7750",
+      "sku": "ดีดีครีมแตงโม (L3-8G)",
+      "ticket_number": "338074",
+      "scanned_at": "2026-05-16 23:28:15.141124",
+      "province": "เลย"
+    },
+    {
+      "scan_id_short": "70a3bd81552a",
+      "user_hash": "ff0f222c",
+      "name_masked": "วิภาดา อ***",
+      "phone_masked": "xxx-xxx-7750",
+      "sku": "ดีดีครีมแตงโม (L3-8G)",
+      "ticket_number": "338073",
+      "scanned_at": "2026-05-16 23:28:07.537062",
+      "province": "เลย"
+    },
+    {
+      "scan_id_short": "0b59da3ed22c",
+      "user_hash": "6957d6f8",
+      "name_masked": "นันทวรรณ น***",
+      "phone_masked": "xxx-xxx-7720",
+      "sku": "ดีดีครีมแตงโม (L3-8G)",
+      "ticket_number": "338072",
+      "scanned_at": "2026-05-16 23:28:04.28771",
+      "province": "ปทุมธานี"
+    },
+    {
+      "scan_id_short": "70d35ae5d970",
+      "user_hash": "ff0f222c",
+      "name_masked": "วิภาดา อ***",
+      "phone_masked": "xxx-xxx-7750",
+      "sku": "ดีดีครีมแตงโม (L3-8G)",
+      "ticket_number": "338071",
+      "scanned_at": "2026-05-16 23:27:59.217494",
+      "province": "เลย"
+    },
+    {
+      "scan_id_short": "ada6ae35d58f",
+      "user_hash": "ff0f222c",
+      "name_masked": "วิภาดา อ***",
+      "phone_masked": "xxx-xxx-7750",
+      "sku": "ดีดีครีมแตงโม (L3-8G)",
+      "ticket_number": "338070",
+      "scanned_at": "2026-05-16 23:27:46.4494",
+      "province": "เลย"
+    },
+    {
+      "scan_id_short": "7f1841b21281",
+      "user_hash": "d573a5e2",
+      "name_masked": "นิตยา ย***",
+      "phone_masked": "xxx-xxx-3827",
+      "sku": "เซรั่มลำไย (L4-8G)",
+      "ticket_number": "338069",
+      "scanned_at": "2026-05-16 23:26:46.467245",
+      "province": "กรุงเทพมหานคร"
+    },
+    {
+      "scan_id_short": "9e06e5eab395",
+      "user_hash": "0eb34e51",
+      "name_masked": "กัญญ์วรา ผ***",
+      "phone_masked": "xxx-xxx-1824",
+      "sku": "โลชั่นโดสส้มแดง (L11-40G)",
+      "ticket_number": "338068",
+      "scanned_at": "2026-05-16 23:26:23.773649",
+      "province": "สระแก้ว"
+    },
+    {
+      "scan_id_short": "d0a9bacf858f",
+      "user_hash": "b412f268",
+      "name_masked": "ดวงใจ ว***",
+      "phone_masked": "xxx-xxx-3831",
+      "sku": "ดีดีครีมแตงโม (L3-8G)",
+      "ticket_number": "338067",
+      "scanned_at": "2026-05-16 23:25:11.374579",
+      "province": "นนทบุรี"
+    },
+    {
+      "scan_id_short": "17ec3e9b85e9",
+      "user_hash": "ff0f222c",
+      "name_masked": "วิภาดา อ***",
+      "phone_masked": "xxx-xxx-7750",
+      "sku": "ยาสีฟันเจเด้นท์ สูตรลดกลิ่นปาก (D3-70G)",
+      "ticket_number": "338066",
+      "scanned_at": "2026-05-16 23:25:10.454899",
+      "province": "เลย"
+    },
+    {
+      "scan_id_short": "60e21a04bb4e",
+      "user_hash": "b412f268",
+      "name_masked": "ดวงใจ ว***",
+      "phone_masked": "xxx-xxx-3831",
+      "sku": "ดีดีครีมแตงโม (L3-8G)",
+      "ticket_number": "338065",
+      "scanned_at": "2026-05-16 23:24:42.015286",
+      "province": "นนทบุรี"
+    },
+    {
+      "scan_id_short": "d6bbf5807e39",
+      "user_hash": "d573a5e2",
+      "name_masked": "นิตยา ย***",
+      "phone_masked": "xxx-xxx-3827",
+      "sku": "สบู่ลำไย (JH906-70G)",
+      "ticket_number": "338064",
+      "scanned_at": "2026-05-16 23:24:33.127775",
+      "province": "กรุงเทพมหานคร"
+    },
+    {
+      "scan_id_short": "0b9dad00e18d",
+      "user_hash": "7821ad62",
+      "name_masked": "พรทิพา ม***",
+      "phone_masked": "xxx-xxx-4496",
+      "sku": "เซรั่มแครอท (L6-8G)",
+      "ticket_number": "338063",
+      "scanned_at": "2026-05-16 23:23:51.458712",
+      "province": "สมุทรปราการ"
+    },
+    {
+      "scan_id_short": "74c6c44e0df2",
+      "user_hash": "4b8b6d55",
+      "name_masked": "Wattriyah K***",
+      "phone_masked": "xxx-xxx-7207",
+      "sku": "ดีดีครีมแตงโม (L3-8G)",
+      "ticket_number": "338062",
+      "scanned_at": "2026-05-16 23:23:33.327878",
+      "province": "สงขลา"
+    },
+    {
+      "scan_id_short": "c5bc3730822f",
+      "user_hash": "7e206948",
+      "name_masked": "อมรรัตน์ อ***",
+      "phone_masked": "xxx-xxx-0402",
+      "sku": "ดีดีครีมแตงโม (L3-8G)",
+      "ticket_number": "338061",
+      "scanned_at": "2026-05-16 23:23:31.374065",
+      "province": "พระนครศรีอยุธยา"
+    },
+    {
+      "scan_id_short": "3b6787e95563",
+      "user_hash": "7e206948",
+      "name_masked": "อมรรัตน์ อ***",
+      "phone_masked": "xxx-xxx-0402",
+      "sku": "ดีดีครีมแตงโม (L3-8G)",
+      "ticket_number": "338060",
+      "scanned_at": "2026-05-16 23:23:21.396275",
+      "province": "พระนครศรีอยุธยา"
+    },
+    {
+      "scan_id_short": "d8831d147aca",
+      "user_hash": "7e206948",
+      "name_masked": "อมรรัตน์ อ***",
+      "phone_masked": "xxx-xxx-0402",
+      "sku": "ดีดีครีมแตงโม (L3-8G)",
+      "ticket_number": "338059",
+      "scanned_at": "2026-05-16 23:23:13.889952",
+      "province": "พระนครศรีอยุธยา"
+    },
+    {
+      "scan_id_short": "57600a559fb0",
+      "user_hash": "7821ad62",
+      "name_masked": "พรทิพา ม***",
+      "phone_masked": "xxx-xxx-4496",
+      "sku": "เซรั่มลำไย (L4-8G)",
+      "ticket_number": "338058",
+      "scanned_at": "2026-05-16 23:23:11.241915",
+      "province": "สมุทรปราการ"
+    },
+    {
+      "scan_id_short": "9904d296b869",
+      "user_hash": "7e206948",
+      "name_masked": "อมรรัตน์ อ***",
+      "phone_masked": "xxx-xxx-0402",
+      "sku": "ดีดีครีมแตงโม (L3-8G)",
+      "ticket_number": "338057",
+      "scanned_at": "2026-05-16 23:23:06.358114",
+      "province": "พระนครศรีอยุธยา"
+    },
+    {
+      "scan_id_short": "98effa678210",
+      "user_hash": "7e206948",
+      "name_masked": "อมรรัตน์ อ***",
+      "phone_masked": "xxx-xxx-0402",
+      "sku": "ดีดีครีมแตงโม (L3-8G)",
+      "ticket_number": "338056",
+      "scanned_at": "2026-05-16 23:22:59.323308",
+      "province": "พระนครศรีอยุธยา"
+    },
+    {
+      "scan_id_short": "8e1ff0b3b423",
+      "user_hash": "b412f268",
+      "name_masked": "ดวงใจ ว***",
+      "phone_masked": "xxx-xxx-3831",
+      "sku": "เซรั่มลำไย (L4-8G)",
+      "ticket_number": "338055",
+      "scanned_at": "2026-05-16 23:22:59.168335",
+      "province": "นนทบุรี"
+    },
+    {
+      "scan_id_short": "ab6709b03f1b",
+      "user_hash": "7e206948",
+      "name_masked": "อมรรัตน์ อ***",
+      "phone_masked": "xxx-xxx-0402",
+      "sku": "ดีดีครีมแตงโม (L3-8G)",
+      "ticket_number": "338054",
+      "scanned_at": "2026-05-16 23:22:52.546539",
+      "province": "พระนครศรีอยุธยา"
+    },
+    {
+      "scan_id_short": "46b63af14b7d",
+      "user_hash": "9307578d",
+      "name_masked": "ฤทัยรัตน์ บ***",
+      "phone_masked": "xxx-xxx-8505",
+      "sku": "เจลดาวเรือง คาเลนดูล่า (C1-6G)",
+      "ticket_number": "338053",
+      "scanned_at": "2026-05-16 23:22:41.420903",
+      "province": "ชัยนาท"
+    },
+    {
+      "scan_id_short": "21000b9bc5ee",
+      "user_hash": "b412f268",
+      "name_masked": "ดวงใจ ว***",
+      "phone_masked": "xxx-xxx-3831",
+      "sku": "เซรั่มลำไย (L4-8G)",
+      "ticket_number": "338052",
+      "scanned_at": "2026-05-16 23:22:21.044153",
+      "province": "นนทบุรี"
+    },
+    {
+      "scan_id_short": "bd940d65f20f",
+      "user_hash": "7821ad62",
+      "name_masked": "พรทิพา ม***",
+      "phone_masked": "xxx-xxx-4496",
+      "sku": "เซรั่มแครอท (L6-8G)",
+      "ticket_number": "338051",
+      "scanned_at": "2026-05-16 23:22:18.430482",
+      "province": "สมุทรปราการ"
+    },
+    {
+      "scan_id_short": "96b1b7d807ed",
+      "user_hash": "7e206948",
+      "name_masked": "อมรรัตน์ อ***",
+      "phone_masked": "xxx-xxx-0402",
+      "sku": "ดีดีครีมแตงโม (L3-8G)",
+      "ticket_number": "338050",
+      "scanned_at": "2026-05-16 23:21:29.468343",
+      "province": "พระนครศรีอยุธยา"
+    },
+    {
+      "scan_id_short": "a553b1e77361",
+      "user_hash": "7e206948",
+      "name_masked": "อมรรัตน์ อ***",
+      "phone_masked": "xxx-xxx-0402",
+      "sku": "ดีดีครีมแตงโม (L3-8G)",
+      "ticket_number": "338049",
+      "scanned_at": "2026-05-16 23:21:21.069117",
+      "province": "พระนครศรีอยุธยา"
+    },
+    {
+      "scan_id_short": "40ed7a8bacdb",
+      "user_hash": "73dfc556",
+      "name_masked": "ศศิธร แ***",
+      "phone_masked": "xxx-xxx-5504",
+      "sku": "ครีมกุหลาบน้ำเงิน (L13-10G)",
+      "ticket_number": "338048",
+      "scanned_at": "2026-05-16 23:21:15.764557",
+      "province": "สมุทรปราการ"
+    },
+    {
+      "scan_id_short": "4201a7a83803",
+      "user_hash": "7e206948",
+      "name_masked": "อมรรัตน์ อ***",
+      "phone_masked": "xxx-xxx-0402",
+      "sku": "ดีดีครีมแตงโม (L3-8G)",
+      "ticket_number": "338047",
+      "scanned_at": "2026-05-16 23:21:14.102041",
+      "province": "พระนครศรีอยุธยา"
+    },
+    {
+      "scan_id_short": "40436c306137",
+      "user_hash": "08a882c0",
+      "name_masked": "ภัทรธารดา พ***",
+      "phone_masked": "xxx-xxx-3945",
+      "sku": "กันแดดแตงโม 3D ออร่า (L10-7G)",
+      "ticket_number": "338046",
+      "scanned_at": "2026-05-16 23:21:12.163057",
+      "province": "สมุทรปราการ"
+    },
+    {
+      "scan_id_short": "8cfade54f3ad",
+      "user_hash": "7e206948",
+      "name_masked": "อมรรัตน์ อ***",
+      "phone_masked": "xxx-xxx-0402",
+      "sku": "ดีดีครีมแตงโม (L3-8G)",
+      "ticket_number": "338045",
+      "scanned_at": "2026-05-16 23:21:07.397774",
+      "province": "พระนครศรีอยุธยา"
+    },
+    {
+      "scan_id_short": "9af5018593cc",
+      "user_hash": "7e206948",
+      "name_masked": "อมรรัตน์ อ***",
+      "phone_masked": "xxx-xxx-0402",
+      "sku": "ดีดีครีมแตงโม (L3-8G)",
+      "ticket_number": "338044",
+      "scanned_at": "2026-05-16 23:20:58.752197",
+      "province": "พระนครศรีอยุธยา"
+    },
+    {
+      "scan_id_short": "ed9f21fdbc70",
+      "user_hash": "7e206948",
+      "name_masked": "อมรรัตน์ อ***",
+      "phone_masked": "xxx-xxx-0402",
+      "sku": "ดีดีครีมแตงโม (L3-8G)",
+      "ticket_number": "338043",
+      "scanned_at": "2026-05-16 23:20:48.911449",
+      "province": "พระนครศรีอยุธยา"
+    },
+    {
+      "scan_id_short": "dc56ae0a4d93",
+      "user_hash": "7821ad62",
+      "name_masked": "พรทิพา ม***",
+      "phone_masked": "xxx-xxx-4496",
+      "sku": "ครีมกุหลาบน้ำเงิน (L13-10G)",
+      "ticket_number": "338042",
+      "scanned_at": "2026-05-16 23:20:35.048172",
+      "province": "สมุทรปราการ"
+    },
+    {
+      "scan_id_short": "89ad88446a2b",
+      "user_hash": "08a882c0",
+      "name_masked": "ภัทรธารดา พ***",
+      "phone_masked": "xxx-xxx-3945",
+      "sku": "อีอีคูชั่นแตงโม 02 Natural (L8B-6G)",
+      "ticket_number": "338041",
+      "scanned_at": "2026-05-16 23:20:22.975258",
+      "province": "สมุทรปราการ"
+    },
+    {
+      "scan_id_short": "c772f2df8c2d",
+      "user_hash": "08a882c0",
+      "name_masked": "ภัทรธารดา พ***",
+      "phone_masked": "xxx-xxx-3945",
+      "sku": "มอยส์เจลฉ่ำบัว (L19-8G)",
+      "ticket_number": "338040",
+      "scanned_at": "2026-05-16 23:19:49.90812",
+      "province": "สมุทรปราการ"
+    },
+    {
+      "scan_id_short": "24b29fd3f58d",
+      "user_hash": "7e206948",
+      "name_masked": "อมรรัตน์ อ***",
+      "phone_masked": "xxx-xxx-0402",
+      "sku": "ดีดีครีมแตงโม (L3-8G)",
+      "ticket_number": "338039",
+      "scanned_at": "2026-05-16 23:19:05.038923",
+      "province": "พระนครศรีอยุธยา"
+    },
+    {
+      "scan_id_short": "df6fcbb894bb",
+      "user_hash": "1d3a4a91",
+      "name_masked": "ช่อทิพย์ พ***",
+      "phone_masked": "xxx-xxx-2793",
+      "sku": "ดีดีครีมแตงโม (L3-8G)",
+      "ticket_number": "338038",
+      "scanned_at": "2026-05-16 23:18:58.938251",
+      "province": "กรุงเทพมหานคร"
+    },
+    {
+      "scan_id_short": "64091894d986",
+      "user_hash": "7e206948",
+      "name_masked": "อมรรัตน์ อ***",
+      "phone_masked": "xxx-xxx-0402",
+      "sku": "ดีดีครีมแตงโม (L3-8G)",
+      "ticket_number": "338037",
+      "scanned_at": "2026-05-16 23:18:58.86179",
+      "province": "พระนครศรีอยุธยา"
+    },
+    {
+      "scan_id_short": "d9bb5eb8016f",
+      "user_hash": "1d3a4a91",
+      "name_masked": "ช่อทิพย์ พ***",
+      "phone_masked": "xxx-xxx-2793",
+      "sku": "ดีดีครีมแตงโม (L3-8G)",
+      "ticket_number": "338036",
+      "scanned_at": "2026-05-16 23:18:50.276671",
+      "province": "กรุงเทพมหานคร"
+    },
+    {
+      "scan_id_short": "a15bd7feacc8",
+      "user_hash": "755ed5b9",
+      "name_masked": "นางสาวฟาตีมะห์ ย***",
+      "phone_masked": "xxx-xxx-6201",
+      "sku": "ดีดีครีมแตงโม (L3-8G)",
+      "ticket_number": "338035",
+      "scanned_at": "2026-05-16 23:18:46.618179",
+      "province": "ยะลา"
+    },
+    {
+      "scan_id_short": "8d4e36e7c66c",
+      "user_hash": "7e206948",
+      "name_masked": "อมรรัตน์ อ***",
+      "phone_masked": "xxx-xxx-0402",
+      "sku": "ดีดีครีมแตงโม (L3-8G)",
+      "ticket_number": "338034",
+      "scanned_at": "2026-05-16 23:18:45.730478",
+      "province": "พระนครศรีอยุธยา"
+    },
+    {
+      "scan_id_short": "55ade49faa1f",
+      "user_hash": "7e206948",
+      "name_masked": "อมรรัตน์ อ***",
+      "phone_masked": "xxx-xxx-0402",
+      "sku": "ดีดีครีมแตงโม (L3-8G)",
+      "ticket_number": "338033",
+      "scanned_at": "2026-05-16 23:18:36.414611",
+      "province": "พระนครศรีอยุธยา"
+    },
+    {
+      "scan_id_short": "a6519b96f191",
+      "user_hash": "d0d9c0dd",
+      "name_masked": "จุฬาลักษณ์ ใ***",
+      "phone_masked": "xxx-xxx-8568",
+      "sku": "กันแดดน้ำนมเมลอน (C3-7G)",
+      "ticket_number": "338032",
+      "scanned_at": "2026-05-16 23:18:36.349416",
+      "province": "เชียงราย"
+    },
+    {
+      "scan_id_short": "596e20a1d7af",
+      "user_hash": "31c5b148",
+      "name_masked": "Kiti M***",
+      "phone_masked": "xxx-xxx-2766",
+      "sku": "เซรั่มขิงดำซิงก์ (C4-8G)",
+      "ticket_number": "338031",
+      "scanned_at": "2026-05-16 23:18:27.743189",
+      "province": "กรุงเทพมหานคร"
+    },
+    {
+      "scan_id_short": "7bdd16ca8f1c",
+      "user_hash": "755ed5b9",
+      "name_masked": "นางสาวฟาตีมะห์ ย***",
+      "phone_masked": "xxx-xxx-6201",
+      "sku": "ดีดีครีมแตงโม (L3-8G)",
+      "ticket_number": "338030",
+      "scanned_at": "2026-05-16 23:18:27.349521",
+      "province": "ยะลา"
+    },
+    {
+      "scan_id_short": "89a267e9e938",
+      "user_hash": "7e206948",
+      "name_masked": "อมรรัตน์ อ***",
+      "phone_masked": "xxx-xxx-0402",
+      "sku": "ดีดีครีมแตงโม (L3-8G)",
+      "ticket_number": "338029",
+      "scanned_at": "2026-05-16 23:18:25.473751",
+      "province": "พระนครศรีอยุธยา"
+    },
+    {
+      "scan_id_short": "9a29335b31bf",
+      "user_hash": "7e206948",
+      "name_masked": "อมรรัตน์ อ***",
+      "phone_masked": "xxx-xxx-0402",
+      "sku": "ดีดีครีมแตงโม (L3-8G)",
+      "ticket_number": "338028",
+      "scanned_at": "2026-05-16 23:18:17.859001",
+      "province": "พระนครศรีอยุธยา"
+    },
+    {
+      "scan_id_short": "19ac1cf2c8e6",
+      "user_hash": "83632f2a",
+      "name_masked": "แสงจันทร์ แ***",
+      "phone_masked": "xxx-xxx-6856",
+      "sku": "ดีดีครีมแตงโม (L3-8G)",
+      "ticket_number": "338027",
+      "scanned_at": "2026-05-16 23:18:12.929373",
+      "province": "กรุงเทพมหานคร"
+    },
+    {
+      "scan_id_short": "5e91e5d1587b",
+      "user_hash": "d0d9c0dd",
+      "name_masked": "จุฬาลักษณ์ ใ***",
+      "phone_masked": "xxx-xxx-8568",
+      "sku": "ครีมกุหลาบน้ำเงิน (L13-10G)",
+      "ticket_number": "338026",
+      "scanned_at": "2026-05-16 23:17:56.424176",
+      "province": "เชียงราย"
+    },
+    {
+      "scan_id_short": "2fa14dbe86ad",
+      "user_hash": "7e206948",
+      "name_masked": "อมรรัตน์ อ***",
+      "phone_masked": "xxx-xxx-0402",
+      "sku": "ดีดีครีมแตงโม (L3-8G)",
+      "ticket_number": "338025",
+      "scanned_at": "2026-05-16 23:17:54.022341",
+      "province": "พระนครศรีอยุธยา"
+    },
+    {
+      "scan_id_short": "bef9cce886ed",
+      "user_hash": "a0ee5b16",
+      "name_masked": "อมลรดา เ***",
+      "phone_masked": "xxx-xxx-7021",
+      "sku": "ครีมกุหลาบน้ำเงิน (L13-10G)",
+      "ticket_number": "338024",
+      "scanned_at": "2026-05-16 23:17:48.316312",
+      "province": "สมุทรปราการ"
+    },
+    {
+      "scan_id_short": "58e6dcd562cd",
+      "user_hash": "1d3a4a91",
+      "name_masked": "ช่อทิพย์ พ***",
+      "phone_masked": "xxx-xxx-2793",
+      "sku": "ดีดีครีมแตงโม (L3-8G)",
+      "ticket_number": "338023",
+      "scanned_at": "2026-05-16 23:17:44.785139",
+      "province": "กรุงเทพมหานคร"
+    },
+    {
+      "scan_id_short": "79289df0696d",
+      "user_hash": "7e206948",
+      "name_masked": "อมรรัตน์ อ***",
+      "phone_masked": "xxx-xxx-0402",
+      "sku": "ดีดีครีมแตงโม (L3-8G)",
+      "ticket_number": "338022",
+      "scanned_at": "2026-05-16 23:17:43.3055",
+      "province": "พระนครศรีอยุธยา"
+    },
+    {
+      "scan_id_short": "e98886987707",
+      "user_hash": "1d3a4a91",
+      "name_masked": "ช่อทิพย์ พ***",
+      "phone_masked": "xxx-xxx-2793",
+      "sku": "ดีดีครีมแตงโม (L3-8G)",
+      "ticket_number": "338021",
+      "scanned_at": "2026-05-16 23:17:32.626013",
+      "province": "กรุงเทพมหานคร"
+    },
+    {
+      "scan_id_short": "48c0197ee60d",
+      "user_hash": "1d3a4a91",
+      "name_masked": "ช่อทิพย์ พ***",
+      "phone_masked": "xxx-xxx-2793",
+      "sku": "ดีดีครีมแตงโม (L3-8G)",
+      "ticket_number": "338020",
+      "scanned_at": "2026-05-16 23:17:24.277177",
+      "province": "กรุงเทพมหานคร"
+    },
+    {
+      "scan_id_short": "36370b2e32c2",
+      "user_hash": "1d3a4a91",
+      "name_masked": "ช่อทิพย์ พ***",
+      "phone_masked": "xxx-xxx-2793",
+      "sku": "ดีดีครีมแตงโม (L3-8G)",
+      "ticket_number": "338019",
+      "scanned_at": "2026-05-16 23:17:09.006342",
+      "province": "กรุงเทพมหานคร"
+    },
+    {
+      "scan_id_short": "690f9840e3e8",
+      "user_hash": "83632f2a",
+      "name_masked": "แสงจันทร์ แ***",
+      "phone_masked": "xxx-xxx-6856",
+      "sku": "ดีดีครีมแตงโม (L3-8G)",
+      "ticket_number": "338018",
+      "scanned_at": "2026-05-16 23:16:54.570004",
+      "province": "กรุงเทพมหานคร"
+    },
+    {
+      "scan_id_short": "7fefaff08233",
+      "user_hash": "806d8f71",
+      "name_masked": "Kanokporn S***",
+      "phone_masked": "xxx-xxx-1418",
+      "sku": "ครีมกุหลาบน้ำเงิน (L13-10G)",
+      "ticket_number": "338017",
+      "scanned_at": "2026-05-16 23:16:52.219456",
+      "province": "กรุงเทพมหานคร"
+    },
+    {
+      "scan_id_short": "cb1a43acea71",
+      "user_hash": "0278014a",
+      "name_masked": "ศรีสุธาทิพย์ แ***",
+      "phone_masked": "xxx-xxx-3515",
+      "sku": "ดีดีครีมแตงโม (L3-8G)",
+      "ticket_number": "338016",
+      "scanned_at": "2026-05-16 23:16:46.856152",
+      "province": "พัทลุง"
+    },
+    {
+      "scan_id_short": "63f1b0dd1729",
+      "user_hash": "167f4dca",
+      "name_masked": "กฤชชคฑา ว***",
+      "phone_masked": "xxx-xxx-6023",
+      "sku": "ดีดีครีมแตงโม (L3-8G)",
+      "ticket_number": "338015",
+      "scanned_at": "2026-05-16 23:16:12.825144",
+      "province": "กาฬสินธุ์"
+    },
+    {
+      "scan_id_short": "b87c1df810e7",
+      "user_hash": "23be642b",
+      "name_masked": "สวรรยา ส***",
+      "phone_masked": "xxx-xxx-2200",
+      "sku": "ดีดีครีมแตงโม (L3-8G)",
+      "ticket_number": "338014",
+      "scanned_at": "2026-05-16 23:15:44.303487",
+      "province": "กรุงเทพมหานคร"
+    },
+    {
+      "scan_id_short": "4b10f6335160",
+      "user_hash": "83632f2a",
+      "name_masked": "แสงจันทร์ แ***",
+      "phone_masked": "xxx-xxx-6856",
+      "sku": "ดีดีครีมแตงโม (L3-8G)",
+      "ticket_number": "338013",
+      "scanned_at": "2026-05-16 23:15:28.256823",
+      "province": "กรุงเทพมหานคร"
+    },
+    {
+      "scan_id_short": "a64a99e3d805",
+      "user_hash": "5ac5d317",
+      "name_masked": "สุทิวัส พ***",
+      "phone_masked": "xxx-xxx-7085",
+      "sku": "ดีดีครีมแตงโม (L3-8G)",
+      "ticket_number": "338012",
+      "scanned_at": "2026-05-16 23:15:19.66401",
+      "province": "อุดรธานี"
+    },
+    {
+      "scan_id_short": "0753081ba977",
+      "user_hash": "23be642b",
+      "name_masked": "สวรรยา ส***",
+      "phone_masked": "xxx-xxx-2200",
+      "sku": "โดสส้มแดงกลูต้าซีไฮยา (L7-6G)",
+      "ticket_number": "338011",
+      "scanned_at": "2026-05-16 23:15:16.881859",
+      "province": "กรุงเทพมหานคร"
+    },
+    {
+      "scan_id_short": "66045adcd0dc",
+      "user_hash": "5ac5d317",
+      "name_masked": "สุทิวัส พ***",
+      "phone_masked": "xxx-xxx-7085",
+      "sku": "ดีดีครีมแตงโม (L3-8G)",
+      "ticket_number": "338010",
+      "scanned_at": "2026-05-16 23:15:10.283644",
+      "province": "อุดรธานี"
+    },
+    {
+      "scan_id_short": "4257214196ff",
+      "user_hash": "5ac5d317",
+      "name_masked": "สุทิวัส พ***",
+      "phone_masked": "xxx-xxx-7085",
+      "sku": "ดีดีครีมแตงโม (L3-8G)",
+      "ticket_number": "338009",
+      "scanned_at": "2026-05-16 23:15:00.415156",
+      "province": "อุดรธานี"
+    },
+    {
+      "scan_id_short": "898c0ac38673",
+      "user_hash": "23be642b",
+      "name_masked": "สวรรยา ส***",
+      "phone_masked": "xxx-xxx-2200",
+      "sku": "ดีดีครีมแตงโม (L3-8G)",
+      "ticket_number": "338008",
+      "scanned_at": "2026-05-16 23:14:57.647446",
+      "province": "กรุงเทพมหานคร"
+    },
+    {
+      "scan_id_short": "912f9aea8c8c",
+      "user_hash": "5ac5d317",
+      "name_masked": "สุทิวัส พ***",
+      "phone_masked": "xxx-xxx-7085",
+      "sku": "เซรั่มแครอท (L6-8G)",
+      "ticket_number": "338007",
+      "scanned_at": "2026-05-16 23:14:50.850354",
+      "province": "อุดรธานี"
+    },
+    {
+      "scan_id_short": "0b4a9be5be5d",
+      "user_hash": "23be642b",
+      "name_masked": "สวรรยา ส***",
+      "phone_masked": "xxx-xxx-2200",
+      "sku": "กันแดดแตงโม 3D ออร่า (L10-7G)",
+      "ticket_number": "338006",
+      "scanned_at": "2026-05-16 23:14:36.393624",
+      "province": "กรุงเทพมหานคร"
+    },
+    {
+      "scan_id_short": "efc2f4ae3508",
+      "user_hash": "5ac5d317",
+      "name_masked": "สุทิวัส พ***",
+      "phone_masked": "xxx-xxx-7085",
+      "sku": "ดีดีครีมแตงโม (L3-8G)",
+      "ticket_number": "338005",
+      "scanned_at": "2026-05-16 23:14:34.571861",
+      "province": "อุดรธานี"
+    },
+    {
+      "scan_id_short": "d7076debdc79",
+      "user_hash": "7e206948",
+      "name_masked": "อมรรัตน์ อ***",
+      "phone_masked": "xxx-xxx-0402",
+      "sku": "ดีดีครีมแตงโม (L3-8G)",
+      "ticket_number": "338004",
+      "scanned_at": "2026-05-16 23:14:19.886774",
+      "province": "พระนครศรีอยุธยา"
+    },
+    {
+      "scan_id_short": "bc1dbbe93f19",
+      "user_hash": "5ac5d317",
+      "name_masked": "สุทิวัส พ***",
+      "phone_masked": "xxx-xxx-7085",
+      "sku": "ดีดีครีมแตงโม (L3-8G)",
+      "ticket_number": "338003",
+      "scanned_at": "2026-05-16 23:14:19.049145",
+      "province": "อุดรธานี"
+    },
+    {
+      "scan_id_short": "f697c3fd78a7",
+      "user_hash": "86a09d00",
+      "name_masked": "วีรยุทธ จ***",
+      "phone_masked": "xxx-xxx-8763",
+      "sku": "เซรั่มขิงดำซิงก์ (C4-8G)",
+      "ticket_number": "338002",
+      "scanned_at": "2026-05-16 23:14:10.662674",
+      "province": "ปทุมธานี"
+    },
+    {
+      "scan_id_short": "2ae1f0ab7773",
+      "user_hash": "ddc44356",
+      "name_masked": "ศุภณัฐ เ***",
+      "phone_masked": "xxx-xxx-3872",
+      "sku": "ดีดีครีมแตงโม (L3-8G)",
+      "ticket_number": "338001",
+      "scanned_at": "2026-05-16 23:13:54.033391",
+      "province": "ตรัง"
+    },
+    {
+      "scan_id_short": "0e44d8ba571f",
+      "user_hash": "23be642b",
+      "name_masked": "สวรรยา ส***",
+      "phone_masked": "xxx-xxx-2200",
+      "sku": "กันแดดแตงโม 3D ออร่า (L10-7G)",
+      "ticket_number": "338000",
+      "scanned_at": "2026-05-16 23:13:53.391102",
+      "province": "กรุงเทพมหานคร"
+    },
+    {
+      "scan_id_short": "601da5b582db",
+      "user_hash": "ddc44356",
+      "name_masked": "ศุภณัฐ เ***",
+      "phone_masked": "xxx-xxx-3872",
+      "sku": "ดีดีครีมแตงโม (L3-8G)",
+      "ticket_number": "337999",
+      "scanned_at": "2026-05-16 23:13:36.02144",
+      "province": "ตรัง"
+    },
+    {
+      "scan_id_short": "273f646892ab",
+      "user_hash": "5f563b27",
+      "name_masked": "อรอนงค์ แ***",
+      "phone_masked": "xxx-xxx-9085",
+      "sku": "กันแดดแตงโม 3D ออร่า (L10-7G)",
+      "ticket_number": "337998",
+      "scanned_at": "2026-05-16 23:13:31.796989",
+      "province": "นครศรีธรรมราช"
+    },
+    {
+      "scan_id_short": "8d5ae9a07972",
+      "user_hash": "23be642b",
+      "name_masked": "สวรรยา ส***",
+      "phone_masked": "xxx-xxx-2200",
+      "sku": "โดสส้มแดงกลูต้าซีไฮยา (L7-6G)",
+      "ticket_number": "337997",
+      "scanned_at": "2026-05-16 23:13:25.96561",
+      "province": "กรุงเทพมหานคร"
+    },
+    {
+      "scan_id_short": "ffa6db1320cb",
+      "user_hash": "7e206948",
+      "name_masked": "อมรรัตน์ อ***",
+      "phone_masked": "xxx-xxx-0402",
+      "sku": "ดีดีครีมแตงโม (L3-8G)",
+      "ticket_number": "337996",
+      "scanned_at": "2026-05-16 23:13:17.465852",
+      "province": "พระนครศรีอยุธยา"
+    },
+    {
+      "scan_id_short": "889d32df6fe1",
+      "user_hash": "23be642b",
+      "name_masked": "สวรรยา ส***",
+      "phone_masked": "xxx-xxx-2200",
+      "sku": "ดีดีครีมแตงโม (L3-8G)",
+      "ticket_number": "337995",
+      "scanned_at": "2026-05-16 23:12:47.290892",
+      "province": "กรุงเทพมหานคร"
+    },
+    {
+      "scan_id_short": "d383a7932785",
+      "user_hash": "7dab21f5",
+      "name_masked": "ณัฐธิดา ร***",
+      "phone_masked": "xxx-xxx-9880",
+      "sku": "สบู่แครอท (S4-70G)",
+      "ticket_number": "337994",
+      "scanned_at": "2026-05-16 23:12:04.98691",
+      "province": "กรุงเทพมหานคร"
+    },
+    {
+      "scan_id_short": "a7fe7edd1cfe",
+      "user_hash": "7e206948",
+      "name_masked": "อมรรัตน์ อ***",
+      "phone_masked": "xxx-xxx-0402",
+      "sku": "ดีดีครีมแตงโม (L3-8G)",
+      "ticket_number": "337993",
+      "scanned_at": "2026-05-16 23:11:10.573159",
+      "province": "พระนครศรีอยุธยา"
+    },
+    {
+      "scan_id_short": "86e3c878a4d7",
+      "user_hash": "815778f1",
+      "name_masked": "น.ส.นริสรา เ***",
+      "phone_masked": "xxx-xxx-8051",
+      "sku": "มาก์สลำไยทองคำ (JHM2-30G)",
+      "ticket_number": "337992",
+      "scanned_at": "2026-05-16 23:10:49.766772",
+      "province": "ระยอง"
+    },
+    {
+      "scan_id_short": "880f5223bb05",
+      "user_hash": "0c90dd0f",
+      "name_masked": "วิศรุต ค***",
+      "phone_masked": "xxx-xxx-1479",
+      "sku": "ดีดีครีมแตงโม (L3-8G)",
+      "ticket_number": "337991",
+      "scanned_at": "2026-05-16 23:10:11.59643",
+      "province": "กรุงเทพมหานคร"
+    },
+    {
+      "scan_id_short": "24b9af4f9a98",
+      "user_hash": "db44d19f",
+      "name_masked": "บุศรา เ***",
+      "phone_masked": "xxx-xxx-4099",
+      "sku": "สบู่ลำไย (JH906-70G)",
+      "ticket_number": "337990",
+      "scanned_at": "2026-05-16 23:09:08.761311",
+      "province": "ภูเก็ต"
+    },
+    {
+      "scan_id_short": "2bf8b4124baa",
+      "user_hash": "0c90dd0f",
+      "name_masked": "วิศรุต ค***",
+      "phone_masked": "xxx-xxx-1479",
+      "sku": "ดีดีครีมแตงโม (L3-8G)",
+      "ticket_number": "337989",
+      "scanned_at": "2026-05-16 23:08:20.277925",
+      "province": "กรุงเทพมหานคร"
+    },
+    {
+      "scan_id_short": "aa721e060be7",
+      "user_hash": "eb8ca881",
+      "name_masked": "ลัดดาวรรณ ก***",
+      "phone_masked": "xxx-xxx-5854",
+      "sku": "กันแดดแตงโม 3D ออร่า (L10-7G)",
+      "ticket_number": "337988",
+      "scanned_at": "2026-05-16 23:08:06.182922",
+      "province": "ปราจีนบุรี"
+    },
+    {
+      "scan_id_short": "f8b2411e2ddf",
+      "user_hash": "81e43479",
+      "name_masked": "จิตราภรณ์ ว***",
+      "phone_masked": "xxx-xxx-9386",
+      "sku": "ยาสีฟันเจเด้นท์ สูตรลดกลิ่นปาก (D3-70G)",
+      "ticket_number": "337987",
+      "scanned_at": "2026-05-16 23:07:52.141815",
+      "province": "เลย"
+    },
+    {
+      "scan_id_short": "7b67c21d6600",
+      "user_hash": "9a78fc2b",
+      "name_masked": "ปิยะนุช บ***",
+      "phone_masked": "xxx-xxx-7582",
+      "sku": "ดีดีครีมแตงโม (L3-8G)",
+      "ticket_number": "337986",
+      "scanned_at": "2026-05-16 23:07:16.079966",
+      "province": "สมุทรปราการ"
+    },
+    {
+      "scan_id_short": "38194775f47e",
+      "user_hash": "9a78fc2b",
+      "name_masked": "ปิยะนุช บ***",
+      "phone_masked": "xxx-xxx-7582",
+      "sku": "สบู่แตงโม (JH905-70G)",
+      "ticket_number": "337985",
+      "scanned_at": "2026-05-16 23:06:34.910391",
+      "province": "สมุทรปราการ"
+    },
+    {
+      "scan_id_short": "4653afdcd637",
+      "user_hash": "eb6832a7",
+      "name_masked": "บุญรอด ก***",
+      "phone_masked": "xxx-xxx-7721",
+      "sku": "เซรั่มลำไย (L4-8G)",
+      "ticket_number": "337984",
+      "scanned_at": "2026-05-16 23:06:26.883373",
+      "province": "ปทุมธานี"
+    },
+    {
+      "scan_id_short": "008968703eab",
+      "user_hash": "9a78fc2b",
+      "name_masked": "ปิยะนุช บ***",
+      "phone_masked": "xxx-xxx-7582",
+      "sku": "ดีดีครีมแตงโม (L3-8G)",
+      "ticket_number": "337983",
+      "scanned_at": "2026-05-16 23:06:11.668426",
+      "province": "สมุทรปราการ"
+    },
+    {
+      "scan_id_short": "d1b63d109c78",
+      "user_hash": "8e479201",
+      "name_masked": "อริสา แ***",
+      "phone_masked": "xxx-xxx-4748",
+      "sku": "ดีดีครีมแตงโม (L3-8G)",
+      "ticket_number": "337982",
+      "scanned_at": "2026-05-16 23:05:58.323359",
+      "province": "เชียงราย"
+    },
+    {
+      "scan_id_short": "e88df13fc533",
+      "user_hash": "eb6832a7",
+      "name_masked": "บุญรอด ก***",
+      "phone_masked": "xxx-xxx-7721",
+      "sku": "อีอีคูชั่นแตงโม 02 Natural (L8B-6G)",
+      "ticket_number": "337981",
+      "scanned_at": "2026-05-16 23:05:51.761935",
+      "province": "ปทุมธานี"
+    },
+    {
+      "scan_id_short": "9d67000093b8",
+      "user_hash": "eb6832a7",
+      "name_masked": "บุญรอด ก***",
+      "phone_masked": "xxx-xxx-7721",
+      "sku": "อีอีคูชั่นแตงโม 02 Natural (L8B-6G)",
+      "ticket_number": "337980",
+      "scanned_at": "2026-05-16 23:05:39.041834",
+      "province": "ปทุมธานี"
+    },
+    {
+      "scan_id_short": "5112c7622932",
+      "user_hash": "d79643f9",
+      "name_masked": "พัชรินทร์ ร***",
+      "phone_masked": "xxx-xxx-1551",
+      "sku": "วิปโฟมแตงโม (L14-70G)",
+      "ticket_number": "337979",
+      "scanned_at": "2026-05-16 23:05:28.396738",
+      "province": "เชียงใหม่"
+    },
+    {
+      "scan_id_short": "27ef56c2d204",
+      "user_hash": "eb6832a7",
+      "name_masked": "บุญรอด ก***",
+      "phone_masked": "xxx-xxx-7721",
+      "sku": "อีอีคูชั่นแตงโม (JH708-6G)",
+      "ticket_number": "337978",
+      "scanned_at": "2026-05-16 23:05:23.635984",
+      "province": "ปทุมธานี"
+    },
+    {
+      "scan_id_short": "69acb2687203",
+      "user_hash": "8e479201",
+      "name_masked": "อริสา แ***",
+      "phone_masked": "xxx-xxx-4748",
+      "sku": "ดีดีครีมแตงโม (L3-8G)",
+      "ticket_number": "337977",
+      "scanned_at": "2026-05-16 23:05:19.796613",
+      "province": "เชียงราย"
+    },
+    {
+      "scan_id_short": "b8659fd8f0e6",
+      "user_hash": "d79643f9",
+      "name_masked": "พัชรินทร์ ร***",
+      "phone_masked": "xxx-xxx-1551",
+      "sku": "กันแดดแตงโม 3D ออร่า (L10-7G)",
+      "ticket_number": "337976",
+      "scanned_at": "2026-05-16 23:04:32.849793",
+      "province": "เชียงใหม่"
+    },
+    {
+      "scan_id_short": "f959e8f6e617",
+      "user_hash": "eb6832a7",
+      "name_masked": "บุญรอด ก***",
+      "phone_masked": "xxx-xxx-7721",
+      "sku": "เซรั่มขิงดำซิงก์ (C4-8G)",
+      "ticket_number": "337975",
+      "scanned_at": "2026-05-16 23:04:19.314362",
+      "province": "ปทุมธานี"
+    },
+    {
+      "scan_id_short": "d70e1be0af6c",
+      "user_hash": "e512bf47",
+      "name_masked": "วุฒิสุดา ช***",
+      "phone_masked": "xxx-xxx-2544",
+      "sku": "ดีดีครีมแตงโม (L3-8G)",
+      "ticket_number": "337974",
+      "scanned_at": "2026-05-16 23:04:01.775537",
+      "province": "นนทบุรี"
+    },
+    {
+      "scan_id_short": "7e0b65468b73",
+      "user_hash": "34f875de",
+      "name_masked": "บุณยาพร เ***",
+      "phone_masked": "xxx-xxx-2081",
+      "sku": "ดีดีครีมแตงโม (L3-8G)",
+      "ticket_number": "337973",
+      "scanned_at": "2026-05-16 23:04:00.315979",
+      "province": "นครราชสีมา"
+    },
+    {
+      "scan_id_short": "daee3241af50",
+      "user_hash": "eb6832a7",
+      "name_masked": "บุญรอด ก***",
+      "phone_masked": "xxx-xxx-7721",
+      "sku": "อีอีคูชั่นแตงโม 01 Light (L8A-6G)",
+      "ticket_number": "337972",
+      "scanned_at": "2026-05-16 23:03:48.978347",
+      "province": "ปทุมธานี"
+    },
+    {
+      "scan_id_short": "117d7130998c",
+      "user_hash": "9afeb1a7",
+      "name_masked": "วรรณิษา ส***",
+      "phone_masked": "xxx-xxx-0687",
+      "sku": "ดีดีครีมแตงโม (L3-8G)",
+      "ticket_number": "337971",
+      "scanned_at": "2026-05-16 23:03:38.271272",
+      "province": "กำแพงเพชร"
+    },
+    {
+      "scan_id_short": "f35b2db94dd6",
+      "user_hash": "eb6832a7",
+      "name_masked": "บุญรอด ก***",
+      "phone_masked": "xxx-xxx-7721",
+      "sku": "อีอีคูชั่นแตงโม 02 Natural (L8B-6G)",
+      "ticket_number": "337970",
+      "scanned_at": "2026-05-16 23:03:28.502791",
+      "province": "ปทุมธานี"
+    },
+    {
+      "scan_id_short": "31f60bba4331",
+      "user_hash": "34f875de",
+      "name_masked": "บุณยาพร เ***",
+      "phone_masked": "xxx-xxx-2081",
+      "sku": "มอยส์เจลฉ่ำบัว (L19-8G)",
+      "ticket_number": "337969",
+      "scanned_at": "2026-05-16 23:03:21.105283",
+      "province": "นครราชสีมา"
+    },
+    {
+      "scan_id_short": "4bd8d551bb98",
+      "user_hash": "eb6832a7",
+      "name_masked": "บุญรอด ก***",
+      "phone_masked": "xxx-xxx-7721",
+      "sku": "เซรั่มแครอท (L6-8G)",
+      "ticket_number": "337968",
+      "scanned_at": "2026-05-16 23:03:01.864338",
+      "province": "ปทุมธานี"
+    },
+    {
+      "scan_id_short": "be96c6c89f28",
+      "user_hash": "9afeb1a7",
+      "name_masked": "วรรณิษา ส***",
+      "phone_masked": "xxx-xxx-0687",
+      "sku": "ดีดีครีมแตงโม (L3-8G)",
+      "ticket_number": "337967",
+      "scanned_at": "2026-05-16 23:02:44.5462",
+      "province": "กำแพงเพชร"
+    },
+    {
+      "scan_id_short": "762bf8e68a5f",
+      "user_hash": "680048bc",
+      "name_masked": "มิลิลัยวรรณ อ***",
+      "phone_masked": "xxx-xxx-3586",
+      "sku": "มาก์สลำไยทองคำ (JHM2-4G)",
+      "ticket_number": "337966",
+      "scanned_at": "2026-05-16 23:02:14.599083",
+      "province": "นครปฐม"
+    },
+    {
+      "scan_id_short": "fba3eba7067a",
+      "user_hash": "eddbd660",
+      "name_masked": "กนกพร ค***",
+      "phone_masked": "xxx-xxx-4916",
+      "sku": "ยาสีฟันเจเด้นท์ สูตรลดเสียวฟัน (D2-70G)",
+      "ticket_number": "337965",
+      "scanned_at": "2026-05-16 23:01:56.619529",
+      "province": "ลำพูน"
+    },
+    {
+      "scan_id_short": "8266c611667d",
+      "user_hash": "eb6832a7",
+      "name_masked": "บุญรอด ก***",
+      "phone_masked": "xxx-xxx-7721",
+      "sku": "เซรั่มขิงดำซิงก์ (C4-8G)",
+      "ticket_number": "337964",
+      "scanned_at": "2026-05-16 23:01:52.679908",
+      "province": "ปทุมธานี"
+    },
+    {
+      "scan_id_short": "3dbd4602e83d",
+      "user_hash": "eb6832a7",
+      "name_masked": "บุญรอด ก***",
+      "phone_masked": "xxx-xxx-7721",
+      "sku": "โดสส้มแดงกลูต้าซีไฮยา (L7-6G)",
+      "ticket_number": "337963",
+      "scanned_at": "2026-05-16 23:00:57.080482",
+      "province": "ปทุมธานี"
+    }
+  ],
+  "section_22_multi_account_list": [
+    {
+      "user_hash": "02854cd3",
+      "scan_count_day": 54,
+      "top_burst_per_hr": 54,
+      "risk_level": "high"
+    },
+    {
+      "user_hash": "81313ac2",
+      "scan_count_day": 53,
+      "top_burst_per_hr": 21,
+      "risk_level": "high"
+    },
+    {
+      "user_hash": "0a3fbb7f",
+      "scan_count_day": 50,
+      "top_burst_per_hr": 27,
+      "risk_level": "high"
+    },
+    {
+      "user_hash": "9df77750",
+      "scan_count_day": 46,
+      "top_burst_per_hr": 24,
+      "risk_level": "mid"
+    },
+    {
+      "user_hash": "234cefd6",
+      "scan_count_day": 39,
+      "top_burst_per_hr": 39,
+      "risk_level": "mid"
+    },
+    {
+      "user_hash": "c05d792d",
+      "scan_count_day": 36,
+      "top_burst_per_hr": 36,
+      "risk_level": "mid"
+    },
+    {
+      "user_hash": "d3c40898",
+      "scan_count_day": 35,
+      "top_burst_per_hr": 31,
+      "risk_level": "mid"
+    },
+    {
+      "user_hash": "0342fa6b",
+      "scan_count_day": 35,
+      "top_burst_per_hr": 30,
+      "risk_level": "mid"
+    },
+    {
+      "user_hash": "72503ee0",
+      "scan_count_day": 30,
+      "top_burst_per_hr": 30,
+      "risk_level": "mid"
+    },
+    {
+      "user_hash": "9abdac79",
+      "scan_count_day": 26,
+      "top_burst_per_hr": 10,
+      "risk_level": "low"
+    },
+    {
+      "user_hash": "4b2a16bb",
+      "scan_count_day": 26,
+      "top_burst_per_hr": 26,
+      "risk_level": "low"
+    },
+    {
+      "user_hash": "603cbc39",
+      "scan_count_day": 25,
+      "top_burst_per_hr": 25,
+      "risk_level": "low"
+    },
+    {
+      "user_hash": "33ba0241",
+      "scan_count_day": 24,
+      "top_burst_per_hr": 24,
+      "risk_level": "low"
+    },
+    {
+      "user_hash": "772641c7",
+      "scan_count_day": 24,
+      "top_burst_per_hr": 24,
+      "risk_level": "low"
+    },
+    {
+      "user_hash": "50bce070",
+      "scan_count_day": 24,
+      "top_burst_per_hr": 16,
+      "risk_level": "low"
+    },
+    {
+      "user_hash": "7e206948",
+      "scan_count_day": 23,
+      "top_burst_per_hr": 23,
+      "risk_level": "low"
+    },
+    {
+      "user_hash": "d9bf03f2",
+      "scan_count_day": 22,
+      "top_burst_per_hr": 22,
+      "risk_level": "low"
+    },
+    {
+      "user_hash": "9fc17897",
+      "scan_count_day": 22,
+      "top_burst_per_hr": 20,
+      "risk_level": "low"
+    },
+    {
+      "user_hash": "e4ca3a37",
+      "scan_count_day": 21,
+      "top_burst_per_hr": 21,
+      "risk_level": "low"
+    },
+    {
+      "user_hash": "bfce6e3b",
+      "scan_count_day": 21,
+      "top_burst_per_hr": 21,
+      "risk_level": "low"
+    },
+    {
+      "user_hash": "061f3261",
+      "scan_count_day": 20,
+      "top_burst_per_hr": 20,
+      "risk_level": "low"
+    },
+    {
+      "user_hash": "0cbbbd5f",
+      "scan_count_day": 20,
+      "top_burst_per_hr": 20,
+      "risk_level": "low"
+    },
+    {
+      "user_hash": "a5425dbd",
+      "scan_count_day": 20,
+      "top_burst_per_hr": 20,
+      "risk_level": "low"
+    }
+  ]
+}

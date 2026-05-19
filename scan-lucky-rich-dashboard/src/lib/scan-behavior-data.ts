@@ -268,6 +268,68 @@ export const WEEKDAY_MATCHED: WeekdayMatchRow[] = [
   },
 ]
 
+// ============================================================
+// 8. Customer Mix per day (new vs existing + profile completion)
+// ============================================================
+
+export interface CustomerMixRow {
+  date: string
+  newSignup: number
+  existingUsers: number
+  profileCompletionPct: number
+}
+
+// CUSTOMER_MIX — auto from live-data.json
+import LIVE from '@/lib/live-data.json'
+
+export const CUSTOMER_MIX: CustomerMixRow[] = (LIVE.customer_mix || []).map((d: any) => ({
+  date: d.date,
+  newSignup: d.newSignup,
+  existingUsers: d.existing,
+  profileCompletionPct: d.profileCompletionPct,
+}))
+
+// ============================================================
+// 9. Engagement gap per day (time to 2nd scan)
+// ============================================================
+
+export interface EngagementGap {
+  date: string
+  returnedCount: number    // users who came back for 2nd scan
+  totalUsers: number
+  returnedPct: number
+  medianGapMin: number
+  avgGapMin: number
+}
+
+export const ENGAGEMENT_GAP: EngagementGap[] = (LIVE.engagement || []).map((d: any) => ({
+  date: d.date,
+  returnedCount: d.returnedCount,
+  totalUsers:    d.totalUsers,
+  returnedPct:   d.totalUsers > 0 ? Math.round((d.returnedCount / d.totalUsers) * 100) : 0,
+  medianGapMin:  d.medianGapMin,
+  avgGapMin:     d.avgGapMin,
+}))
+
+// ============================================================
+// 10. Forecast — Cumulative + 3 scenarios
+// ============================================================
+
+// FORECAST — auto from live-data.json (if available, else fallback)
+const liveFc: any = LIVE.forecast || {}
+export const FORECAST = {
+  toDate:        liveFc.to_date     ?? 23922,
+  asOfDate:      liveFc.as_of_date  ?? '2026-05-19T11:18:00+07:00',
+  dailyAvg3day:  liveFc.daily_avg   ?? 7434,
+  daysRemaining: liveFc.days_left   ?? 213,
+  drawDate:      liveFc.draw_date   ?? '2026-12-18',
+  scenarios: {
+    linear:     { label: 'Linear (velocity คงเดิม)',     value: liveFc.forecast_range?.linear ?? 1600000, color: '#16a34a' },
+    midDecay15: { label: 'Mid (decay 15%/เดือน)',        value: liveFc.forecast_range?.mid    ?? 900000,  color: '#facc15' },
+    decay30:    { label: 'Conservative (decay 30%/เดือน)', value: liveFc.forecast_range?.decay  ?? 500000,  color: '#ef4444' },
+  },
+}
+
 export const VERIFICATION_BREAKDOWN: VerificationStat[] = (() => {
   const failures = TOTAL_ATTEMPTS - TOTAL_VALID  // 1,971
   const items = [

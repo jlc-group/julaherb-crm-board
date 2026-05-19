@@ -1,25 +1,9 @@
 'use client'
-import { useState, useMemo } from 'react'
 import ChartCard from '@/components/ui/ChartCard'
 import InsightInline from '@/components/ui/InsightInline'
-import DateRangeFilter, { computeRange, type DateRange } from '@/components/ui/DateRangeFilter'
-import { DAILY_STATS, RANK_MOVEMENT, DEAD_SKUS_3DAY, HIGH_VELOCITY, type DailyStat } from '@/lib/daily-sku-data'
+import { DAILY_STATS, RANK_MOVEMENT, DEAD_SKUS_3DAY, HIGH_VELOCITY } from '@/lib/daily-sku-data'
 import { REAL_CAMPAIGN } from '@/lib/real-data'
 import { numFmt } from '@/lib/utils'
-
-const CAMPAIGN_START = '2026-05-16'
-const CAMPAIGN_END   = '2026-05-18'
-
-// Match a single-day date to a DailyStat. If range spans multiple days → return null (caller shows fallback)
-function pickDay(from: string, to: string): DailyStat | null {
-  if (from !== to) return null
-  return DAILY_STATS.find(d => d.date === from) || null
-}
-
-const DEFAULT_RANGE: DateRange = (() => {
-  // Default to Day 1 (16 พ.ค.) for the day-specific Top 15 view
-  return { preset: 'custom', from: '2026-05-16', to: '2026-05-16' }
-})()
 
 const TREND_ICON: Record<string, { icon: string; color: string; label: string }> = {
   up:    { icon: 'ti-trending-up',   color: 'var(--primary)',     label: '↑'  },
@@ -29,13 +13,11 @@ const TREND_ICON: Record<string, { icon: string; color: string; label: string }>
 }
 
 export default function DailyCampaignBreakdown() {
-  const [dateRange, setDateRange] = useState<DateRange>(DEFAULT_RANGE)
-  const day = useMemo(() => pickDay(dateRange.from, dateRange.to), [dateRange.from, dateRange.to])
   const total3day = DAILY_STATS.reduce((s, d) => s + d.totalRights, 0)
   const totalUsers3day = DAILY_STATS.reduce((s, d) => s + d.uniqueUsers, 0)
 
   return (
-    <ChartCard title="Daily Campaign Breakdown — 16-18 พ.ค." icon="ti-calendar-stats" full>
+    <ChartCard title="3-Day Summary + Movement & Dead SKU" icon="ti-calendar-stats" full>
       {/* ── KPI Comparison Table (4 col: D1 / D2 / D3 / รวม) ── */}
       <div className="overflow-x-auto mb-4">
         <table className="w-full text-[12px]">
@@ -62,72 +44,6 @@ export default function DailyCampaignBreakdown() {
       <InsightInline
         html={`<b>17 พ.ค. (อาทิตย์) peak</b> ที่ ${numFmt(DAILY_STATS[1].totalRights)} สิทธิ์ — โต <b>+${REAL_CAMPAIGN.growthPct}%</b> จาก D1, แล้วลด <b>${REAL_CAMPAIGN.d2d3Pct}%</b> ใน D3 (จันทร์) — เป็น weekend pattern ชัดเจน`}
       />
-
-      {/* ── Date selector (same UX as Overview) ── */}
-      <div className="mt-4 mb-3">
-        <div className="text-[10.5px] uppercase tracking-wider text-[var(--text-secondary)] font-bold mb-1.5">
-          <i className="ti ti-calendar text-sm text-[var(--primary)] mr-1" />
-          เลือกวันที่ดู Top 15 SKU
-        </div>
-        <DateRangeFilter
-          value={dateRange}
-          onChange={setDateRange}
-          minDate={CAMPAIGN_START}
-          maxDate={CAMPAIGN_END}
-        />
-      </div>
-
-      {/* ── Top 15 SKU of selected day ── */}
-      {!day && (
-        <div className="bg-[var(--bg-soft)] border border-[var(--border)] rounded-lg p-6 text-center text-[12px] text-[var(--text-secondary)]">
-          <i className="ti ti-info-circle text-2xl text-[var(--primary)] block mb-1" />
-          เลือก <b>"กำหนดเอง"</b> แล้วเลือกวันเดียว (16 / 17 / 18 พ.ค.) เพื่อดู Top 15 SKU ของวันนั้น
-          <div className="text-[10.5px] mt-1 text-[var(--text-muted)]">ถ้าเลือกหลายวัน → ดู KPI summary ด้านบนเท่านั้น</div>
-        </div>
-      )}
-      {day && <div className="overflow-x-auto">
-        <table className="w-full text-[12px]">
-          <thead>
-            <tr className="text-[var(--text-secondary)] text-[10.5px] uppercase tracking-wider bg-[var(--bg-soft)]">
-              <th className="text-center py-2 px-2 w-10">#</th>
-              <th className="text-left   py-2 px-2 w-24">SKU</th>
-              <th className="text-left   py-2 px-2">ชื่อ</th>
-              <th className="text-right  py-2 px-2 w-20">สิทธิ์</th>
-              <th className="text-right  py-2 px-2 w-16">Users</th>
-              <th className="text-right  py-2 px-2 w-16">/คน</th>
-              <th className="text-right  py-2 px-2 w-20">% วัน</th>
-              <th className="text-left   py-2 px-2 w-28">share</th>
-            </tr>
-          </thead>
-          <tbody>
-            {day.top.map(r => (
-              <tr key={r.sku} className="border-b border-[var(--border-soft)] hover:bg-[var(--green-50)]/40">
-                <td className="text-center py-1.5 px-2">
-                  {r.rank <= 3
-                    ? <span className={`rank ${r.rank === 1 ? 'rank-1' : r.rank === 2 ? 'rank-2' : 'rank-3'}`} style={{ width: 22, height: 22, fontSize: 10 }}>{r.rank}</span>
-                    : <span className="num text-[var(--text-muted)] text-[11px]">{r.rank}</span>
-                  }
-                </td>
-                <td className="py-1.5 px-2 font-mono text-[10.5px] text-[var(--green-700)] font-semibold">{r.sku}</td>
-                <td className="py-1.5 px-2 truncate text-[var(--dark)] font-medium max-w-[280px]" title={r.name}>{r.name}</td>
-                <td className="text-right py-1.5 px-2 num font-bold text-[var(--dark)]">{numFmt(r.rights)}</td>
-                <td className="text-right py-1.5 px-2 num text-[var(--text)]">{numFmt(r.users)}</td>
-                <td className="text-right py-1.5 px-2 num text-[var(--text-secondary)]">{r.rightsPerUser.toFixed(2)}</td>
-                <td className="text-right py-1.5 px-2 num text-[var(--green-700)] font-bold">{r.pctOfDay.toFixed(1)}%</td>
-                <td className="py-1.5 px-2">
-                  <div className="progress" style={{ height: 5 }}>
-                    <div className="progress-fill" style={{ width: `${Math.min(100, r.pctOfDay * 2.5)}%` }} />
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>}
-
-      {day && <InsightInline
-        html={`Top 15 ของ <b>${day.date.split('-')[2]} พ.ค.</b> รวมส่วนแบ่ง <b>${day.top.reduce((s, r) => s + r.pctOfDay, 0).toFixed(1)}%</b> ของวัน — L3-8G ครอง <b>${day.top[0].pctOfDay.toFixed(1)}%</b>`}
-      />}
 
       {/* ── 2-col: Rank Movement + Dead SKU ── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 mt-4">

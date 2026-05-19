@@ -15,6 +15,8 @@ import MomentumGauge from '@/components/ui/MomentumGauge'
 import BaselineComparison from '@/components/ui/BaselineComparison'
 import AppleToAppleComparison from '@/components/ui/AppleToAppleComparison'
 import ScanHeatmap from '@/components/ui/ScanHeatmap'
+import CustomerMixCard from '@/components/ui/CustomerMixCard'
+import ForecastWidget from '@/components/ui/ForecastWidget'
 import { numFmt, maskPhone } from '@/lib/utils'
 import { REAL_CAMPAIGN } from '@/lib/real-data'
 import { VERIFICATION_KPIS } from '@/lib/scan-behavior-data'
@@ -135,7 +137,12 @@ export default function OverviewTab() {
         />
       </div>
 
-      <MomentumGauge />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <MomentumGauge fromDate={dateRange.from} toDate={dateRange.to} />
+        <CustomerMixCard />
+      </div>
+
+      <ForecastWidget />
 
       {/* ── SECTION 2: Campaign Lift Analysis ── */}
       <SectionTitle icon="ti-target" title="Campaign Lift Analysis" sub="วัดผลแคมเปญเทียบ baseline" />

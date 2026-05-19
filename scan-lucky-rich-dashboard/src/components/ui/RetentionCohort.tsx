@@ -2,7 +2,7 @@
 import { Bar } from 'react-chartjs-2'
 import ChartCard from '@/components/ui/ChartCard'
 import InsightInline from '@/components/ui/InsightInline'
-import { SAME_DAY_REPEAT, TIME_TO_REPEAT } from '@/lib/scan-behavior-data'
+import { SAME_DAY_REPEAT, TIME_TO_REPEAT, ENGAGEMENT_GAP } from '@/lib/scan-behavior-data'
 import { numFmt } from '@/lib/utils'
 
 export default function RetentionCohort() {
@@ -20,8 +20,32 @@ export default function RetentionCohort() {
   // peak interval
   const peakInterval = [...TIME_TO_REPEAT].sort((a, b) => b.users - a.users)[0]
 
+  // Avg engagement gap (median is consistent at 0.8 min across days, avg fluctuates)
+  const latestGap = ENGAGEMENT_GAP[ENGAGEMENT_GAP.length - 1]
+  const avgMedian = ENGAGEMENT_GAP.reduce((s, d) => s + d.medianGapMin, 0) / ENGAGEMENT_GAP.length
+  const avgAvg    = ENGAGEMENT_GAP.reduce((s, d) => s + d.avgGapMin, 0) / ENGAGEMENT_GAP.length
+
   return (
     <ChartCard title="Retention: First → Second Scan" icon="ti-refresh">
+      {/* Engagement Gap KPIs (median + avg time to 2nd scan) */}
+      <div className="grid grid-cols-3 gap-2 mb-3">
+        <div className="rounded-lg p-2 border border-[var(--green-200)] bg-[var(--green-50)]">
+          <div className="text-[10px] uppercase tracking-wide text-[var(--green-700)] font-bold">Median gap</div>
+          <div className="text-[18px] num text-[var(--green-800)]">{avgMedian.toFixed(1)}<span className="text-[11px] font-normal opacity-70"> min</span></div>
+          <div className="text-[9.5px] text-[var(--text-muted)]">batch scan ≈ ทันที</div>
+        </div>
+        <div className="rounded-lg p-2 border border-yellow-200 bg-yellow-50">
+          <div className="text-[10px] uppercase tracking-wide text-yellow-800 font-bold">Avg gap</div>
+          <div className="text-[18px] num text-yellow-900">{avgAvg.toFixed(0)}<span className="text-[11px] font-normal opacity-70"> min</span></div>
+          <div className="text-[9.5px] text-[var(--text-muted)]">stragglers ดึงค่าสูง</div>
+        </div>
+        <div className="rounded-lg p-2 border border-[var(--border-soft)] bg-[var(--bg-soft)]">
+          <div className="text-[10px] uppercase tracking-wide text-[var(--text-secondary)] font-bold">Returned (2nd)</div>
+          <div className="text-[18px] num text-[var(--dark)]">{latestGap.returnedPct}%</div>
+          <div className="text-[9.5px] text-[var(--text-muted)]">{numFmt(latestGap.returnedCount)} / {numFmt(latestGap.totalUsers)}</div>
+        </div>
+      </div>
+
       {/* Donut-like horizontal stacked bar */}
       <div className="space-y-2">
         <div className="flex justify-between items-center text-[11px] mb-1">

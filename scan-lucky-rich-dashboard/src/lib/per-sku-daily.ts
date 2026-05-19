@@ -1,11 +1,16 @@
 // Per-SKU daily rights/users — for day-filtered ProductMasterTable
-// Source: scan_history breakdown 16-18 พ.ค. 2026
+// Source: live-data.json (auto-generated from daily JSON files)
+
+import LIVE from '@/lib/live-data.json'
 
 export interface DayValue { r: number; u: number }   // rights, users
 export type DayKey = '16' | '17' | '18'
 
-// SKUs not in this map = no scan that day → counted as Dead for selected day
-export const PER_SKU_DAILY: Record<string, Partial<Record<DayKey, DayValue>>> = {
+// Live data (auto-loaded from DB pipeline)
+export const PER_SKU_DAILY: Record<string, Partial<Record<DayKey, DayValue>>> = LIVE.per_sku_daily as any
+
+// Hardcoded fallback (kept for reference)
+const _LEGACY_PER_SKU_DAILY: Record<string, Partial<Record<DayKey, DayValue>>> = {
   // ── Top performers (in all 3 days) ──
   'L3-8G':     { '16': { r: 2452, u: 1023 }, '17': { r: 2822, u: 1178 }, '18': { r: 2157, u:  986 } },
   'L4-8G':     { '16': { r:  659, u:  359 }, '17': { r:  813, u:  400 }, '18': { r:  692, u:  375 } },
@@ -88,16 +93,27 @@ export const PER_SKU_DAILY: Record<string, Partial<Record<DayKey, DayValue>>> = 
   'JHT2-2G':   {                                                          '18': { r:    1, u:    1 } },
 }
 
-// Day totals (for share% calc)
-export const DAY_TOTALS: Record<DayKey, number> = {
-  '16': 7160,
-  '17': 8709,
-  '18': 6432,
-}
+// Day totals (auto-derived from LIVE)
+export const DAY_TOTALS: Record<DayKey, number> = (() => {
+  const out: any = {}
+  LIVE.snapshot.days.forEach((d: any) => {
+    const dk = d.date.split('-')[2]
+    out[dk] = d.rights
+  })
+  return out
+})()
 
-// Top 10 SKUs per day (for Hero badge)
-export const DAILY_TOP10: Record<DayKey, string[]> = {
-  '16': ['L3-8G','L4-8G','L6-8G','L10-7G','L13-10G','L7-6G','C4-8G','L3-40G','L19-8G','L8B-6G'],
-  '17': ['L3-8G','L4-8G','L6-8G','L10-7G','L7-6G','L13-10G','C4-8G','L3-40G','L19-8G','L8B-6G'],
-  '18': ['L3-8G','L4-8G','L10-7G','L6-8G','L7-6G','L13-10G','L3-40G','C4-8G','L19-8G','L8B-6G'],
-}
+// Top 10 SKUs per day (auto-derived from LIVE per_sku_daily)
+export const DAILY_TOP10: Record<DayKey, string[]> = (() => {
+  const out: any = {}
+  for (const dk of ['16', '17', '18'] as const) {
+    const list: { sku: string; rights: number }[] = []
+    for (const [sku, days] of Object.entries(PER_SKU_DAILY)) {
+      const v = (days as any)[dk]
+      if (v?.r > 0) list.push({ sku, rights: v.r })
+    }
+    list.sort((a, b) => b.rights - a.rights)
+    out[dk] = list.slice(0, 10).map(x => x.sku)
+  }
+  return out
+})()

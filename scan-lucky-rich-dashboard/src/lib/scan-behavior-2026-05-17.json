@@ -1,0 +1,10 @@
+{
+  "date": "2026-05-17",
+  "apple": {
+    "today": 8713,
+    "same_dow_avg": 8742,
+    "delta_pct": -1.9,
+    "dow": "Sunday",
+    "baseline_count": 5
+  }
+}

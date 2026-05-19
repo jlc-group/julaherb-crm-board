@@ -14,33 +14,44 @@ export interface SkuStat {
   rightsPerUser: number
 }
 
+import LIVE from '@/lib/live-data.json'
+
+// REAL_CAMPAIGN — auto-derived from live-data.json
 export const REAL_CAMPAIGN = {
-  day1: { date: '2026-05-16', rights: 7160, users: 2624, skuActive: 75, weekday: 'เสาร์' },
-  day2: { date: '2026-05-17', rights: 8709, users: 2968, skuActive: 74, weekday: 'อาทิตย์' },
-  day3: { date: '2026-05-18', rights: 6432, users: 2509, skuActive: 72, weekday: 'จันทร์' },
-  totalRights: 22301,           // 3-day total
-  uniqueUsers: 7842,            // 3-day total
-  activeSkus: 78,               // union across 3 days
-  totalSkus: 93,
-  deadSkus: 15,
-  growthPct: 21.6,              // D1 → D2 (peak day)
-  d2d3Pct: -26.1,               // D2 → D3 drop
-  allTimeRights: 23264,         // since campaign start
+  day1: { date: LIVE.snapshot.days[0]?.date || '2026-05-16', rights: LIVE.snapshot.days[0]?.rights || 0, users: LIVE.snapshot.days[0]?.users || 0, skuActive: LIVE.snapshot.days[0]?.skuActive || 0, weekday: LIVE.snapshot.days[0]?.weekday || '' },
+  day2: { date: LIVE.snapshot.days[1]?.date || '', rights: LIVE.snapshot.days[1]?.rights || 0, users: LIVE.snapshot.days[1]?.users || 0, skuActive: LIVE.snapshot.days[1]?.skuActive || 0, weekday: LIVE.snapshot.days[1]?.weekday || '' },
+  day3: { date: LIVE.snapshot.days[2]?.date || '', rights: LIVE.snapshot.days[2]?.rights || 0, users: LIVE.snapshot.days[2]?.users || 0, skuActive: LIVE.snapshot.days[2]?.skuActive || 0, weekday: LIVE.snapshot.days[2]?.weekday || '' },
+  totalRights: LIVE.snapshot.totals.rights,
+  uniqueUsers: LIVE.snapshot.totals.users,
+  activeSkus:  LIVE.snapshot.cumulativeSkus.filter((s: any) => s.rights > 0).length,
+  totalSkus:   93,
+  deadSkus:    LIVE.snapshot.cumulativeSkus.filter((s: any) => s.rights === 0).length,
+  growthPct: LIVE.snapshot.days[1] && LIVE.snapshot.days[0]
+    ? +((LIVE.snapshot.days[1].rights - LIVE.snapshot.days[0].rights) / LIVE.snapshot.days[0].rights * 100).toFixed(1)
+    : 0,
+  d2d3Pct: LIVE.snapshot.days[2] && LIVE.snapshot.days[1]
+    ? +((LIVE.snapshot.days[2].rights - LIVE.snapshot.days[1].rights) / LIVE.snapshot.days[1].rights * 100).toFixed(1)
+    : 0,
+  allTimeRights: (LIVE.forecast as any)?.to_date || LIVE.snapshot.totals.rights,
 } as const
 
-// Top 10 from real DB — 3-day cumulative (16-17-18 พ.ค.)
-export const TOP_SKUS: SkuStat[] = [
-  { sku: 'L3-8G',   name: 'ดีดีครีมแตงโม',          tier: 'ซอง',  size: '8G',  productGroup: 'ดีดีครีมแตงโม', rights: 7431, users: 3187, rightsPerUser: 2.33 },
-  { sku: 'L4-8G',   name: 'เซรั่มลำไย',              tier: 'ซอง',  size: '8G',  productGroup: 'เซรั่มลำไย',     rights: 2164, users: 1134, rightsPerUser: 1.91 },
-  { sku: 'L6-8G',   name: 'เซรั่มแครอท',             tier: 'ซอง',  size: '8G',  productGroup: 'เซรั่มแครอท',    rights: 1600, users:  873, rightsPerUser: 1.83 },
-  { sku: 'L10-7G',  name: 'กันแดดแตงโม 3D Aura',     tier: 'ซอง',  size: '7G',  productGroup: 'กันแดดแตงโม',    rights: 1523, users:  894, rightsPerUser: 1.70 },
-  { sku: 'L7-6G',   name: 'โดสส้มแดงกลูต้าซีไฮยา',   tier: 'ซอง',  size: '6G',  productGroup: 'โดสส้มแดง',      rights: 1080, users:  549, rightsPerUser: 1.97 },
-  { sku: 'L13-10G', name: 'ครีมกุหลาบน้ำเงิน',       tier: 'ซอง',  size: '10G', productGroup: 'ครีมกุหลาบ',      rights: 1030, users:  627, rightsPerUser: 1.64 },
-  { sku: 'C4-8G',   name: 'เซรั่มขิงดำซิงก์',         tier: 'ซอง',  size: '8G',  productGroup: 'เซรั่มขิงดำ',    rights:  751, users:  402, rightsPerUser: 1.87 },
-  { sku: 'L3-40G',  name: 'ดีดีครีมแตงโม',           tier: 'หลอด', size: '40G', productGroup: 'ดีดีครีมแตงโม', rights:  690, users:  566, rightsPerUser: 1.22 },
-  { sku: 'L19-8G',  name: 'มอยส์เจลฉ่ำบัว',          tier: 'ซอง',  size: '8G',  productGroup: 'มอยส์เจลฉ่ำบัว', rights:  586, users:  407, rightsPerUser: 1.44 },
-  { sku: 'L8B-6G',  name: 'อีอีคูชั่นแตงโม 02',       tier: 'ซอง',  size: '6G',  productGroup: 'อีอีคูชั่นแตงโม',rights:  402, users:  253, rightsPerUser: 1.59 },
-]
+// Top 10 from live data
+export const TOP_SKUS: SkuStat[] = LIVE.snapshot.top10Skus.map((s: any) => {
+  const m = s.sku.match(/^(.+?)\s*\(([^)]+)\)\s*$/)
+  const name = m ? m[1].trim() : s.sku
+  const skuCode = m ? m[2].trim() : s.sku
+  const sizeMatch = skuCode.match(/(\d+G)$/)
+  return {
+    sku: skuCode,
+    name,
+    tier: skuCode.includes('-40G') || skuCode.includes('-30G') ? 'หลอด' as const : 'ซอง' as const,
+    size: sizeMatch ? sizeMatch[1] : '',
+    productGroup: name,
+    rights: s.rights,
+    users:  s.users,
+    rightsPerUser: s.rightsPerUser,
+  }
+})
 
 // ── Cross-size product groups (same product, different sizes) ──
 export interface CrossSizeRow {
