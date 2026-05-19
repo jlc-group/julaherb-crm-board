@@ -15,28 +15,31 @@ export interface SkuStat {
 }
 
 export const REAL_CAMPAIGN = {
-  day1: { date: '2026-05-16', rights: 7160 },
-  day2: { date: '2026-05-17', rights: 8709 },
-  totalRights: 15869,
-  uniqueUsers: 5485,
-  activeSkus: 78,
+  day1: { date: '2026-05-16', rights: 7160, users: 2624, skuActive: 75, weekday: 'เสาร์' },
+  day2: { date: '2026-05-17', rights: 8709, users: 2968, skuActive: 74, weekday: 'อาทิตย์' },
+  day3: { date: '2026-05-18', rights: 6432, users: 2509, skuActive: 72, weekday: 'จันทร์' },
+  totalRights: 22301,           // 3-day total
+  uniqueUsers: 7842,            // 3-day total
+  activeSkus: 78,               // union across 3 days
   totalSkus: 93,
   deadSkus: 15,
-  growthPct: 21.6, // D1 → D2
+  growthPct: 21.6,              // D1 → D2 (peak day)
+  d2d3Pct: -26.1,               // D2 → D3 drop
+  allTimeRights: 23264,         // since campaign start
 } as const
 
-// Top 10 from real DB
+// Top 10 from real DB — 3-day cumulative (16-17-18 พ.ค.)
 export const TOP_SKUS: SkuStat[] = [
-  { sku: 'L3-8G',   name: 'ดีดีครีมแตงโม',          tier: 'ซอง',  size: '8G',  productGroup: 'ดีดีครีมแตงโม', rights: 5274, users: 2175, rightsPerUser: 2.42 },
-  { sku: 'L4-8G',   name: 'เซรั่มลำไย',              tier: 'ซอง',  size: '8G',  productGroup: 'เซรั่มลำไย',     rights: 1472, users:  752, rightsPerUser: 1.96 },
-  { sku: 'L6-8G',   name: 'เซรั่มแครอท',             tier: 'ซอง',  size: '8G',  productGroup: 'เซรั่มแครอท',    rights: 1130, users:  590, rightsPerUser: 1.92 },
-  { sku: 'L10-7G',  name: 'กันแดดแตงโม 3D Aura',     tier: 'ซอง',  size: '7G',  productGroup: 'กันแดดแตงโม',    rights: 1010, users:  603, rightsPerUser: 1.68 },
-  { sku: 'L7-6G',   name: 'โดสส้มแดงกลูต้าซีไฮยา',   tier: 'ซอง',  size: '6G',  productGroup: 'โดสส้มแดง',      rights:  745, users:  370, rightsPerUser: 2.01 },
-  { sku: 'L13-10G', name: 'ครีมกุหลาบน้ำเงิน',       tier: 'ซอง',  size: '10G', productGroup: 'ครีมกุหลาบ',      rights:  739, users:  446, rightsPerUser: 1.66 },
-  { sku: 'C4-8G',   name: 'เซรั่มขิงดำซิงก์',         tier: 'ซอง',  size: '8G',  productGroup: 'เซรั่มขิงดำ',    rights:  555, users:  272, rightsPerUser: 2.04 },
-  { sku: 'L3-40G',  name: 'ดีดีครีมแตงโม',           tier: 'หลอด', size: '40G', productGroup: 'ดีดีครีมแตงโม', rights:  488, users:  397, rightsPerUser: 1.23 },
-  { sku: 'L19-8G',  name: 'มอยส์เจลฉ่ำบัว',          tier: 'ซอง',  size: '8G',  productGroup: 'มอยส์เจลฉ่ำบัว', rights:  422, users:  293, rightsPerUser: 1.44 },
-  { sku: 'L8B-6G',  name: 'อีอีคูชั่นแตงโม 02',       tier: 'ซอง',  size: '6G',  productGroup: 'อีอีคูชั่นแตงโม',rights:  293, users:  173, rightsPerUser: 1.69 },
+  { sku: 'L3-8G',   name: 'ดีดีครีมแตงโม',          tier: 'ซอง',  size: '8G',  productGroup: 'ดีดีครีมแตงโม', rights: 7431, users: 3187, rightsPerUser: 2.33 },
+  { sku: 'L4-8G',   name: 'เซรั่มลำไย',              tier: 'ซอง',  size: '8G',  productGroup: 'เซรั่มลำไย',     rights: 2164, users: 1134, rightsPerUser: 1.91 },
+  { sku: 'L6-8G',   name: 'เซรั่มแครอท',             tier: 'ซอง',  size: '8G',  productGroup: 'เซรั่มแครอท',    rights: 1600, users:  873, rightsPerUser: 1.83 },
+  { sku: 'L10-7G',  name: 'กันแดดแตงโม 3D Aura',     tier: 'ซอง',  size: '7G',  productGroup: 'กันแดดแตงโม',    rights: 1523, users:  894, rightsPerUser: 1.70 },
+  { sku: 'L7-6G',   name: 'โดสส้มแดงกลูต้าซีไฮยา',   tier: 'ซอง',  size: '6G',  productGroup: 'โดสส้มแดง',      rights: 1080, users:  549, rightsPerUser: 1.97 },
+  { sku: 'L13-10G', name: 'ครีมกุหลาบน้ำเงิน',       tier: 'ซอง',  size: '10G', productGroup: 'ครีมกุหลาบ',      rights: 1030, users:  627, rightsPerUser: 1.64 },
+  { sku: 'C4-8G',   name: 'เซรั่มขิงดำซิงก์',         tier: 'ซอง',  size: '8G',  productGroup: 'เซรั่มขิงดำ',    rights:  751, users:  402, rightsPerUser: 1.87 },
+  { sku: 'L3-40G',  name: 'ดีดีครีมแตงโม',           tier: 'หลอด', size: '40G', productGroup: 'ดีดีครีมแตงโม', rights:  690, users:  566, rightsPerUser: 1.22 },
+  { sku: 'L19-8G',  name: 'มอยส์เจลฉ่ำบัว',          tier: 'ซอง',  size: '8G',  productGroup: 'มอยส์เจลฉ่ำบัว', rights:  586, users:  407, rightsPerUser: 1.44 },
+  { sku: 'L8B-6G',  name: 'อีอีคูชั่นแตงโม 02',       tier: 'ซอง',  size: '6G',  productGroup: 'อีอีคูชั่นแตงโม',rights:  402, users:  253, rightsPerUser: 1.59 },
 ]
 
 // ── Cross-size product groups (same product, different sizes) ──

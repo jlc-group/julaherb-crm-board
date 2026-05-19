@@ -2,10 +2,18 @@
 
 import { useMemo, useState } from 'react'
 import {
-  buildSkuTable, applyTierFilter, sortRows, toCsv,
+  buildSkuTable, applyTierFilter, sortRows, toCsv, rangeToDay,
   type SkuRow, type SortKey, type SortDir, type TierFilter,
 } from '@/lib/sku-redemption'
+import DateRangeFilter, { computeRange, type DateRange } from '@/components/ui/DateRangeFilter'
 import { numFmt } from '@/lib/utils'
+
+const CAMPAIGN_START = '2026-05-16'
+const CAMPAIGN_END   = '2026-05-18'
+const DEFAULT_RANGE: DateRange = (() => {
+  const r = computeRange('campaign', new Date(CAMPAIGN_END), CAMPAIGN_START)
+  return { preset: 'campaign', ...r }
+})()
 
 const TIER_OPTIONS: { key: TierFilter; label: string; icon?: string }[] = [
   { key: 'all',    label: 'ทั้งหมด' },
@@ -18,11 +26,12 @@ const TIER_OPTIONS: { key: TierFilter; label: string; icon?: string }[] = [
 const COLS: { key: SortKey; label: string; align?: 'left' | 'right' | 'center'; width?: string }[] = [
   { key: 'seq',            label: '#',          align: 'center', width: '40px' },
   { key: 'sku',            label: 'SKU',        align: 'left',   width: '90px' },
-  // ชื่อ column — not sortable directly (use sku key as placeholder, but we'll render plainly)
-  { key: 'price',          label: 'ราคา',       align: 'right',  width: '70px' },
-  { key: 'pointsPerScan',  label: 'แต้ม',       align: 'center', width: '60px' },
-  { key: 'rightsPerScan',  label: 'สิทธิ์/scan', align: 'center', width: '80px' },
-  { key: 'rightsRedeemed', label: 'สิทธิ์ที่แลก', align: 'right',  width: '110px' },
+  // ชื่อ column — not sortable directly
+  { key: 'price',          label: 'ราคา',       align: 'right',  width: '60px' },
+  { key: 'rightsPerScan',  label: 'สิทธิ์/scan', align: 'center', width: '70px' },
+  { key: 'rightsRedeemed', label: 'สิทธิ์ที่แลก', align: 'right',  width: '95px' },
+  { key: 'users',          label: 'Users',      align: 'right',  width: '70px' },
+  { key: 'rightsPerUser',  label: 'สิทธิ์/คน',   align: 'right',  width: '75px' },
   { key: 'sharePct',       label: '% Share',    align: 'left' },
 ]
 
@@ -31,11 +40,13 @@ const PER_PAGE = 25
 export default function ProductMasterTable() {
   const [search, setSearch] = useState('')
   const [tier, setTier]     = useState<TierFilter>('all')
+  const [dateRange, setDateRange] = useState<DateRange>(DEFAULT_RANGE)
   const [sortKey, setSortKey] = useState<SortKey>('rightsRedeemed')
   const [sortDir, setSortDir] = useState<SortDir>('desc')
   const [page, setPage] = useState(0)
 
-  const base = useMemo(() => buildSkuTable(), [])
+  const day = useMemo(() => rangeToDay(dateRange.from, dateRange.to), [dateRange.from, dateRange.to])
+  const base = useMemo(() => buildSkuTable(day), [day])
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
@@ -54,7 +65,8 @@ export default function ProductMasterTable() {
   const pageData = filtered.slice(page * PER_PAGE, (page + 1) * PER_PAGE)
 
   // Reset to page 0 on filter changes
-  useMemo(() => { setPage(0) }, [search, tier, sortKey, sortDir])
+  useMemo(() => { setPage(0) }, [search, tier, day, sortKey, sortDir])
+  const isSpecificDay = day !== 'all'
 
   function toggleSort(key: SortKey) {
     if (sortKey === key) {
@@ -99,6 +111,14 @@ export default function ProductMasterTable() {
           <i className="ti ti-download mr-1" /> Export CSV
         </button>
       </div>
+
+      {/* Date selector — same UX as Overview */}
+      <DateRangeFilter
+        value={dateRange}
+        onChange={setDateRange}
+        minDate={CAMPAIGN_START}
+        maxDate={CAMPAIGN_END}
+      />
 
       {/* Search + Tier filters */}
       <div className="flex flex-wrap items-center gap-2">
@@ -155,25 +175,36 @@ export default function ProductMasterTable() {
                 ไม่พบสินค้าที่ตรงกับเงื่อนไข
               </td></tr>
             )}
-            {pageData.map((r, idx) => (
+            {pageData.map((r) => (
               <tr key={r.sku} className="border-t border-[var(--border-soft)] hover:bg-[var(--green-50)]/40 transition">
                 <td className="text-center py-2 px-2 text-[var(--text-muted)]">{r.seq}</td>
                 <td className="py-2 px-2 font-mono text-[11px] text-[var(--green-700)] font-semibold">{r.sku}</td>
-                <td className="py-2 px-2 max-w-[280px]">
+                <td className="py-2 px-2 max-w-[260px]">
                   <div className="truncate font-medium text-[var(--dark)]" title={r.fullName}>{r.displayName}</div>
                   <div className="truncate text-[10px] text-[var(--text-muted)]">{r.priceCategory}</div>
                 </td>
                 <td className="text-right py-2 px-2 num text-[var(--text)]">{r.price}฿</td>
-                <td className="text-center py-2 px-2 num">{r.pointsPerScan}</td>
                 <td className="text-center py-2 px-2 num">
                   <span className="chip chip-gray" style={{ minWidth: 28, justifyContent: 'center' }}>{r.rightsPerScan}</span>
                 </td>
                 <td className={`text-right py-2 px-2 num font-bold ${r.rightsRedeemed > 0 ? 'text-[var(--dark)]' : 'text-[var(--text-muted)]'}`}>
                   {numFmt(r.rightsRedeemed)}
                 </td>
+                <td className={`text-right py-2 px-2 num ${r.users > 0 ? 'text-[var(--text)]' : 'text-[var(--text-muted)]'}`}>
+                  {numFmt(r.users)}
+                </td>
+                <td className="text-right py-2 px-2 num">
+                  {r.rightsPerUser > 0 ? (
+                    <span className={`font-bold ${r.rightsPerUser >= 2 ? 'text-[var(--green-700)]' : 'text-[var(--text-secondary)]'}`}>
+                      {r.rightsPerUser.toFixed(2)}
+                    </span>
+                  ) : (
+                    <span className="text-[var(--text-muted)]">—</span>
+                  )}
+                </td>
                 <td className="py-2 px-2">
                   <div className="flex items-center gap-2">
-                    <div className="progress flex-1" style={{ height: 6, minWidth: 60 }}>
+                    <div className="progress flex-1" style={{ height: 6, minWidth: 50 }}>
                       <div className="progress-fill" style={{ width: `${Math.max(0.5, r.sharePct * 3)}%` }} />
                     </div>
                     <span className="text-[10.5px] num font-bold text-[var(--green-800)] w-10 text-right">
@@ -190,9 +221,12 @@ export default function ProductMasterTable() {
           {filtered.length > 0 && (
             <tfoot>
               <tr className="border-t-2 border-[var(--green-200)] bg-[var(--green-50)] font-bold text-[var(--dark)]">
-                <td colSpan={6} className="text-right py-2 px-2 text-[11px] uppercase tracking-wider">รวม ({filtered.length} SKU)</td>
+                <td colSpan={5} className="text-right py-2 px-2 text-[11px] uppercase tracking-wider">รวม ({filtered.length} SKU)</td>
                 <td className="text-right py-2 px-2 num">{numFmt(totalRights)}</td>
-                <td className="py-2 px-2 num text-[var(--green-700)]">{numFmt(totalUsers)} users</td>
+                <td className="text-right py-2 px-2 num text-[var(--green-700)]">{numFmt(totalUsers)}</td>
+                <td className="text-right py-2 px-2 num text-[var(--green-800)]">
+                  {totalUsers > 0 ? (totalRights / totalUsers).toFixed(2) : '—'}
+                </td>
                 <td></td>
               </tr>
             </tfoot>

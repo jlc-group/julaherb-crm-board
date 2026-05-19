@@ -11,6 +11,11 @@ import ChartCard from '@/components/ui/ChartCard'
 import InsightInline from '@/components/ui/InsightInline'
 import InsightCard from '@/components/ui/InsightCard'
 import ProductMasterTable from '@/components/ui/ProductMasterTable'
+import DailyCampaignBreakdown from '@/components/ui/DailyCampaignBreakdown'
+import HeroSkuCard from '@/components/ui/HeroSkuCard'
+import ParetoChart from '@/components/ui/ParetoChart'
+import FirstScanCard from '@/components/ui/FirstScanCard'
+import CrossSizeMatrix from '@/components/ui/CrossSizeMatrix'
 import { numFmt } from '@/lib/utils'
 import { buildSkuTable, getTierBuckets } from '@/lib/sku-redemption'
 import { REAL_CAMPAIGN } from '@/lib/real-data'
@@ -61,6 +66,12 @@ export default function ProductsTab() {
       </div>
 
       <InsightInline html={`<b>${tiers[0]?.skuCount || 0} SKU</b> ระดับ <b>1 สิทธิ์</b> (ซอง) สร้างสิทธิ์ <b>${tiers[0]?.sharePct.toFixed(0) || 0}%</b> ของแคมเปญ — sachet-driven ชัดเจน`} />
+
+      {/* ── Hero SKU + Concentration Risk ── */}
+      <HeroSkuCard />
+
+      {/* ── Pareto Chart ── */}
+      <ParetoChart />
 
       {/* ── Charts row: Funnel + Donut ── */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -128,6 +139,15 @@ export default function ProductsTab() {
           <InsightInline html={`<b>Tier 1 สิทธิ์</b> ครอง <b>${tiers[0]?.sharePct.toFixed(0) || 0}%</b> — โอกาส grow premium tier ผ่าน bundling`} />
         </ChartCard>
       </div>
+
+      {/* ── First-scan Entry + Cross-size ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <FirstScanCard />
+        <CrossSizeMatrix />
+      </div>
+
+      {/* ── Daily Campaign Breakdown (3-day per-SKU) ── */}
+      <DailyCampaignBreakdown />
 
       {/* ── 97 SKU Master Table ── */}
       <ProductMasterTable />

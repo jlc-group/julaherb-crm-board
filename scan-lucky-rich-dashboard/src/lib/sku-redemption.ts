@@ -1,30 +1,65 @@
-// Joins 97-SKU master (Excel) with real redemption data (TOP_SKUS) into a single table
+// Joins 97-SKU master (Excel) with real redemption data (TOP_SKUS / per-day) into a single table
 import { PRODUCTS_MASTER, type ProductMaster } from '@/config/products-real'
 import { TOP_SKUS, REAL_CAMPAIGN } from '@/lib/real-data'
+import { PER_SKU_DAILY, DAY_TOTALS, DAILY_TOP10, type DayKey } from '@/lib/per-sku-daily'
 
 export type SkuStatus = 'hero' | 'active' | 'dead'
+export type DayFilter = 'all' | DayKey
+
+// Map a date range (from-to) to day key. If single day matches 16/17/18 → that day. Else 'all'
+export function rangeToDay(from: string, to: string): DayFilter {
+  if (from !== to) return 'all'
+  const d = from.split('-')[2]  // "16" | "17" | "18"
+  if (d === '16' || d === '17' || d === '18') return d as DayKey
+  return 'all'
+}
 
 export interface SkuRow extends ProductMaster {
-  rightsRedeemed: number   // 0 if not in TOP_SKUS
+  rightsRedeemed: number   // 0 if no data
   users: number
   rightsPerUser: number    // observed avg
-  sharePct: number         // % ของ campaign total
+  sharePct: number         // % ของ total ของช่วงที่เลือก
   status: SkuStatus
 }
 
 const TOP_BY_SKU = new Map(TOP_SKUS.map(s => [s.sku, s]))
 const TOP_SET    = new Set(TOP_SKUS.map(s => s.sku))
 
-export function buildSkuTable(): SkuRow[] {
+export function buildSkuTable(day: DayFilter = 'all'): SkuRow[] {
+  // All-time mode → cumulative TOP_SKUS values
+  if (day === 'all') {
+    return PRODUCTS_MASTER.map((p): SkuRow => {
+      const top = TOP_BY_SKU.get(p.sku)
+      const rights = top?.rights ?? 0
+      const users  = top?.users  ?? 0
+      const sharePct = (rights / REAL_CAMPAIGN.totalRights) * 100
+      const status: SkuStatus =
+        TOP_SET.has(p.sku) ? 'hero' :
+        rights > 0         ? 'active' :
+                             'dead'
+      return {
+        ...p,
+        rightsRedeemed: rights,
+        users,
+        rightsPerUser: users > 0 ? rights / users : 0,
+        sharePct,
+        status,
+      }
+    })
+  }
+
+  // Day-specific mode → use per-day values
+  const dayTotal = DAY_TOTALS[day]
+  const top10Set = new Set(DAILY_TOP10[day])
   return PRODUCTS_MASTER.map((p): SkuRow => {
-    const top = TOP_BY_SKU.get(p.sku)
-    const rights = top?.rights ?? 0
-    const users  = top?.users  ?? 0
-    const sharePct = (rights / REAL_CAMPAIGN.totalRights) * 100
+    const dayData = PER_SKU_DAILY[p.sku]?.[day]
+    const rights = dayData?.r ?? 0
+    const users  = dayData?.u ?? 0
+    const sharePct = dayTotal > 0 ? (rights / dayTotal) * 100 : 0
     const status: SkuStatus =
-      TOP_SET.has(p.sku) ? 'hero' :
-      rights > 0         ? 'active' :
-                           'dead'
+      top10Set.has(p.sku) ? 'hero' :
+      rights > 0          ? 'active' :
+                            'dead'
     return {
       ...p,
       rightsRedeemed: rights,
@@ -49,7 +84,7 @@ export function applyTierFilter(rows: SkuRow[], tier: TierFilter): SkuRow[] {
   }
 }
 
-export type SortKey = 'seq' | 'sku' | 'price' | 'pointsPerScan' | 'rightsPerScan' | 'rightsRedeemed' | 'sharePct'
+export type SortKey = 'seq' | 'sku' | 'price' | 'pointsPerScan' | 'rightsPerScan' | 'rightsRedeemed' | 'users' | 'rightsPerUser' | 'sharePct'
 export type SortDir = 'asc' | 'desc'
 
 export function sortRows(rows: SkuRow[], key: SortKey, dir: SortDir): SkuRow[] {
@@ -96,13 +131,13 @@ export function getTierBuckets(rows: SkuRow[]): TierBucket[] {
 }
 
 export function toCsv(rows: SkuRow[]): string {
-  const headers = ['ลำดับ', 'SKU', 'หมวดราคา', 'ชื่อเต็ม', 'ชื่อเล่น', 'ราคา', 'แต้ม', 'สิทธิ์/scan', 'สิทธิ์ที่แลกแล้ว', 'Users', '% Share', 'Status']
+  const headers = ['ลำดับ', 'SKU', 'หมวดราคา', 'ชื่อเต็ม', 'ชื่อเล่น', 'ราคา', 'แต้ม', 'สิทธิ์/scan', 'สิทธิ์ที่แลกแล้ว', 'Users', 'สิทธิ์/คน', '% Share', 'Status']
   const lines = [headers.join(',')]
   for (const r of rows) {
     const cells = [
       r.seq, r.sku, r.priceCategory, r.fullName, r.displayName,
       r.price, r.pointsPerScan, r.rightsPerScan,
-      r.rightsRedeemed, r.users, r.sharePct.toFixed(2), r.status,
+      r.rightsRedeemed, r.users, r.rightsPerUser.toFixed(2), r.sharePct.toFixed(2), r.status,
     ].map(v => {
       const s = String(v ?? '')
       return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s

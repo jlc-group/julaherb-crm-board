@@ -9,12 +9,13 @@ interface SidebarProps {
 }
 
 const TABS: { id: TabId; label: string; icon: string }[] = [
-  { id: 'overview',  label: 'Scan Overview',         icon: 'ti-chart-pie' },
-  { id: 'customers', label: 'Customers',             icon: 'ti-users' },
-  { id: 'products',  label: 'Products',              icon: 'ti-package' },
-  { id: 'channels',  label: 'Channel & Attribution', icon: 'ti-building-store' },
-  { id: 'operations',label: 'Operations',            icon: 'ti-trophy' },
-  { id: 'risk',      label: 'Risk Watch',            icon: 'ti-shield-check' },
+  { id: 'overview',   label: 'Scan Overview', icon: 'ti-chart-pie' },
+  { id: 'customers',  label: 'Customers',     icon: 'ti-users' },
+  { id: 'products',   label: 'Products',      icon: 'ti-package' },
+  // Channel & Attribution — ปิดไว้ก่อนเพราะยังไม่มี data จริงในระบบ
+  // { id: 'channels', label: 'Channel & Attribution', icon: 'ti-building-store' },
+  { id: 'operations', label: 'Operations',    icon: 'ti-trophy' },
+  { id: 'risk',       label: 'Risk Watch',    icon: 'ti-shield-check' },
 ]
 
 export default function Sidebar({ activeTab, onTabChange }: SidebarProps) {
