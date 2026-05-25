@@ -16,6 +16,7 @@ const TABS: { id: TabId; label: string; icon: string }[] = [
   // { id: 'channels', label: 'Channel & Attribution', icon: 'ti-building-store' },
   { id: 'operations', label: 'Operations',    icon: 'ti-trophy' },
   { id: 'risk',       label: 'Risk Watch',    icon: 'ti-shield-check' },
+  { id: 'print-list', label: 'Print List',    icon: 'ti-printer' },
 ]
 
 export default function Sidebar({ activeTab, onTabChange }: SidebarProps) {

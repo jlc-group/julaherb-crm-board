@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700;800;900&family=Mali:wght@500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700;800;900&family=Mali:wght@500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap');
 @import url('https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css');
 
 :root {
@@ -425,3 +425,28 @@ body {
   100% { opacity: 1; transform: translateY(0); }
 }
 .float-up { animation: float-up 0.4s ease-out backwards; }
+
+/* ── Print layout for Slip List (PrintListTab) ───────────────────────── */
+@media print {
+  @page {
+    size: A4;
+    margin: 8mm;
+  }
+
+  /* Hide everything outside print area */
+  body * { visibility: hidden; }
+  .print-area, .print-area * { visibility: visible; }
+  .print-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+  .print\:hidden { display: none !important; }
+
+  /* Slip cards — keep together on one page */
+  .slip-card {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+}

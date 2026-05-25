@@ -84,16 +84,14 @@ export default function ProductsTab() {
 
   return (
     <div className="space-y-4">
-      {/* ── 1. TAB HEADER ── */}
-      <TabHeader
-        icon="📦"
-        title="Products"
-        subtitle="SKU analytics — 97 SKUs • Hero / Tier / Cross-size / Master table"
-      />
-
-      {/* ── 2. UNIFIED DATE RANGE (sticky) ── */}
-      <div className="sticky top-0 z-30 -mx-1 px-1 pt-1 pb-2"
+      {/* ── 1+2. STICKY HEADER (Title + Date range ติดมาด้วยกัน) ── */}
+      <div className="sticky top-0 z-30 -mx-6 px-6 pt-6 pb-3 space-y-3"
            style={{ background: 'var(--bg)', boxShadow: '0 4px 12px -8px rgba(15,23,42,0.15)' }}>
+        <TabHeader
+          icon="📦"
+          title="Products"
+          subtitle="SKU analytics — 97 SKUs • Hero / Tier / Cross-size / Master table"
+        />
         <UnifiedDateRange value={range} onChange={setRange} today={new Date('2026-05-24')} />
       </div>
 
