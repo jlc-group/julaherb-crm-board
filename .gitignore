@@ -1,0 +1,18 @@
+# Node deps
+node_modules/
+
+# Local agent / IDE config
+.claude/
+
+# Dev server logs
+*.log
+next-dev.err.log
+next-dev.out.log
+
+# Archives + scratch
+_archive_html_mockup_*/
+prompt edit/
+
+# OS
+.DS_Store
+Thumbs.db

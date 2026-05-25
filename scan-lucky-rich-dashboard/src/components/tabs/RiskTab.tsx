@@ -8,6 +8,8 @@ import InsightInline from '@/components/ui/InsightInline'
 import InsightCard from '@/components/ui/InsightCard'
 import DataTable from '@/components/ui/DataTable'
 import VerificationPanel from '@/components/ui/VerificationPanel'
+import HeavyUsersPanel from '@/components/ui/HeavyUsersPanel'
+import SupportCasesPanel from '@/components/ui/SupportCasesPanel'
 import { numFmt } from '@/lib/utils'
 import * as mock from '@/lib/mock-data'
 
@@ -144,6 +146,12 @@ export default function RiskTab() {
       {/* ── Chart Grid ── */}
       {/* Verification Panel (moved from Overview) */}
       <VerificationPanel />
+
+      {/* ── Heavy Users + Support Cases (from Daily Update data) ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+        <HeavyUsersPanel />
+        <SupportCasesPanel />
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
         {/* Risk Score Ranking (Top 10) */}

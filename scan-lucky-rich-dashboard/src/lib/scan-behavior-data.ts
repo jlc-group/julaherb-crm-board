@@ -217,31 +217,43 @@ export const VERIFICATION_KPIS = {
 // ============================================================
 
 export interface BaselineRow {
-  day: 16 | 17 | 18
+  day: 16 | 17 | 18 | 19 | 20
   mar:  { scans: number; weekday: string }
   apr:  { scans: number; weekday: string }
   may:  { scans: number; weekday: string }  // campaign month
 }
 
+// ✅ ใช้ "สแกนสำเร็จได้แต้ม" (points > 0) — apples-to-apples comparison
+//    เพื่อ Δ% เทียบกับ มี.ค./เม.ย. ตรงเปรียบเทียบโดยตรง
+//    (เก่าเคยใส่ total attempts สำหรับ พ.ค. = ผิด)
 export const BASELINE_3MO: BaselineRow[] = [
   { day: 16,
-    mar: { scans: 7452, weekday: 'จันทร์' },
-    apr: { scans: 7375, weekday: 'พฤหัส' },
-    may: { scans: 8082, weekday: 'เสาร์' } },
+    mar: { scans: 6851, weekday: 'จันทร์' },
+    apr: { scans: 6726, weekday: 'พฤหัส' },
+    may: { scans: 7163, weekday: 'เสาร์' } },         // +6.5% vs เม.ย., +4.6% vs มี.ค.
   { day: 17,
-    mar: { scans: 8236, weekday: 'อังคาร' },
-    apr: { scans: 8004, weekday: 'ศุกร์' },
-    may: { scans: 9772, weekday: 'อาทิตย์' } },
+    mar: { scans: 7492, weekday: 'อังคาร' },
+    apr: { scans: 7208, weekday: 'ศุกร์' },
+    may: { scans: 8713, weekday: 'อาทิตย์' } },        // +20.9% / +16.3%
   { day: 18,
-    mar: { scans: 7841, weekday: 'พุธ' },
-    apr: { scans: 9524, weekday: 'เสาร์' },
-    may: { scans: 7358, weekday: 'จันทร์' } },
+    mar: { scans: 7112, weekday: 'พุธ' },
+    apr: { scans: 8567, weekday: 'เสาร์' },
+    may: { scans: 6459, weekday: 'จันทร์' } },         // −24.6% / −9.2%
+  { day: 19,
+    mar: { scans: 6634, weekday: 'พฤหัส' },
+    apr: { scans: 9254, weekday: 'อาทิตย์' },
+    may: { scans: 5707, weekday: 'อังคาร' } },         // −38.3% / −14.0% (outage 6h)
+  { day: 20,
+    mar: { scans: 6769, weekday: 'ศุกร์' },
+    apr: { scans: 7740, weekday: 'จันทร์' },
+    may: { scans: 7666, weekday: 'พุธ' } },            // −1.0% / +13.3%
 ]
+// รวม: Mar 34,858 / Apr 39,495 / May 35,708 → vs Apr −9.6%, vs Mar +2.4%
 
 export const BASELINE_TOTALS = {
-  mar: BASELINE_3MO.reduce((s, r) => s + r.mar.scans, 0),  // 23,529
-  apr: BASELINE_3MO.reduce((s, r) => s + r.apr.scans, 0),  // 24,903
-  may: BASELINE_3MO.reduce((s, r) => s + r.may.scans, 0),  // 25,212
+  mar: BASELINE_3MO.reduce((s, r) => s + r.mar.scans, 0),
+  apr: BASELINE_3MO.reduce((s, r) => s + r.apr.scans, 0),
+  may: BASELINE_3MO.reduce((s, r) => s + r.may.scans, 0),
 }
 
 // ============================================================

@@ -2,15 +2,24 @@
 import { PRODUCTS_MASTER, type ProductMaster } from '@/config/products-real'
 import { TOP_SKUS, REAL_CAMPAIGN } from '@/lib/real-data'
 import { PER_SKU_DAILY, DAY_TOTALS, DAILY_TOP10, type DayKey } from '@/lib/per-sku-daily'
+import LIVE from '@/lib/live-data.json'
+
+// Build cumulative SKU map from live-data (5-day totals — auto-updates with live)
+const CUM_BY_SKU = new Map<string, { rights: number; users: number }>()
+for (const s of (LIVE.snapshot.cumulativeSkus || []) as any[]) {
+  const m = s.sku.match(/\(([^)]+)\)\s*$/)
+  const code = m ? m[1].trim() : s.sku
+  CUM_BY_SKU.set(code, { rights: s.rights, users: s.users })
+}
 
 export type SkuStatus = 'hero' | 'active' | 'dead'
-export type DayFilter = 'all' | DayKey
+export type DayFilter = 'all' | DayKey | DayKey[]
 
-// Map a date range (from-to) to day key. If single day matches 16/17/18 → that day. Else 'all'
+// Map a date range (from-to) to day key. If single day matches loaded campaign data, return that day. Else 'all'
 export function rangeToDay(from: string, to: string): DayFilter {
   if (from !== to) return 'all'
-  const d = from.split('-')[2]  // "16" | "17" | "18"
-  if (d === '16' || d === '17' || d === '18') return d as DayKey
+  const d = from.split('-')[2]
+  if (d === '16' || d === '17' || d === '18' || d === '19' || d === '20' || d === '21' || d === '22' || d === '23' || d === '24') return d as DayKey
   return 'all'
 }
 
@@ -26,13 +35,45 @@ const TOP_BY_SKU = new Map(TOP_SKUS.map(s => [s.sku, s]))
 const TOP_SET    = new Set(TOP_SKUS.map(s => s.sku))
 
 export function buildSkuTable(day: DayFilter = 'all'): SkuRow[] {
-  // All-time mode → cumulative TOP_SKUS values
+  // All-time mode → use cumulative values across all days (full 93 SKUs)
   if (day === 'all') {
     return PRODUCTS_MASTER.map((p): SkuRow => {
-      const top = TOP_BY_SKU.get(p.sku)
-      const rights = top?.rights ?? 0
-      const users  = top?.users  ?? 0
+      const cum = CUM_BY_SKU.get(p.sku)
+      const rights = cum?.rights ?? 0
+      const users  = cum?.users  ?? 0
       const sharePct = (rights / REAL_CAMPAIGN.totalRights) * 100
+      const status: SkuStatus =
+        TOP_SET.has(p.sku) ? 'hero' :
+        rights > 0         ? 'active' :
+                             'dead'
+      return {
+        ...p,
+        rightsRedeemed: rights,
+        users,
+        rightsPerUser: users > 0 ? rights / users : 0,
+        sharePct,
+        status,
+      }
+    })
+  }
+
+  // Multiple-days mode (array of DayKey)
+  if (Array.isArray(day)) {
+    const dayKeys = day
+    let total = 0
+    const sumByKey: Record<string, { r: number; u: number }> = {}
+    for (const p of PRODUCTS_MASTER) {
+      let r = 0, u = 0
+      for (const dk of dayKeys) {
+        const v = PER_SKU_DAILY[p.sku]?.[dk]
+        if (v) { r += v.r; u += v.u }
+      }
+      sumByKey[p.sku] = { r, u }
+      total += r
+    }
+    return PRODUCTS_MASTER.map((p): SkuRow => {
+      const { r: rights, u: users } = sumByKey[p.sku]
+      const sharePct = total > 0 ? (rights / total) * 100 : 0
       const status: SkuStatus =
         TOP_SET.has(p.sku) ? 'hero' :
         rights > 0         ? 'active' :

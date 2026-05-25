@@ -1,0 +1,238 @@
+{
+  "summary": {
+    "totalScansSaversure": 42298,
+    "totalScansParsed": 41862,
+    "totalSpecTickets": 56211,
+    "multiplier": 1.343,
+    "top1": {
+      "sku": "L3-8G",
+      "name": "ดีดีครีมแตงโม 8 กรัม",
+      "scans": 14148,
+      "specTickets": 14148,
+      "share": 25.2
+    },
+    "pareto": {
+      "top1": 25.2,
+      "top3": 44.1,
+      "top10": 71.8
+    },
+    "tierMix": {
+      "tier1": {
+        "skus": 44,
+        "scans": 37547,
+        "spec": 37547,
+        "share": 66.8
+      },
+      "tier2": {
+        "skus": 5,
+        "scans": 955,
+        "spec": 1910,
+        "share": 3.4
+      },
+      "tier3plus": {
+        "skus": 30,
+        "scans": 3360,
+        "spec": 16754,
+        "share": 29.8
+      }
+    }
+  },
+  "perDay": [
+    {
+      "day": "16",
+      "dow": "เสาร์",
+      "scans": 7160,
+      "specTickets": 9308,
+      "dupSelf": 660,
+      "dupOther": 78,
+      "notFound": 181,
+      "totalAttempts": 8079,
+      "uniqueUsers": 2624,
+      "newMembers": 440
+    },
+    {
+      "day": "17",
+      "dow": "อาทิตย์",
+      "scans": 8713,
+      "specTickets": 11585,
+      "dupSelf": 755,
+      "dupOther": 304,
+      "notFound": 0,
+      "totalAttempts": 9772,
+      "uniqueUsers": 2968,
+      "newMembers": 460
+    },
+    {
+      "day": "18",
+      "dow": "จันทร์",
+      "scans": 6459,
+      "specTickets": 8615,
+      "dupSelf": 639,
+      "dupOther": 260,
+      "notFound": 0,
+      "totalAttempts": 7358,
+      "uniqueUsers": 2509,
+      "newMembers": 480
+    },
+    {
+      "day": "19",
+      "dow": "อังคาร",
+      "scans": 5707,
+      "specTickets": 7832,
+      "dupSelf": 588,
+      "dupOther": 326,
+      "notFound": 0,
+      "totalAttempts": 6621,
+      "uniqueUsers": 1929,
+      "newMembers": 308,
+      "outage": "6 ชม. 02:49-09:00"
+    },
+    {
+      "day": "20",
+      "dow": "พุธ",
+      "scans": 7669,
+      "specTickets": 10335,
+      "dupSelf": 654,
+      "dupOther": 271,
+      "notFound": 0,
+      "totalAttempts": 8594,
+      "uniqueUsers": 2618,
+      "newMembers": 413
+    },
+    {
+      "day": "21",
+      "dow": "พฤหัสบดี",
+      "scans": 6590,
+      "specTickets": 8536,
+      "dupSelf": 617,
+      "dupOther": 245,
+      "notFound": 0,
+      "totalAttempts": 7452,
+      "uniqueUsers": 2470,
+      "newMembers": 403,
+      "outage": "2 ชม. 03:00-04:59"
+    }
+  ],
+  "top15": [
+    {
+      "sku": "L3-8G",
+      "name": "ดีดีครีมแตงโม 8 กรัม",
+      "perScan": 1,
+      "scans": 14148,
+      "specTickets": 14148,
+      "share": 25.2
+    },
+    {
+      "sku": "L3-40G",
+      "name": "ดีดีครีมแตงโม 40 กรัม",
+      "perScan": 5,
+      "scans": 1285,
+      "specTickets": 6425,
+      "share": 11.4
+    },
+    {
+      "sku": "L4-8G",
+      "name": "เซรั่มลำไยใหม่ 8 กรัม",
+      "perScan": 1,
+      "scans": 4210,
+      "specTickets": 4210,
+      "share": 7.5
+    },
+    {
+      "sku": "L6-8G",
+      "name": "เซรั่มแครอทใหม่ 8 กรัม",
+      "perScan": 1,
+      "scans": 3155,
+      "specTickets": 3155,
+      "share": 5.6
+    },
+    {
+      "sku": "L10-7G",
+      "name": "กันแดดแตงโม 3D ออร่า 7 กรัม",
+      "perScan": 1,
+      "scans": 2756,
+      "specTickets": 2756,
+      "share": 4.9
+    },
+    {
+      "sku": "L4-40G",
+      "name": "เซรั่มลำไยใหม่ 40 กรัม",
+      "perScan": 5,
+      "scans": 457,
+      "specTickets": 2285,
+      "share": 4.1
+    },
+    {
+      "sku": "L6-40G",
+      "name": "เซรั่มแครอทใหม่ 40 กรัม",
+      "perScan": 5,
+      "scans": 422,
+      "specTickets": 2110,
+      "share": 3.8
+    },
+    {
+      "sku": "L7-6G",
+      "name": "โดสส้มแดงกลูต้าซีไฮยา 6 กรัม",
+      "perScan": 1,
+      "scans": 1835,
+      "specTickets": 1835,
+      "share": 3.3
+    },
+    {
+      "sku": "L13-10G",
+      "name": "ครีมกุหลาบน้ำเงิน 10 กรัม",
+      "perScan": 1,
+      "scans": 1772,
+      "specTickets": 1772,
+      "share": 3.2
+    },
+    {
+      "sku": "L10-30G",
+      "name": "กันแดดแตงโม 3D ออร่า 30 กรัม",
+      "perScan": 5,
+      "scans": 331,
+      "specTickets": 1655,
+      "share": 2.9
+    },
+    {
+      "sku": "C4-8G",
+      "name": "เซรั่มขิงดำซิงก์ 8 กรัม",
+      "perScan": 1,
+      "scans": 1351,
+      "specTickets": 1351,
+      "share": 2.4
+    },
+    {
+      "sku": "D3-70G",
+      "name": "ยาสีฟันเจเด้นท์ สูตรออริจินัลเฟรช ใหม่! 70 กรัม",
+      "perScan": 2,
+      "scans": 613,
+      "specTickets": 1226,
+      "share": 2.2
+    },
+    {
+      "sku": "L19-8G",
+      "name": "มอยส์เจลฉ่ำบัว 8 กรัม",
+      "perScan": 1,
+      "scans": 1129,
+      "specTickets": 1129,
+      "share": 2
+    },
+    {
+      "sku": "L7-30G",
+      "name": "โดสส้มแดงกลูต้าซีไฮยา 30 กรัม",
+      "perScan": 5,
+      "scans": 185,
+      "specTickets": 925,
+      "share": 1.6
+    },
+    {
+      "sku": "L8B-6G",
+      "name": "อีอีคูชั่นแตงโม 02 Natural 6 กรัม",
+      "perScan": 1,
+      "scans": 786,
+      "specTickets": 786,
+      "share": 1.4
+    }
+  ]
+}

@@ -15,9 +15,9 @@ export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState<TabId>('overview')
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex h-screen overflow-hidden">
       <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
-      <main className="flex-1 ml-[var(--sidebar-width)] p-6 overflow-y-auto">
+      <main className="flex-1 ml-[var(--sidebar-width)] p-6 overflow-y-auto h-screen">
         {activeTab === 'overview' && <OverviewTab />}
         {activeTab === 'scan-behavior' && <ScanBehaviorTab />}
         {activeTab === 'customers' && <CustomersTab />}

@@ -28,7 +28,11 @@ const PRESETS: { key: DatePreset; label: string }[] = [
 ]
 
 function toISO(d: Date): string {
-  return d.toISOString().split('T')[0]
+  // Local date (avoid UTC shift causing -1 day)
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
 }
 
 function thaiShort(iso: string): string {
@@ -132,8 +136,8 @@ export default function DateRangeFilter({ value, onChange, minDate = '2026-05-16
         {showCustom && (
           <div
             ref={popRef}
-            className="absolute top-full left-0 mt-2 z-20 bg-white border border-gray-200 rounded-lg shadow-lg p-3 flex gap-2 items-end"
-            style={{ minWidth: 320 }}
+            className="absolute top-full left-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-xl p-3 flex gap-2 items-end"
+            style={{ minWidth: 340, zIndex: 1000 }}
           >
             <div>
               <label className="block text-[10px] text-gray-500 mb-1">จาก</label>

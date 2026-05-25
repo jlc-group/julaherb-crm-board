@@ -1,24 +1,27 @@
 'use client'
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import {
   Chart as ChartJS,
   CategoryScale, LinearScale, BarElement, LineElement, PointElement, ArcElement,
   Tooltip, Legend, Filler,
 } from 'chart.js'
-import { Doughnut } from 'react-chartjs-2'
-import KpiCard from '@/components/ui/KpiCard'
-import ChartCard from '@/components/ui/ChartCard'
-import InsightInline from '@/components/ui/InsightInline'
-import InsightCard from '@/components/ui/InsightCard'
-import ProductMasterTable from '@/components/ui/ProductMasterTable'
-import DailyCampaignBreakdown from '@/components/ui/DailyCampaignBreakdown'
 import HeroSkuCard from '@/components/ui/HeroSkuCard'
-import ParetoChart from '@/components/ui/ParetoChart'
-import FirstScanCard from '@/components/ui/FirstScanCard'
 import CrossSizeMatrix from '@/components/ui/CrossSizeMatrix'
-import { numFmt } from '@/lib/utils'
+import FirstScanCard from '@/components/ui/FirstScanCard'
+import ProductMasterTable from '@/components/ui/ProductMasterTable'
+import InsightInline from '@/components/ui/InsightInline'
+import ZoneTitle from '@/components/ui/ZoneTitle'
+import TabHeader from '@/components/ui/TabHeader'
+import UnifiedDateRange, { defaultRange, type DateRangeV2 } from '@/components/ui/UnifiedDateRange'
+import Top5SkuCard from '@/components/ui/Top5SkuCard'
+import SkuTrendLineChart from '@/components/ui/SkuTrendLineChart'
+import ApiSourceBadge from '@/components/ui/ApiSourceBadge'
+
 import { buildSkuTable, getTierBuckets } from '@/lib/sku-redemption'
-import { REAL_CAMPAIGN } from '@/lib/real-data'
+import { RANK_MOVEMENT } from '@/lib/daily-sku-data'
+import { DAILY_ENTRIES } from '@/lib/daily-update-data'
+import type { DayKey } from '@/lib/per-sku-daily'
+import { numFmt } from '@/lib/utils'
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, LineElement, PointElement, ArcElement, Tooltip, Legend, Filler)
 ChartJS.defaults.font.family = "'Noto Sans Thai', sans-serif"
@@ -26,139 +29,283 @@ ChartJS.defaults.font.size = 11
 ChartJS.defaults.color = '#6b7280'
 
 const TIER_COLORS: Record<string, string> = {
-  '1':     '#22c55e',  // green-500 — สิทธิ์น้อย / ซองเล็ก
-  '2':     '#16a34a',  // green-600 — กลาง
-  '3plus': '#facc15',  // yellow — premium / set
+  '1':     '#6366f1',
+  '2':     '#818cf8',
+  '3plus': '#a5b4fc',
+}
+
+const TREND_ICON: Record<string, { icon: string; color: string }> = {
+  up:    { icon: 'ti-trending-up',   color: '#10b981' },
+  down:  { icon: 'ti-trending-down', color: '#ef4444' },
+  flat:  { icon: 'ti-minus',         color: '#9ca3af' },
+  mixed: { icon: 'ti-arrows-shuffle', color: '#f59e0b' },
 }
 
 export default function ProductsTab() {
-  const allRows = useMemo(() => buildSkuTable(), [])
-  const tiers = useMemo(() => getTierBuckets(allRows), [allRows])
+  const [range, setRange] = useState<DateRangeV2>(() => defaultRange({ preset: 'campaign', today: new Date('2026-05-24') }))
+  const selectedDays = useMemo(
+    () => DAILY_ENTRIES.filter(d => d.date >= range.from && d.date <= range.to),
+    [range.from, range.to]
+  )
+  const day = selectedDays[selectedDays.length - 1] ?? DAILY_ENTRIES[DAILY_ENTRIES.length - 1]
+  // Compute full range day count (regardless of data availability) for label
+  const rangeDayCount = useMemo(() => {
+    const ms = new Date(range.to).getTime() - new Date(range.from).getTime()
+    return Math.round(ms / 86400000) + 1
+  }, [range.from, range.to])
+  const isMultiDay = rangeDayCount > 1
+  const dataLabel = selectedDays.length < rangeDayCount && selectedDays.length > 0
+    ? ` (มีข้อมูล ${selectedDays.length})`
+    : ''
+  const dayTag = isMultiDay
+    ? `${rangeDayCount} วัน${dataLabel}`
+    : `${range.from.split('-')[2]} พ.ค.`
 
-  const totalRightsClaimed = allRows.reduce((s, r) => s + r.rightsRedeemed, 0)
-  const totalSku  = allRows.length
-  const heroCount = allRows.filter(r => r.status === 'hero').length
-  const deadCount = allRows.filter(r => r.status === 'dead').length
+  // Convert selected DailyEntries to DayKey[] for buildSkuTable
+  const selectedDayKeys = useMemo<DayKey[]>(
+    () => selectedDays.map(d => d.date.split('-')[2] as DayKey),
+    [selectedDays]
+  )
+  const allRows = useMemo(
+    () => selectedDayKeys.length > 0 ? buildSkuTable(selectedDayKeys) : buildSkuTable('all'),
+    [selectedDayKeys]
+  )
+  const tiers = useMemo(() => getTierBuckets(allRows), [allRows])
+  const sortedByRights = useMemo(() => [...allRows].sort((a, b) => b.rightsRedeemed - a.rightsRedeemed), [allRows])
+
+  const totalSku = allRows.length
+  const deadCount = allRows.filter(r => r.rightsRedeemed === 0).length
+  const activeCount = totalSku - deadCount
+  const top1 = sortedByRights[0]
+  const totalRights = allRows.reduce((s, r) => s + r.rightsRedeemed, 0)
+  const top1Pct = totalRights > 0 ? (top1.rightsRedeemed / totalRights) * 100 : 0
+  const top10 = sortedByRights.slice(0, 10).reduce((s, r) => s + r.rightsRedeemed, 0)
+  const top10Pct = (top10 / totalRights) * 100
 
   return (
-    <div className="space-y-5">
-      {/* ── Top KPI Strip ── */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-        <KpiCard
-          label="SKU ทั้งหมด"
-          value={String(totalSku)}
-          sub={`Active ${totalSku - deadCount} • Dead ${deadCount}`}
-        />
-        <KpiCard
-          label="สิทธิ์ที่แลกแล้ว"
-          value={numFmt(totalRightsClaimed)}
-          sub={`จาก ${numFmt(REAL_CAMPAIGN.uniqueUsers)} users`}
-          gold
-        />
-        {tiers.map(t => (
-          <KpiCard
-            key={t.key}
-            label={`Tier: ${t.label}`}
-            value={`${t.skuCount} SKU`}
-            sub={`${numFmt(t.rightsClaimed)} สิทธิ์ • ${t.sharePct.toFixed(1)}%`}
-          />
-        ))}
+    <div className="space-y-4">
+      {/* ── 1. TAB HEADER ── */}
+      <TabHeader
+        icon="📦"
+        title="Products"
+        subtitle="SKU analytics — 97 SKUs • Hero / Tier / Cross-size / Master table"
+      />
+
+      {/* ── 2. UNIFIED DATE RANGE (sticky) ── */}
+      <div className="sticky top-0 z-30 -mx-1 px-1 pt-1 pb-2"
+           style={{ background: 'var(--bg)', boxShadow: '0 4px 12px -8px rgba(15,23,42,0.15)' }}>
+        <UnifiedDateRange value={range} onChange={setRange} today={new Date('2026-05-24')} />
       </div>
 
-      <InsightInline html={`<b>${tiers[0]?.skuCount || 0} SKU</b> ระดับ <b>1 สิทธิ์</b> (ซอง) สร้างสิทธิ์ <b>${tiers[0]?.sharePct.toFixed(0) || 0}%</b> ของแคมเปญ — sachet-driven ชัดเจน`} />
-
-      {/* ── Hero SKU + Concentration Risk ── */}
-      <HeroSkuCard />
-
-      {/* ── Pareto Chart ── */}
-      <ParetoChart />
-
-      {/* ── Charts row: Funnel + Donut ── */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Tier Funnel by rights-bucket */}
-        <ChartCard title="Tier Funnel (สิทธิ์ที่แลกตาม Tier)" icon="ti-arrow-big-down-lines">
-          <div className="flex flex-col items-center gap-3 py-4">
-            {tiers.map((t, i) => {
-              const maxRights = Math.max(...tiers.map(x => x.rightsClaimed)) || 1
-              const widthPct = Math.max(28, (t.rightsClaimed / maxRights) * 90)
-              const conv = i > 0 && tiers[0].rightsClaimed > 0
-                ? Math.round((t.rightsClaimed / tiers[0].rightsClaimed) * 100)
-                : null
-              return (
-                <div key={t.key} className="w-full flex flex-col items-center">
-                  {i > 0 && conv !== null && (
-                    <div className="text-[10px] text-[var(--text-muted)] mb-1">↓ {conv}% ของ tier 1</div>
-                  )}
-                  <div
-                    className="rounded-lg py-3 px-4 text-center text-white font-semibold text-[12px] shadow-sm"
-                    style={{ width: `${widthPct}%`, background: TIER_COLORS[t.key] }}
-                  >
-                    <div className="text-[10px] uppercase tracking-wider opacity-90">{t.label}</div>
-                    <div className="num text-[15px] leading-tight mt-0.5">{numFmt(t.rightsClaimed)}</div>
-                    <div className="text-[10px] opacity-90">{t.skuCount} SKU</div>
-                  </div>
-                </div>
-              )
-            })}
+      {/* ════════════════════════════════════════════════════
+          A — ภาพรวม SKU (aggregate by date range)
+      ════════════════════════════════════════════════════ */}
+      <ZoneTitle num="A" title="ภาพรวม SKU" dayTag={dayTag} />
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="kpi-accent kpi-pink" title="จำนวน SKU ในแคมเปญทั้งหมด">
+          <div className="text-[11px] text-[var(--text-secondary)] font-semibold uppercase tracking-wider mb-1">
+            SKU ทั้งหมด <ApiSourceBadge endpoint="/api/sku/list" />
           </div>
-          <InsightInline html="สิทธิ์กระจุกที่ <b>tier 1 สิทธิ์</b> (ซองเล็ก) — แคมเปญพึ่ง trial pack เป็นหลัก" />
-        </ChartCard>
+          <div className="text-[26px] font-bold leading-tight">{totalSku}</div>
+          <div className="text-[11px] text-[var(--text-muted)] mt-1">Active {activeCount} • Dead {deadCount}</div>
+        </div>
+        <div className="kpi-accent kpi-coral" title={`Top 1 SKU: ${top1?.sku}`}>
+          <div className="text-[11px] text-[var(--text-secondary)] font-semibold uppercase tracking-wider mb-1">
+            Top 1 share <ApiSourceBadge endpoint="/api/sku/per-day" params="from&to" />
+          </div>
+          <div className="text-[26px] font-bold leading-tight">{top1Pct.toFixed(1)}%</div>
+          <div className="text-[11px] text-[var(--text-muted)] mt-1">{top1?.sku} ({numFmt(top1?.rightsRedeemed || 0)})</div>
+        </div>
+        <div className="kpi-accent kpi-lavender" title="สัดส่วน Top 10 SKU ของยอดรวม">
+          <div className="text-[11px] text-[var(--text-secondary)] font-semibold uppercase tracking-wider mb-1">
+            Top 10 share <ApiSourceBadge endpoint="/api/sku/per-day" params="from&to" />
+          </div>
+          <div className="text-[26px] font-bold leading-tight">{top10Pct.toFixed(1)}%</div>
+          <div className="text-[11px] text-[var(--text-muted)] mt-1">Pareto concentration</div>
+        </div>
+        <div className="kpi-accent kpi-mint" title="สิทธิ์ที่ใช้แลกรวมทั้งแคมเปญ">
+          <div className="text-[11px] text-[var(--text-secondary)] font-semibold uppercase tracking-wider mb-1">
+            สิทธิ์ที่แลก <ApiSourceBadge endpoint="/api/sku/per-day" params="from&to → total" />
+          </div>
+          <div className="text-[26px] font-bold leading-tight">{numFmt(totalRights)}</div>
+          <div className="text-[11px] text-[var(--text-muted)] mt-1">{tiers.length} tiers</div>
+        </div>
+      </div>
 
-        {/* Tier Share Donut */}
-        <ChartCard title="สัดส่วนสิทธิ์ตาม Tier" icon="ti-chart-donut-3">
-          <div style={{ height: 240 }} className="flex items-center justify-center">
-            <div style={{ width: 220, height: 220 }}>
-              <Doughnut
-                data={{
-                  labels: tiers.map(t => t.label),
-                  datasets: [{
-                    data: tiers.map(t => t.rightsClaimed),
-                    backgroundColor: tiers.map(t => TIER_COLORS[t.key]),
-                    borderWidth: 0,
-                  }],
-                }}
-                options={{
-                  responsive: true,
-                  maintainAspectRatio: false,
-                  cutout: '60%',
-                  plugins: {
-                    legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 10 } } },
-                    tooltip: {
-                      callbacks: {
-                        label: (ctx) => {
-                          const t = tiers[ctx.dataIndex]
-                          return `${t.label}: ${numFmt(t.rightsClaimed)} (${t.sharePct.toFixed(1)}%)`
-                        },
-                      },
-                    },
-                  },
-                }}
-              />
+      {/* ════════════════════════════════════════════════════
+          B — Top Performers (Hero + Top 5 per-day)
+      ════════════════════════════════════════════════════ */}
+      <ZoneTitle num="B" title="Top Performers" dayTag={dayTag} />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div>
+          <div className="mb-1"><ApiSourceBadge endpoint="/api/sku/per-day" params="from&to → rows[0]" /></div>
+          <HeroSkuCard rows={allRows} rangeLabel={dayTag} dayCount={selectedDays.length} />
+        </div>
+        <div>
+          <div className="mb-1"><ApiSourceBadge endpoint="/api/sku/per-day" params="from&to → rows.slice(0,5)" /></div>
+          <Top5SkuCard day={day} rows={allRows} rangeLabel={dayTag} />
+        </div>
+      </div>
+
+      {/* SKU Trend Line — เลือก SKU ดูกราฟเส้นรายวัน (scale ถึงสิ้นปี) */}
+      <div className="mb-1"><ApiSourceBadge endpoint="/api/sku/[sku]/timeseries" params="from&to (per selected SKU)" /></div>
+      <SkuTrendLineChart days={selectedDays} rangeLabel={dayTag} />
+
+      {/* ════════════════════════════════════════════════════
+          C — Mix Analysis (Tier + CrossSize)
+      ════════════════════════════════════════════════════ */}
+      <ZoneTitle num="C" title="Mix Analysis" />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="card p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <i className="ti ti-chart-bar text-lg" style={{ color: 'var(--brand-500)' }} />
+            <h3 className="text-[14px] font-bold text-[var(--dark)]">🎯 Tier Mix — สัดส่วนสิทธิ์ตาม Tier</h3>
+            <ApiSourceBadge endpoint="/api/sku/per-day" params="from&to → group by perScan" />
+          </div>
+
+          {/* Stacked horizontal proportion bar */}
+          <div className="mb-4">
+            <div className="flex w-full h-8 rounded-lg overflow-hidden border border-[var(--border)]">
+              {tiers.map((t, i) => (
+                <div key={t.key}
+                     className="flex items-center justify-center text-[11px] font-bold text-white transition-all hover:opacity-90"
+                     style={{
+                       background: TIER_COLORS[t.key] || '#a5b4fc',
+                       width: `${t.sharePct}%`,
+                     }}
+                     title={`${t.label}: ${numFmt(t.rightsClaimed)} สิทธิ์ (${t.sharePct.toFixed(1)}%)`}>
+                  {t.sharePct >= 8 && `${t.sharePct.toFixed(0)}%`}
+                </div>
+              ))}
             </div>
           </div>
-          <InsightInline html={`<b>Tier 1 สิทธิ์</b> ครอง <b>${tiers[0]?.sharePct.toFixed(0) || 0}%</b> — โอกาส grow premium tier ผ่าน bundling`} />
-        </ChartCard>
-      </div>
 
-      {/* ── First-scan Entry + Cross-size ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <FirstScanCard />
+          {/* Detail rows per tier */}
+          <div className="space-y-2">
+            {tiers.map(t => (
+              <div key={t.key} className="flex items-center gap-3 p-2 rounded-lg hover:bg-[var(--bg-soft)] transition">
+                <div className="w-3 h-3 rounded flex-shrink-0" style={{ background: TIER_COLORS[t.key] || '#a5b4fc' }} />
+                <div className="flex-1 min-w-0">
+                  <div className="text-[13px] font-bold text-[var(--dark)] truncate">{t.label}</div>
+                  <div className="text-[10.5px] text-[var(--text-muted)]">{t.skuCount} SKUs</div>
+                </div>
+                <div className="text-right">
+                  <div className="text-[16px] font-bold num text-[var(--brand-700)]">{numFmt(t.rightsClaimed)}</div>
+                  <div className="text-[10.5px] text-[var(--text-muted)]">{t.sharePct.toFixed(1)}% share</div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <InsightInline html={`<b>${tiers[0]?.label}</b> (ซองเล็ก) ครอง <b>${tiers[0]?.sharePct.toFixed(0)}%</b> — โอกาส push premium tier ผ่าน bundling`} />
+        </div>
         <CrossSizeMatrix />
       </div>
 
-      {/* ── Daily Campaign Breakdown (3-day per-SKU) ── */}
-      <DailyCampaignBreakdown />
+      {/* ════════════════════════════════════════════════════
+          D — Rank Dynamics (FirstScan + Rank Movement)
+      ════════════════════════════════════════════════════ */}
+      <ZoneTitle num="D" title="Rank Dynamics" />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div>
+          <div className="mb-1"><ApiSourceBadge endpoint="/api/sku/per-day" params="from=X&to=X (per day) → first appearance" /></div>
+          <FirstScanCard />
+        </div>
+        <div className="card p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <i className="ti ti-arrows-vertical text-lg" style={{ color: 'var(--brand-500)' }} />
+            <h3 className="text-[13px] font-bold text-[var(--dark)]">Rank Movement (Top 10)</h3>
+            <ApiSourceBadge endpoint="/api/sku/per-day" params="from=X&to=X per day → rank by tickets" />
+            <span className="ml-auto text-[10px] text-[var(--text-muted)] font-bold uppercase">6 วัน</span>
+          </div>
+          <div className="text-[10.5px] text-[var(--text-secondary)] mb-2">
+            Top 10 SKU เคลื่อนตัวอย่างไรระหว่าง 16-21 พ.ค.
+          </div>
+          <table className="w-full text-[11px]">
+            <thead>
+              <tr className="text-[var(--text-muted)] text-[9.5px] uppercase tracking-wider">
+                <th className="text-left py-1">SKU</th>
+                <th className="text-center py-1 w-8">16</th>
+                <th className="text-center py-1 w-8">17</th>
+                <th className="text-center py-1 w-8">18</th>
+                <th className="text-center py-1 w-8">19</th>
+                <th className="text-center py-1 w-8">20</th>
+                <th className="text-center py-1 w-10">Trend</th>
+              </tr>
+            </thead>
+            <tbody>
+              {RANK_MOVEMENT.map(m => {
+                const t = TREND_ICON[m.trend]
+                return (
+                  <tr key={m.sku} className="border-t border-[var(--border-soft)]">
+                    <td className="py-1.5 truncate max-w-[140px]" title={m.name}>
+                      <span className="font-mono text-[10px] text-[var(--brand-700)] mr-1 font-semibold">{m.sku}</span>
+                    </td>
+                    <td className="text-center num text-[var(--text)]">{m.rank16}</td>
+                    <td className="text-center num text-[var(--text)]">{m.rank17}</td>
+                    <td className="text-center num text-[var(--text)]">{m.rank18}</td>
+                    <td className="text-center num text-[var(--text)]">{m.rank19}</td>
+                    <td className="text-center num text-[var(--text)]">{m.rank20}</td>
+                    <td className="text-center">
+                      <i className={`ti ${t.icon} text-base`} style={{ color: t.color }} title={m.trend} />
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
 
-      {/* ── 97 SKU Master Table ── */}
-      <ProductMasterTable />
+      {/* ════════════════════════════════════════════════════
+          E — Master Table (Dead SKU alert inline)
+      ════════════════════════════════════════════════════ */}
+      <ZoneTitle num="E" title="Master Table" />
+      {deadCount > 0 && (
+        <div className="card p-3 flex items-center gap-3 text-[12px] border-l-2"
+             style={{ background: '#fef2f2', borderLeftColor: '#dc2626' }}>
+          <i className="ti ti-skull text-[#dc2626] text-lg" />
+          <div className="flex-1">
+            <span className="font-bold text-[#991b1b]">💀 Dead SKU: {deadCount} ตัว</span>
+            <span className="text-[11px] text-[var(--text-secondary)] ml-2">
+              ไม่มีคนสแกนเลยตลอดแคมเปญ → ตรวจ shelf placement / QR visibility
+            </span>
+          </div>
+          <span className="text-[10.5px] text-[var(--text-muted)] italic">
+            → ใช้ filter <b>"Dead"</b> ในตารางด้านล่าง
+          </span>
+        </div>
+      )}
+      <div className="mb-1"><ApiSourceBadge endpoint="/api/sku/per-day" params="from&to → all 97 SKUs with daily breakdown" /></div>
+      <ProductMasterTable visibleDays={selectedDayKeys} />
 
-      {/* ── Actions ── */}
-      <InsightCard html={`
-        <b>1. Bundle promotion:</b> จับคู่ tier 1 + tier 2 ให้สิทธิ์ x2 — push customers ขึ้น tier<br/>
-        <b>2. Dead SKU (${deadCount}):</b> ทำ flash sale ลด 30% + สิทธิ์ลุ้นพิเศษ ดึงให้ขึ้น Active<br/>
-        <b>3. Premium tier focus:</b> tier 3+ ให้สิทธิ์เยอะแต่ส่วนแบ่งน้อย — ทำ content "ซื้อเซ็ตลุ้นได้มากกว่า"<br/>
-        <b>4. Hero SKU protection:</b> ${heroCount} SKU hero สร้าง impact สูงสุด — monitor stock + POSM ทุกวัน
-      `} />
+      {/* ════════════════════════════════════════════════════
+          F — Action Items
+      ════════════════════════════════════════════════════ */}
+      <ZoneTitle num="F" title="Action Items" />
+      <div className="card p-4" style={{ borderLeft: '3px solid var(--brand-500)' }}>
+        <div className="text-[14px] font-bold text-[var(--dark)] mb-2 flex items-center gap-2">
+          <i className="ti ti-target" style={{ color: 'var(--brand-500)' }} /> สิ่งที่ควรทำ
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-[12px]">
+          <div>
+            <div className="font-bold mb-1" style={{ color: 'var(--brand-700)' }}>📦 Hero SKU stock plan</div>
+            <div className="text-[11px] text-[var(--text-secondary)]">{top1?.sku} ครอง {top1Pct.toFixed(0)}% — backup supply + alert ถ้า inv {'<'} 7 วัน</div>
+          </div>
+          <div>
+            <div className="font-bold mb-1" style={{ color: 'var(--brand-700)' }}>🎁 Tier upsell bundle</div>
+            <div className="text-[11px] text-[var(--text-secondary)]">ดัน customers ขึ้น Tier 2/3+ (premium) ผ่าน bundle promo</div>
+          </div>
+          <div>
+            <div className="font-bold mb-1" style={{ color: '#d97706' }}>💀 Dead SKU ({deadCount} ตัว)</div>
+            <div className="text-[11px] text-[var(--text-secondary)]">Audit shelf placement + QR visibility ภายในสัปดาห์</div>
+          </div>
+          <div>
+            <div className="font-bold mb-1" style={{ color: 'var(--positive)' }}>🚪 Entry product</div>
+            <div className="text-[11px] text-[var(--text-secondary)]">L3-8G เป็น entry — protect supply + cross-sell หลัง first scan</div>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }

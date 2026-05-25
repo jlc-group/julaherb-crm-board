@@ -1,71 +1,83 @@
 'use client'
 import ChartCard from '@/components/ui/ChartCard'
 import InsightInline from '@/components/ui/InsightInline'
-import { BASELINE_3MO, BASELINE_TOTALS } from '@/lib/scan-behavior-data'
+import { DAILY_ENTRIES } from '@/lib/daily-update-data'
 import { numFmt } from '@/lib/utils'
 
-function pctDelta(a: number, b: number): number {
-  return b > 0 ? ((a - b) / b) * 100 : 0
-}
-
-function DeltaCell({ pct }: { pct: number }) {
-  const positive = pct >= 0
-  const big = Math.abs(pct) >= 10
-  const cls = positive
-    ? big ? 'text-[var(--green-700)] font-bold' : 'text-[var(--primary)] font-semibold'
-    : big ? 'text-[var(--red)] font-bold' : 'text-yellow-700 font-semibold'
-  return (
-    <span className={cls}>
-      {positive ? '+' : ''}{pct.toFixed(1)}% {positive ? '✅' : '❌'}
-    </span>
-  )
+function pctDelta(after: number, before: number): number {
+  return before > 0 ? ((after - before) / before) * 100 : 0
 }
 
 export default function BaselineComparison() {
-  const totMar = BASELINE_TOTALS.mar
-  const totApr = BASELINE_TOTALS.apr
-  const totMay = BASELINE_TOTALS.may
-  const liftVsApr = pctDelta(totMay, totApr)
-  const liftVsMar = pctDelta(totMay, totMar)
-  const baselineGrowth = pctDelta(totApr, totMar) // เม.ย. vs มี.ค. (no campaign)
+  const rows = DAILY_ENTRIES.map(d => ({
+    day: d.date.split('-')[2],
+    weekday: d.weekday,
+    outage: d.outage,
+    mar: d.baselineMar,
+    apr: d.baselineApr,
+    may: { scans: d.success, users: d.uniqueUsers, weekday: d.weekday },
+    deltaApr: pctDelta(d.success, d.baselineApr.scans),
+    deltaMar: pctDelta(d.success, d.baselineMar.scans),
+  }))
+
+  const totalMar = rows.reduce((s, r) => s + r.mar.scans, 0)
+  const totalApr = rows.reduce((s, r) => s + r.apr.scans, 0)
+  const totalMay = rows.reduce((s, r) => s + r.may.scans, 0)
+  const totalDeltaApr = pctDelta(totalMay, totalApr)
+  const totalDeltaMar = pctDelta(totalMay, totalMar)
+
+  const lastDay = rows[rows.length - 1]
+  const lastDate = `${lastDay.day} พ.ค.`
 
   return (
-    <ChartCard title="Baseline Comparison — 16-18 ของ มี.ค./เม.ย./พ.ค." icon="ti-table" full>
+    <ChartCard title={`เทียบรายวัน — มี.ค. / เม.ย. / พ.ค. (ครบ ${rows.length} วัน)`} icon="ti-target" full>
+      <div className="text-[11.5px] text-[var(--text-secondary)] mb-3">
+        <b className="text-[var(--dark)]">มี.ค.</b> = ไม่มีแคมเปญ (baseline) •
+        <b className="text-[var(--dark)] ml-2">เม.ย.</b> = ช่วงสงกรานต์ •
+        <b className="text-[var(--green-700)] ml-2">พ.ค. 🎯</b> = แคมเปญสแกนลุ้นรวย
+      </div>
+
       <div className="overflow-x-auto">
         <table className="w-full text-[12px]">
           <thead>
-            <tr className="text-[var(--text-secondary)] text-[11px] uppercase tracking-wider bg-[var(--bg-soft)]">
-              <th className="text-center py-2 px-3 font-bold rounded-l-md">วันที่</th>
-              <th className="text-right py-2 px-3 font-bold">มี.ค.</th>
-              <th className="text-right py-2 px-3 font-bold">เม.ย.</th>
-              <th className="text-right py-2 px-3 font-bold text-[var(--green-700)]">
-                พ.ค. 🎯
-              </th>
-              <th className="text-right py-2 px-3 font-bold">Δ vs เม.ย.</th>
-              <th className="text-right py-2 px-3 font-bold rounded-r-md">Δ vs มี.ค.</th>
+            <tr className="text-[var(--text-secondary)] text-[10.5px] uppercase tracking-wider bg-[var(--bg-soft)]">
+              <th className="text-center py-2 px-3 font-bold">วัน</th>
+              <th className="text-right  py-2 px-3 font-bold">มี.ค. <span className="opacity-60 text-[9px]">no campaign</span></th>
+              <th className="text-right  py-2 px-3 font-bold">เม.ย. <span className="opacity-60 text-[9px]">สงกรานต์</span></th>
+              <th className="text-right  py-2 px-3 font-bold text-[var(--green-700)]">พ.ค. 🎯</th>
+              <th className="text-right  py-2 px-3 font-bold">Δ vs เม.ย.</th>
+              <th className="text-right  py-2 px-3 font-bold">Δ vs มี.ค. <span className="text-[var(--gold)] text-[9px]">⭐ true</span></th>
             </tr>
           </thead>
           <tbody>
-            {BASELINE_3MO.map(r => {
-              const dApr = pctDelta(r.may.scans, r.apr.scans)
-              const dMar = pctDelta(r.may.scans, r.mar.scans)
+            {rows.map(r => {
+              const aprPos = r.deltaApr >= 0
+              const marPos = r.deltaMar >= 0
               return (
-                <tr key={r.day} className="border-b border-[var(--border-soft)] hover:bg-[var(--green-50)]/40 transition">
-                  <td className="text-center py-2.5 px-3 num font-extrabold text-[var(--dark)] text-base">{r.day}</td>
-                  <td className="text-right py-2.5 px-3">
-                    <span className="num font-semibold text-[var(--text)]">{numFmt(r.mar.scans)}</span>
-                    <span className="text-[10px] text-[var(--text-muted)] ml-1">({r.mar.weekday})</span>
+                <tr key={r.day} className={`border-b border-[var(--border-soft)] hover:bg-[var(--green-50)]/40 transition ${r.outage ? 'bg-red-50/30' : ''}`}>
+                  <td className="text-center py-2.5 px-3">
+                    <div className="num text-[15px] font-extrabold text-[var(--green-700)]">{r.day}</div>
+                    <div className="text-[9px] text-[var(--text-muted)]">{r.weekday}</div>
+                    {r.outage && <div className="text-[8.5px] text-[var(--red)] font-bold">🚨 outage</div>}
                   </td>
                   <td className="text-right py-2.5 px-3">
-                    <span className="num font-semibold text-[var(--text)]">{numFmt(r.apr.scans)}</span>
-                    <span className="text-[10px] text-[var(--text-muted)] ml-1">({r.apr.weekday})</span>
+                    <div className="num font-semibold text-[var(--text)]">{numFmt(r.mar.scans)}</div>
+                    <div className="text-[9px] text-[var(--text-muted)]">({r.mar.weekday})</div>
                   </td>
-                  <td className="text-right py-2.5 px-3 bg-[var(--green-50)]/50">
-                    <span className="num font-bold text-[var(--green-800)]">{numFmt(r.may.scans)}</span>
-                    <span className="text-[10px] text-[var(--green-700)] ml-1 font-semibold">({r.may.weekday})</span>
+                  <td className="text-right py-2.5 px-3">
+                    <div className="num font-semibold text-[var(--text)]">{numFmt(r.apr.scans)}</div>
+                    <div className="text-[9px] text-[var(--text-muted)]">({r.apr.weekday})</div>
                   </td>
-                  <td className="text-right py-2.5 px-3 num"><DeltaCell pct={dApr} /></td>
-                  <td className="text-right py-2.5 px-3 num"><DeltaCell pct={dMar} /></td>
+                  <td className="text-right py-2.5 px-3 bg-[var(--green-50)]/40">
+                    <div className="num font-bold text-[var(--green-800)]">{numFmt(r.may.scans)}</div>
+                    <div className="text-[9px] text-[var(--text-secondary)] font-semibold">({r.weekday})</div>
+                  </td>
+                  <td className={`text-right py-2.5 px-3 num font-bold ${aprPos ? 'text-[var(--green-700)]' : 'text-[var(--red)]'}`}>
+                    {aprPos ? '+' : ''}{r.deltaApr.toFixed(1)}% {aprPos ? '✅' : '❌'}
+                  </td>
+                  <td className={`text-right py-2.5 px-3 num font-bold ${marPos ? 'text-[var(--green-700)]' : 'text-[var(--red)]'}`}>
+                    {marPos ? '+' : ''}{r.deltaMar.toFixed(1)}% {marPos ? '✅' : '❌'}
+                  </td>
                 </tr>
               )
             })}
@@ -73,35 +85,31 @@ export default function BaselineComparison() {
           <tfoot>
             <tr className="bg-[var(--green-50)] border-t-2 border-[var(--green-200)] font-bold">
               <td className="text-center py-2.5 px-3 text-[var(--dark)] uppercase tracking-wider text-[11px]">รวม</td>
-              <td className="text-right py-2.5 px-3 num text-[var(--dark)]">{numFmt(totMar)}</td>
-              <td className="text-right py-2.5 px-3 num text-[var(--dark)]">{numFmt(totApr)}</td>
-              <td className="text-right py-2.5 px-3 num text-[var(--green-800)] bg-[var(--green-100)]">{numFmt(totMay)}</td>
-              <td className="text-right py-2.5 px-3 num">
-                <span className={liftVsApr > 5 ? 'text-[var(--primary)] font-bold' : 'text-yellow-700 font-bold'}>
-                  {liftVsApr > 0 ? '+' : ''}{liftVsApr.toFixed(1)}%
-                </span>
+              <td className="text-right py-2.5 px-3 num text-[var(--dark)]">{numFmt(totalMar)}</td>
+              <td className="text-right py-2.5 px-3 num text-[var(--dark)]">{numFmt(totalApr)}</td>
+              <td className="text-right py-2.5 px-3 num text-[var(--green-800)] bg-[var(--green-100)]">{numFmt(totalMay)}</td>
+              <td className={`text-right py-2.5 px-3 num ${totalDeltaApr >= 0 ? 'text-[var(--green-700)]' : 'text-[var(--red)]'}`}>
+                {totalDeltaApr >= 0 ? '+' : ''}{totalDeltaApr.toFixed(1)}%
               </td>
-              <td className="text-right py-2.5 px-3 num text-[var(--primary)]">
-                +{liftVsMar.toFixed(1)}%
+              <td className={`text-right py-2.5 px-3 num ${totalDeltaMar >= 0 ? 'text-[var(--green-700)]' : 'text-[var(--red)]'}`}>
+                {totalDeltaMar >= 0 ? '+' : ''}{totalDeltaMar.toFixed(1)}%
               </td>
             </tr>
           </tfoot>
         </table>
       </div>
 
-      <div className="mt-3 text-[11px] text-[var(--text-muted)] flex items-center gap-1 justify-end">
-        🎯 = เดือนที่มีแคมเปญ
-      </div>
-
       <InsightInline
-        severity="warn"
-        html={`<b>พ.ค. โต +${liftVsApr.toFixed(1)}%</b> จากเม.ย. — แต่ baseline growth (เม.ย. vs มี.ค.) อยู่ที่ <b>+${baselineGrowth.toFixed(1)}%</b> โดยไม่มีแคมเปญ → แคมเปญดัน lift จริงแค่ <b>~${(liftVsApr - baselineGrowth).toFixed(1)} percentage point</b>`}
+        severity={totalDeltaMar >= 0 ? 'info' : 'warn'}
+        html={`<b>True lift = ${totalDeltaMar >= 0 ? '+' : ''}${totalDeltaMar.toFixed(1)}%</b> เทียบ มี.ค. (baseline สะอาด) • <b>vs เม.ย. = ${totalDeltaApr >= 0 ? '+' : ''}${totalDeltaApr.toFixed(1)}%</b> (เม.ย. มีสงกรานต์) • อัปเดตล่าสุด: <b>${lastDate} (${lastDay.weekday})</b>`}
       />
 
-      <InsightInline
-        severity="danger"
-        html={`⚠️ <b>วันในสัปดาห์ไม่ match กัน</b> — พ.ค. 16-17 = เสาร์-อาทิตย์ (weekend natural peak) แต่ มี.ค./เม.ย. 16-17 = วันธรรมดา → +22.1% ของวัน 17 อาจมาจาก <b>weekend effect</b> ไม่ใช่แคมเปญ`}
-      />
+      {rows.some(r => r.outage) && (
+        <InsightInline
+          severity="danger"
+          html={`⚠️ วันที่ <b>${rows.find(r => r.outage)?.day} พ.ค.</b> มี outage 6 ชม. → ตัวเลขนั้นไม่ apples-to-apples`}
+        />
+      )}
     </ChartCard>
   )
 }

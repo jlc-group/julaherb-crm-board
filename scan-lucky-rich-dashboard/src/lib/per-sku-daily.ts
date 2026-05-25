@@ -4,7 +4,9 @@
 import LIVE from '@/lib/live-data.json'
 
 export interface DayValue { r: number; u: number }   // rights, users
-export type DayKey = '16' | '17' | '18'
+export type DayKey = '16' | '17' | '18' | '19' | '20' | '21' | '22' | '23' | '24'
+
+export const DAY_KEYS: DayKey[] = ['16', '17', '18', '19', '20', '21', '22', '23', '24']
 
 // Live data (auto-loaded from DB pipeline)
 export const PER_SKU_DAILY: Record<string, Partial<Record<DayKey, DayValue>>> = LIVE.per_sku_daily as any
@@ -106,7 +108,7 @@ export const DAY_TOTALS: Record<DayKey, number> = (() => {
 // Top 10 SKUs per day (auto-derived from LIVE per_sku_daily)
 export const DAILY_TOP10: Record<DayKey, string[]> = (() => {
   const out: any = {}
-  for (const dk of ['16', '17', '18'] as const) {
+  for (const dk of DAY_KEYS) {
     const list: { sku: string; rights: number }[] = []
     for (const [sku, days] of Object.entries(PER_SKU_DAILY)) {
       const v = (days as any)[dk]

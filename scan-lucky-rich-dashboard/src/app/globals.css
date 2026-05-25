@@ -6,43 +6,73 @@
 @import url('https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css');
 
 :root {
-  /* Light fresh palette — matched to poster */
-  --bg:           #ffffff;
-  --bg-soft:      #f8fafc;
+  /* ────────────────────────────────────────────────────────
+     MINIMAL MONOCHROME THEME — indigo accent + neutrals
+  ──────────────────────────────────────────────────────── */
+  --bg:           #fafbfc;
+  --bg-soft:      #f4f6f8;
   --surface:      #ffffff;
-  --card-shadow:  0 1px 2px rgba(20, 83, 45, 0.04), 0 4px 12px rgba(20, 83, 45, 0.06);
-  --card-hover:   0 4px 8px rgba(20, 83, 45, 0.08), 0 12px 24px rgba(20, 83, 45, 0.10);
+  --card-shadow:  0 1px 2px rgba(15, 23, 42, 0.04), 0 2px 6px rgba(15, 23, 42, 0.04);
+  --card-hover:   0 2px 6px rgba(15, 23, 42, 0.06), 0 6px 16px rgba(15, 23, 42, 0.08);
 
-  /* Greens — bright & fresh */
-  --green-50:     #f0fdf4;
-  --green-100:    #dcfce7;
-  --green-200:    #bbf7d0;
-  --green-500:    #22c55e;   /* bright vivid */
-  --green-600:    #16a34a;   /* primary */
-  --green-700:    #15803d;
-  --green-800:    #166534;
-  --green-900:    #14532d;   /* deep — for headings */
+  /* Brand — indigo (single tone, light to deep) */
+  --brand-50:     #eef2ff;
+  --brand-100:    #e0e7ff;
+  --brand-200:    #c7d2fe;
+  --brand-400:    #818cf8;
+  --brand-500:    #6366f1;   /* primary */
+  --brand-600:    #4f46e5;
+  --brand-700:    #4338ca;
+  --brand-800:    #3730a3;
 
-  /* Brand aliases */
-  --primary:      var(--green-600);
-  --primary-soft: var(--green-100);
-  --dark:         var(--green-900);
-  --mid:          var(--green-700);
-  --accent:       var(--green-500);
+  /* Semantic accents (used sparingly + only when meaning is critical) */
+  --positive:      #10b981;   /* gentle green */
+  --positive-soft: #ecfdf5;
+  --warn:          #d97706;
+  --warn-soft:     #fef3c7;
+  --danger:        #dc2626;
+  --danger-soft:   #fef2f2;
 
-  /* Accents (used sparingly) */
-  --yellow:       #facc15;   /* prize / highlight */
-  --yellow-soft:  #fef9c3;
-  --red:          #ef4444;   /* danger */
-  --red-soft:     #fee2e2;
-  --blue:         #3b82f6;
-  --blue-soft:    #dbeafe;
+  /* Legacy aliases — kept so existing var(--*) usage still works */
+  --green-50:     var(--positive-soft);
+  --green-100:    #d1fae5;
+  --green-200:    #a7f3d0;
+  --green-500:    var(--positive);
+  --green-600:    #059669;
+  --green-700:    #047857;
+  --green-800:    #065f46;
+  --green-900:    #064e3b;
+  --primary:      var(--brand-500);
+  --primary-soft: var(--brand-50);
+  --dark:         #1e1b4b;
+  --mid:          var(--brand-700);
+  --accent:       var(--brand-500);
+  --yellow:       #f59e0b;
+  --yellow-soft:  #fef3c7;
+  --red:          var(--danger);
+  --red-soft:     var(--danger-soft);
+  --blue:         var(--brand-500);
+  --blue-soft:    var(--brand-50);
+
+  /* Mapping old purple header vars → brand */
+  --h1:           var(--brand-500);
+  --h2:           var(--brand-600);
+  --h3:           var(--brand-700);
+  --h-soft:       var(--brand-50);
+
+  /* Mapping old coral products vars → brand (unified) */
+  --p1:           var(--brand-400);
+  --p2:           var(--brand-500);
+  --p3:           var(--brand-600);
+  --p-lavender:   var(--brand-400);
+  --p-mint:       var(--positive);
+  --p-soft:       var(--brand-50);
 
   /* Text */
-  --text:           #1f2937;
-  --text-secondary: #6b7280;
-  --text-muted:     #9ca3af;
-  --border:         #e5e7eb;
+  --text:           #0f172a;
+  --text-secondary: #475569;
+  --text-muted:     #94a3b8;
+  --border:         #e2e8f0;
   --border-soft:    #f1f5f9;
 
   --sidebar-width:  240px;
@@ -234,6 +264,158 @@ body {
   background: var(--accent);
   border-radius: 0 4px 4px 0;
 }
+
+/* ============================================================
+   ZONE LAYOUT — monitor dashboard (from HTML mockup)
+============================================================ */
+
+/* Minimal header — white card with indigo accent left bar */
+.zone-header,
+.products-header {
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--brand-500);
+  border-radius: 12px;
+  padding: 18px 24px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--card-shadow);
+}
+.zone-header::before,
+.products-header::before { display: none; }
+
+/* All KPI accent variants → unified indigo (was multi-color) */
+.kpi-accent.kpi-pink::after,
+.kpi-accent.kpi-coral::after,
+.kpi-accent.kpi-lavender::after,
+.kpi-accent.kpi-mint::after,
+.kpi-accent.kpi-peach::after { background: var(--brand-500); }
+
+/* Zone section title with gradient underline */
+.zone-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  margin: 24px 0 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.zone-title::before {
+  content: '';
+  width: 20px;
+  height: 2px;
+  background: var(--brand-500);
+  border-radius: 2px;
+}
+.zone-title .day-tag {
+  margin-left: auto;
+  font-size: 11px;
+  background: var(--brand-50);
+  color: var(--brand-700);
+  padding: 3px 10px;
+  border-radius: 6px;
+  letter-spacing: 0;
+  text-transform: none;
+  font-weight: 600;
+}
+
+/* KPI card with side accent */
+.kpi-accent {
+  background: var(--surface);
+  padding: 18px;
+  border-radius: 14px;
+  box-shadow: var(--card-shadow);
+  border: 1px solid var(--border);
+  position: relative;
+  overflow: hidden;
+}
+.kpi-accent::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 4px; height: 100%;
+  background: linear-gradient(180deg, var(--h1), var(--h3));
+}
+/* All KPI accent variants → unified indigo (single brand tone) */
+.kpi-accent.kpi-scans::after,
+.kpi-accent.kpi-tickets::after,
+.kpi-accent.kpi-users::after,
+.kpi-accent.kpi-new::after,
+.kpi-accent.kpi-success::after,
+.kpi-accent.kpi-uptime::after,
+.kpi-accent.kpi-dup::after,
+.kpi-accent.kpi-engage::after { background: var(--brand-500); }
+
+/* Day selector row (4 buttons) */
+.day-selector {
+  background: #fff;
+  border-radius: 14px;
+  padding: 10px;
+  display: flex;
+  gap: 6px;
+  border: 1px solid var(--border);
+  box-shadow: var(--card-shadow);
+  align-items: center;
+}
+.day-selector-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  padding: 0 12px;
+  flex-shrink: 0;
+}
+.day-btn {
+  flex: 1;
+  min-width: 130px;
+  padding: 12px 14px;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  align-items: center;
+  transition: all 0.2s;
+  color: var(--text);
+  text-align: center;
+  position: relative;
+}
+.day-btn:hover { background: #f3f4f6; }
+.day-btn.active {
+  background: var(--brand-500);
+  color: #fff;
+  box-shadow: 0 2px 6px -1px rgba(99, 102, 241, 0.35);
+}
+.day-btn .d-date { font-size: 15px; font-weight: 700; }
+.day-btn .d-dow  { font-size: 11px; opacity: 0.85; }
+.day-btn .d-tag  { font-size: 10px; opacity: 0.85; font-weight: 500; margin-top: 2px; }
+
+/* Recommendation 3-column */
+.reco-col {
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+.reco-col.now     { background: var(--surface); border-left: 3px solid var(--danger); }
+.reco-col.month   { background: var(--surface); border-left: 3px solid var(--warn); }
+.reco-col.quarter { background: var(--surface); border-left: 3px solid var(--brand-500); }
+.reco-head { display: flex; align-items: center; gap: 8px; font-weight: 700; margin-bottom: 10px; font-size: 14px; }
+.reco-item { margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px dashed var(--border); }
+.reco-item:last-child { border-bottom: 0; margin-bottom: 0; padding-bottom: 0; }
+.reco-item .what { font-weight: 600; margin-bottom: 4px; font-size: 13px; }
+.reco-item .why  { font-size: 11.5px; color: var(--text-secondary); margin-bottom: 4px; line-height: 1.5; }
+.reco-item .imp  { font-size: 11.5px; font-weight: 600; color: #059669; }
 
 /* ============================================================
    Float-up entrance animation (subtle)

@@ -86,27 +86,31 @@ export const DEAD_SKUS_3DAY: { sku: string; name: string }[] = [
   { sku: 'JH705-40G', name: 'เซรั่มมะม่วง (40G)' },
 ]
 
-// ── Rank Movement: SKUs ที่อยู่ใน Top 10 ทั้ง 3 วัน ──
+// ── Rank Movement: SKUs ที่อยู่ใน Top 10 ทั้ง 5 วัน ──
 export interface RankMovement {
   sku: string
   name: string
   rank16: number
   rank17: number
   rank18: number
+  rank19: number
+  rank20: number
   trend: 'up' | 'down' | 'flat' | 'mixed'
 }
 
+// Day 20 ranks (from screenshot):
+// 1.L3-8G 2.L4-8G 3.L6-8G 4.L10-7G 5.L7-6G 6.L13-10G 7.L3-40G 8.C4-8G 9.L19-8G 10.L8B-6G
 export const RANK_MOVEMENT: RankMovement[] = [
-  { sku: 'L3-8G',   name: 'ดีดีครีมแตงโม',           rank16:  1, rank17:  1, rank18:  1, trend: 'flat' },
-  { sku: 'L4-8G',   name: 'เซรั่มลำไย',                rank16:  2, rank17:  2, rank18:  2, trend: 'flat' },
-  { sku: 'L6-8G',   name: 'เซรั่มแครอท',               rank16:  3, rank17:  3, rank18:  4, trend: 'down' },
-  { sku: 'L10-7G',  name: 'กันแดดแตงโม 3D ออร่า',     rank16:  4, rank17:  4, rank18:  3, trend: 'up' },
-  { sku: 'L7-6G',   name: 'โดสส้มแดงกลูต้าซีไฮยา',     rank16:  6, rank17:  5, rank18:  5, trend: 'up' },
-  { sku: 'L13-10G', name: 'ครีมกุหลาบน้ำเงิน',         rank16:  5, rank17:  6, rank18:  6, trend: 'down' },
-  { sku: 'C4-8G',   name: 'เซรั่มขิงดำซิงก์',           rank16:  7, rank17:  7, rank18:  8, trend: 'down' },
-  { sku: 'L3-40G',  name: 'ดีดีครีมแตงโม (40G)',       rank16:  8, rank17:  8, rank18:  7, trend: 'up' },
-  { sku: 'L19-8G',  name: 'มอยส์เจลฉ่ำบัว',            rank16:  9, rank17:  9, rank18:  9, trend: 'flat' },
-  { sku: 'L8B-6G',  name: 'อีอีคูชั่นแตงโม 02',         rank16: 10, rank17: 10, rank18: 10, trend: 'flat' },
+  { sku: 'L3-8G',   name: 'ดีดีครีมแตงโม',           rank16:  1, rank17:  1, rank18:  1, rank19:  1, rank20:  1, trend: 'flat' },
+  { sku: 'L4-8G',   name: 'เซรั่มลำไย',                rank16:  2, rank17:  2, rank18:  2, rank19:  2, rank20:  2, trend: 'flat' },
+  { sku: 'L6-8G',   name: 'เซรั่มแครอท',               rank16:  3, rank17:  3, rank18:  4, rank19:  3, rank20:  3, trend: 'mixed' },
+  { sku: 'L10-7G',  name: 'กันแดดแตงโม 3D ออร่า',     rank16:  4, rank17:  4, rank18:  3, rank19:  4, rank20:  4, trend: 'mixed' },
+  { sku: 'L13-10G', name: 'ครีมกุหลาบน้ำเงิน',         rank16:  5, rank17:  6, rank18:  6, rank19:  5, rank20:  6, trend: 'mixed' },
+  { sku: 'L7-6G',   name: 'โดสส้มแดงกลูต้าซีไฮยา',     rank16:  6, rank17:  5, rank18:  5, rank19:  6, rank20:  5, trend: 'mixed' },
+  { sku: 'C4-8G',   name: 'เซรั่มขิงดำซิงก์',           rank16:  7, rank17:  7, rank18:  8, rank19:  7, rank20:  8, trend: 'mixed' },
+  { sku: 'L3-40G',  name: 'ดีดีครีมแตงโม (40G)',       rank16:  8, rank17:  8, rank18:  7, rank19:  8, rank20:  7, trend: 'mixed' },
+  { sku: 'L19-8G',  name: 'มอยส์เจลฉ่ำบัว',            rank16:  9, rank17:  9, rank18:  9, rank19:  9, rank20:  9, trend: 'flat' },
+  { sku: 'L8B-6G',  name: 'อีอีคูชั่นแตงโม 02',         rank16: 10, rank17: 10, rank18: 10, rank19: 10, rank20: 10, trend: 'flat' },
 ]
 
 // ── High velocity (สิทธิ์/คน สูงผิดปกติ) ──
