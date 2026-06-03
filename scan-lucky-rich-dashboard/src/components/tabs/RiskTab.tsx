@@ -10,6 +10,7 @@ import DataTable from '@/components/ui/DataTable'
 import VerificationPanel from '@/components/ui/VerificationPanel'
 import HeavyUsersPanel from '@/components/ui/HeavyUsersPanel'
 import SupportCasesPanel from '@/components/ui/SupportCasesPanel'
+import DemoBanner from '@/components/ui/DemoBanner'
 import { numFmt } from '@/lib/utils'
 import * as mock from '@/lib/mock-data'
 
@@ -60,6 +61,7 @@ export default function RiskTab() {
 
   return (
     <div>
+      <DemoBanner reason="RiskTab ยังไม่มี API endpoint dedicated (ต้องการ /api/customers/risk?date= สำหรับ fraud scoring + velocity alerts) — บางส่วนใช้ /api/customers/heavy-users ได้ในอนาคต" />
       {/* ── KPI Grid ── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
         <KpiCard label="Flagged Users Today" value="3" valueStyle={{ color: 'var(--danger)' }} />

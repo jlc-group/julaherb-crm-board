@@ -17,8 +17,10 @@ import TimeOfDayChart from '@/components/ui/TimeOfDayChart'
 import TrendLineChart from '@/components/ui/TrendLineChart'
 import WeekdayMatchedCard from '@/components/ui/WeekdayMatchedCard'
 
-import { DAILY_ENTRIES } from '@/lib/daily-update-data'
+import { DAILY_ENTRIES } from '@/lib/daily-update-data'  // ใช้สำหรับ chart components ที่ต้องการ timeOfDay/peakHours fields (ยังไม่มี API endpoint รองรับ)
 import { numFmt } from '@/lib/utils'
+import { useApi } from '@/lib/hooks/useApi'
+import type { ScansTotalsResponse, MembersDailyResponse, UptimeResponse, DailyRow } from '@/lib/api/types'
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, LineElement, PointElement, ArcElement, Tooltip, Legend, Filler)
 ChartJS.defaults.font.family = "'Noto Sans Thai', sans-serif"
@@ -46,7 +48,18 @@ export default function OverviewTab() {
     ? `${rangeDayCount} วัน${dataLabel}`
     : `${range.from.split('-')[2]} พ.ค.`
 
-  // Aggregate KPI for multi-day mode
+  // ─── API fetch (Layer 1: internal /api/* with adapter) ───
+  // ที่มาข้อมูล: src/lib/api/mock-source.ts (อ่านจาก daily-update-data.ts เหมือนเดิม)
+  // เปลี่ยน DATA_SOURCE=db ใน .env.local → ดึงจาก Postgres แทนได้โดยไม่แก้ component
+  // ป้าย "Live": refresh เงียบๆ ทุก 30 วิ (polling สุภาพ — หยุดเมื่อสลับแท็บ + backoff เมื่อ error)
+  const LIVE_REFRESH_MS = 30_000
+  const apiTotals = useApi<ScansTotalsResponse>(`/api/scans/totals?from=${range.from}&to=${range.to}`, { refreshMs: LIVE_REFRESH_MS })
+  const apiMembers = useApi<MembersDailyResponse>(`/api/members/daily?from=${range.from}&to=${range.to}`, { refreshMs: LIVE_REFRESH_MS })
+  const apiUptime = useApi<UptimeResponse>(`/api/system/uptime?from=${range.from}&to=${range.to}`, { refreshMs: LIVE_REFRESH_MS })
+  // Fetch full campaign range for tables (always show all days regardless of date filter)
+  const apiDaily = useApi<DailyRow[]>(`/api/daily?from=2026-05-16&to=2026-05-24`)
+
+  // Aggregate KPI for multi-day mode (static fallback ระหว่าง API loading)
   const agg = useMemo(() => {
     const days = selectedDays.length > 0 ? selectedDays : [day]
     return {
@@ -87,45 +100,68 @@ export default function OverviewTab() {
 
       {/* ════════════════════════════════════════════════════
           ZONE 1 — KPI Snapshot (per-day)
+          🔌 Wired to internal API (/api/scans/totals, /api/members/daily, /api/system/uptime)
+          → Falls back to static aggregation during loading or on API failure
       ════════════════════════════════════════════════════ */}
       <ZoneTitle num="A" title="ภาพรวม" dayTag={dayTag} />
       {(() => {
-        const attempts = agg.success + agg.dupSelf + agg.dupOther + agg.notFound
-        const dbGap = agg.expectedTickets - agg.tickets
-        const outageInfo = agg.outageDay?.outage
+        // Prefer API data when available; fallback to static-derived agg
+        const successVal = apiTotals.data?.success ?? agg.success
+        const ticketsVal = apiTotals.data?.tickets ?? agg.tickets
+        const expectedVal = apiTotals.data?.expectedTickets ?? agg.expectedTickets
+        const dupSelfVal = apiTotals.data?.dupSelf ?? agg.dupSelf
+        const dupOtherVal = apiTotals.data?.dupOther ?? agg.dupOther
+        const notFoundVal = apiTotals.data?.notFound ?? agg.notFound
+        const successRateVal = apiTotals.data?.successRate ?? agg.successRate
+        const apiMemberNew = apiMembers.data?.totals.memberNew ?? agg.memberNew
+        const apiMemberOld = apiMembers.data?.totals.memberOld ?? agg.memberOld
+        const apiOutage = apiUptime.data?.outages?.[0] ?? agg.outageDay?.outage
+
+        const attempts = successVal + dupSelfVal + dupOtherVal + notFoundVal
+        const dbGap = expectedVal - ticketsVal
+        const outageInfo = apiOutage
+
+        const apiLoaded = !apiTotals.loading && !apiTotals.error && apiTotals.data
+        const apiBadge = apiLoaded
+          ? <span className="inline-block ml-1 px-1.5 py-0.5 rounded text-[8px] font-bold bg-green-100 text-green-800 align-middle">🟢 API</span>
+          : apiTotals.loading
+            ? <span className="inline-block ml-1 px-1.5 py-0.5 rounded text-[8px] font-bold bg-yellow-100 text-yellow-800 align-middle">⏳ Loading</span>
+            : apiTotals.error
+              ? <span className="inline-block ml-1 px-1.5 py-0.5 rounded text-[8px] font-bold bg-red-100 text-red-800 align-middle" title={apiTotals.error}>⚠️ {apiTotals.error}</span>
+              : null
         return (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {/* CARD 1 — สแกนสำเร็จ */}
             <div className="kpi-accent kpi-scans"
                  title={`สแกนสำเร็จในช่วง ${dayTag} — ไม่นับซ้ำตัวเอง/ซ้ำคนอื่น/ไม่พบ\nเป็นตัวเลขที่ใช้คำนวณสิทธิ์`}>
               <div className="text-[11px] text-[var(--text-secondary)] font-semibold uppercase tracking-wider mb-1">
-                ⭐ สแกนสำเร็จ <ApiSourceBadge endpoint="/api/scans/totals" params="from&to" />
+                ⭐ สแกนสำเร็จ {apiBadge}
               </div>
-              <div className="text-[26px] font-bold leading-tight">{numFmt(agg.success)}</div>
-              <div className="text-[12px] text-[var(--text-muted)] mt-1">จาก {numFmt(attempts)} ครั้ง • {agg.successRate.toFixed(1)}%</div>
+              <div className="text-[26px] font-bold leading-tight">{numFmt(successVal)}</div>
+              <div className="text-[12px] text-[var(--text-muted)] mt-1">จาก {numFmt(attempts)} ครั้ง • {successRateVal.toFixed(1)}%</div>
             </div>
 
             {/* CARD 2 — 🎟️ สิทธิ์ตามสเปก (HERO) */}
             <div className="kpi-accent kpi-success"
-                 title={`สิทธิ์ที่ควรได้ตามสเปก Excel — Σ(scans × rightsPerScan)\nDB ปัจจุบัน: ${numFmt(agg.tickets)} ใบ (1:1 bug)\nตามสเปก: ${numFmt(agg.expectedTickets)} ใบ\nขาดหายไป: ${numFmt(dbGap)} ใบ`}>
+                 title={`สิทธิ์ที่ควรได้ตามสเปก Excel — Σ(scans × rightsPerScan)\nDB ปัจจุบัน: ${numFmt(ticketsVal)} ใบ (1:1 bug)\nตามสเปก: ${numFmt(expectedVal)} ใบ\nขาดหายไป: ${numFmt(dbGap)} ใบ`}>
               <div className="text-[11px] text-[var(--text-secondary)] font-semibold uppercase tracking-wider mb-1">
-                🎟️ สิทธิ์ตามสเปก <ApiSourceBadge endpoint="/api/scans/totals" params="from&to" />
+                🎟️ สิทธิ์ตามสเปก {apiBadge}
               </div>
-              <div className="text-[26px] font-bold leading-tight">{numFmt(agg.expectedTickets)}</div>
+              <div className="text-[26px] font-bold leading-tight">{numFmt(expectedVal)}</div>
               <div className="text-[12px] text-[var(--text-muted)] mt-1">
-                DB {numFmt(agg.tickets)}{dbGap > 0 && <> • <span className="text-red-600 font-bold">−{numFmt(dbGap)}</span></>}
+                DB {numFmt(ticketsVal)}{dbGap > 0 && <> • <span className="text-red-600 font-bold">−{numFmt(dbGap)}</span></>}
               </div>
             </div>
 
             {/* CARD 3 — 👥 สมาชิก */}
             <div className="kpi-accent kpi-users"
-                 title={`สมาชิกในช่วง ${dayTag}\n• สมัครใหม่: ${numFmt(agg.memberNew)} คน\n• เก่ามาสแกน: ${numFmt(agg.memberOld)} คน${day.memberTotal ? `\n• สะสมระบบ (ล่าสุด): ${numFmt(day.memberTotal)} คน` : ''}`}>
+                 title={`สมาชิกในช่วง ${dayTag}\n• สมัครใหม่: ${numFmt(apiMemberNew)} คน\n• เก่ามาสแกน: ${numFmt(apiMemberOld)} คน${day.memberTotal ? `\n• สะสมระบบ (ล่าสุด): ${numFmt(day.memberTotal)} คน` : ''}`}>
               <div className="text-[11px] text-[var(--text-secondary)] font-semibold uppercase tracking-wider mb-1">
-                👥 สมาชิก <ApiSourceBadge endpoint="/api/members/daily" params="from&to" />
+                👥 สมาชิก {!apiMembers.loading && !apiMembers.error && apiMembers.data ? <span className="inline-block ml-1 px-1.5 py-0.5 rounded text-[8px] font-bold bg-green-100 text-green-800 align-middle">🟢 API</span> : null}
               </div>
-              <div className="text-[26px] font-bold leading-tight">{numFmt(agg.memberNew + agg.memberOld)}</div>
+              <div className="text-[26px] font-bold leading-tight">{numFmt(apiMemberNew + apiMemberOld)}</div>
               <div className="text-[12px] text-[var(--text-muted)] mt-1">
-                ใหม่ <b className="text-[var(--green-700)]">{numFmt(agg.memberNew)}</b> + เก่า {numFmt(agg.memberOld)}
+                ใหม่ <b className="text-[var(--green-700)]">{numFmt(apiMemberNew)}</b> + เก่า {numFmt(apiMemberOld)}
               </div>
             </div>
 
@@ -191,12 +227,13 @@ export default function OverviewTab() {
               </tr>
             </thead>
             <tbody>
-              {DAILY_ENTRIES.map(d => {
-                const failedOther = d.scanFailedOther ?? 0
-                const attempts = d.success + failedOther + d.dupSelf + d.dupOther + d.notFound
+              {(apiDaily.data ?? DAILY_ENTRIES).map(d => {
+                const failedOther = (d as { scanFailedOther?: number }).scanFailedOther ?? 0
+                const attempts = d.success + failedOther + d.dupSelf + d.dupOther + (d.notFound ?? 0)
+                const sourceList = apiDaily.data ?? DAILY_ENTRIES
                 const tag = d.outage ? { l: 'ระบบล่ม 6 ชม.', c: 'chip-red' }
-                          : d.success === Math.max(...DAILY_ENTRIES.map(x => x.success)) ? { l: 'peak', c: '' }
-                          : d.date === DAILY_ENTRIES[0].date ? { l: 'วันแรก', c: 'chip-gray' }
+                          : d.success === Math.max(...sourceList.map(x => x.success)) ? { l: 'peak', c: '' }
+                          : d.date === sourceList[0].date ? { l: 'วันแรก', c: 'chip-gray' }
                           : { l: 'วันธรรมดา', c: 'chip-blue' }
                 return (
                   <tr key={d.date} className={`border-b border-[var(--border-soft)] hover:bg-[var(--bg-soft)] ${d.outage ? 'bg-red-50/40' : ''}`}>
@@ -209,7 +246,7 @@ export default function OverviewTab() {
                     <td className="text-right py-2 px-2 num text-[var(--text-muted)] bg-red-50/40">{numFmt(failedOther)}</td>
                     <td className="text-right py-2 px-2 num text-[var(--text-muted)] bg-red-50/40">{numFmt(d.dupSelf)}</td>
                     <td className="text-right py-2 px-2 num text-[var(--text-muted)] bg-red-50/40">{numFmt(d.dupOther)}</td>
-                    <td className="text-right py-2 px-2 num text-[var(--red)] bg-red-50/40">{numFmt(d.notFound)}</td>
+                    <td className="text-right py-2 px-2 num text-[var(--red)] bg-red-50/40">{numFmt(d.notFound ?? 0)}</td>
                     <td className="text-right py-2 px-2 num font-semibold">{numFmt(attempts)}</td>
                     <td className="text-right py-2 px-2 num font-bold" style={{ color: d.successRate >= 89 ? 'var(--green-700)' : '#ca8a04' }}>{d.successRate.toFixed(1)}%</td>
                     <td className="text-right py-2 px-2 num font-bold text-[var(--green-700)] bg-yellow-50/40"
@@ -252,10 +289,11 @@ export default function OverviewTab() {
               </tr>
             </thead>
             <tbody>
-              {DAILY_ENTRIES.map(d => {
-                const mNew = d.memberNew ?? d.newSignup
-                const mOld = d.memberOld ?? (d.uniqueUsers - d.newScanned)
-                const mTotal = d.memberTotal
+              {(apiDaily.data ?? DAILY_ENTRIES).map(d => {
+                const dailyAny = d as { memberNew?: number; newSignup?: number; memberOld?: number; newScanned?: number; memberTotal?: number; signedNotScanned?: number }
+                const mNew = dailyAny.memberNew ?? dailyAny.newSignup ?? 0
+                const mOld = dailyAny.memberOld ?? ((d.uniqueUsers ?? 0) - (dailyAny.newScanned ?? 0))
+                const mTotal = dailyAny.memberTotal
                 return (
                   <tr key={d.date} className={`border-b border-[var(--border-soft)] hover:bg-[var(--bg-soft)] ${d.outage ? 'bg-red-50/40' : ''}`}>
                     <td className="py-2 px-2 font-bold text-[var(--dark)]">{d.date.split('-')[2]} พ.ค.</td>
@@ -263,11 +301,11 @@ export default function OverviewTab() {
                     <td className="text-right py-2 px-2 num text-[var(--green-700)] font-bold bg-green-50/40">{numFmt(mNew)}</td>
                     <td className="text-right py-2 px-2 num">{numFmt(mOld)}</td>
                     <td className="text-right py-2 px-2 num font-semibold">{numFmt(mNew + mOld)}</td>
-                    <td className="text-right py-2 px-2 num text-[var(--text-muted)]">{numFmt(d.uniqueUsers)}</td>
+                    <td className="text-right py-2 px-2 num text-[var(--text-muted)]">{numFmt(d.uniqueUsers ?? 0)}</td>
                     <td className="text-right py-2 px-2 num font-bold text-[var(--dark)] bg-yellow-50/40">
                       {mTotal != null ? numFmt(mTotal) : <span className="text-[var(--text-muted)]">—</span>}
                     </td>
-                    <td className="text-right py-2 px-2 num text-[var(--text-muted)]">{numFmt(d.signedNotScanned)}</td>
+                    <td className="text-right py-2 px-2 num text-[var(--text-muted)]">{numFmt(dailyAny.signedNotScanned ?? 0)}</td>
                   </tr>
                 )
               })}

@@ -13,6 +13,7 @@ import TvAirtimeChart from '@/components/ui/TvAirtimeChart'
 import ScanFunnel from '@/components/ui/ScanFunnel'
 import RetentionCohort from '@/components/ui/RetentionCohort'
 import VerificationPanel from '@/components/ui/VerificationPanel'
+import DemoBanner from '@/components/ui/DemoBanner'
 import { numFmt } from '@/lib/utils'
 import { VERIFICATION_KPIS, SAME_DAY_REPEAT, FUNNEL_DATA, TV_LIFT } from '@/lib/scan-behavior-data'
 import { REAL_CAMPAIGN } from '@/lib/real-data'
@@ -32,6 +33,7 @@ export default function ScanBehaviorTab() {
 
   return (
     <div className="space-y-5">
+      <DemoBanner reason="ScanBehaviorTab ส่วนใหญ่ยังเป็น mock — BaselineComparison ใช้ /api/baseline/compare ได้, ส่วนที่เหลือ (TV airtime, funnel, heatmap, retention cohort) ยังไม่มี API dedicated" />
       {/* ── Top KPI Strip ── */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         <KpiCard

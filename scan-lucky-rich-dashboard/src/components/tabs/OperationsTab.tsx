@@ -6,6 +6,7 @@ import ChartCard from '@/components/ui/ChartCard'
 import InsightInline from '@/components/ui/InsightInline'
 import InsightCard from '@/components/ui/InsightCard'
 import ProgressBar from '@/components/ui/ProgressBar'
+import DemoBanner from '@/components/ui/DemoBanner'
 import { numFmt, maskPhone, statusColor, statusLabel } from '@/lib/utils'
 import { PRIZES } from '@/config/campaign'
 import type { Winner } from '@/types'
@@ -91,6 +92,7 @@ export default function OperationsTab() {
 
   return (
     <div>
+      <DemoBanner reason="OperationsTab ยังไม่มี API endpoint (ต้องการ /api/winners CRUD + /api/prize-allocations + /api/scan-log/export) — รอ backend ทำ endpoint เพิ่ม" />
       {/* ── Gold KPI Card ── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
         <KpiCard

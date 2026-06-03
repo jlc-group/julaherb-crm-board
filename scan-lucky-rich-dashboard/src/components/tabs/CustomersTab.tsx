@@ -16,8 +16,10 @@ import TopProvincesCard from '@/components/ui/TopProvincesCard'
 import InsightInline from '@/components/ui/InsightInline'
 import ApiSourceBadge from '@/components/ui/ApiSourceBadge'
 
-import { DAILY_ENTRIES } from '@/lib/daily-update-data'
+import { DAILY_ENTRIES } from '@/lib/daily-update-data'  // ใช้สำหรับ SegmentMixCard, EngagementDistribution, HeavyUsersCard, TopProvincesCard ที่ต้องการ DailyEntry shape
 import { numFmt } from '@/lib/utils'
+import { useApi } from '@/lib/hooks/useApi'
+import type { ScansTotalsResponse, EngagementResponse, HeavyUsersResponse, MembersDailyResponse } from '@/lib/api/types'
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, LineElement, PointElement, ArcElement, Tooltip, Legend, Filler)
 ChartJS.defaults.font.family = "'Noto Sans Thai', sans-serif"
@@ -44,26 +46,51 @@ export default function CustomersTab() {
     ? `${rangeDayCount} วัน${dataLabel}`
     : `${range.from.split('-')[2]} พ.ค.`
 
-  // Aggregate customer KPIs across selected days
-  const totalUsers = selectedDays.reduce((s, d) => s + d.uniqueUsers, 0)
-  // Repeat rate = (users with 2+ scans) / total — computed from engagementBuckets
-  const repeatRate = (() => {
-    let oneShot = 0, twoPlus = 0
-    for (const d of selectedDays) {
-      const b = d.engagementBuckets || []
-      oneShot += b[0]?.users || 0
-      twoPlus += (b[1]?.users || 0) + (b[2]?.users || 0) + (b[3]?.users || 0)
-    }
-    const total = oneShot + twoPlus
-    return total > 0 ? Math.round((twoPlus / total) * 100) : 0
-  })()
-  const heavyCount = selectedDays.reduce((s, d) => s + d.heavyUsers.length, 0)
+  // ─── API calls (Layer 1 internal /api/*) ───
+  const apiTotals = useApi<ScansTotalsResponse>(`/api/scans/totals?from=${range.from}&to=${range.to}`)
+  const apiEngagement = useApi<EngagementResponse>(`/api/customers/engagement?from=${range.from}&to=${range.to}`)
+  const apiHeavy = useApi<HeavyUsersResponse>(`/api/customers/heavy-users?date=${range.to}&limit=100`)
+  const apiMembers = useApi<MembersDailyResponse>(`/api/members/daily?from=${range.from}&to=${range.to}`)
+
+  // Aggregate customer KPIs — API-first with static fallback
+  const totalUsers = apiTotals.data?.uniqueUsers ?? selectedDays.reduce((s, d) => s + d.uniqueUsers, 0)
+  // Repeat rate from API engagement buckets (or fallback to static)
+  const repeatRate = apiEngagement.data
+    ? (() => {
+        const buckets = apiEngagement.data.buckets || []
+        const oneShot = buckets[0]?.users || 0
+        const twoPlus = (buckets[1]?.users || 0) + (buckets[2]?.users || 0) + (buckets[3]?.users || 0)
+        const total = oneShot + twoPlus
+        return total > 0 ? Math.round((twoPlus / total) * 100) : 0
+      })()
+    : (() => {
+        let oneShot = 0, twoPlus = 0
+        for (const d of selectedDays) {
+          const b = d.engagementBuckets || []
+          oneShot += b[0]?.users || 0
+          twoPlus += (b[1]?.users || 0) + (b[2]?.users || 0) + (b[3]?.users || 0)
+        }
+        const total = oneShot + twoPlus
+        return total > 0 ? Math.round((twoPlus / total) * 100) : 0
+      })()
+  const heavyCount = apiHeavy.data?.users?.length ?? selectedDays.reduce((s, d) => s + d.heavyUsers.length, 0)
   const newSignupGrowth = (() => {
+    const rows = apiMembers.data?.rows
+    if (rows && rows.length >= 2) {
+      const first = rows[0].memberNew
+      const last = rows[rows.length - 1].memberNew
+      return first > 0 ? ((last - first) / first) * 100 : 0
+    }
     if (selectedDays.length < 2) return 0
     const first = selectedDays[0].newSignup
     const last = selectedDays[selectedDays.length - 1].newSignup
     return ((last - first) / first) * 100
   })()
+  const apiBadge = (loading: boolean, error: string | null, hasData: boolean) =>
+    hasData ? <span className="inline-block ml-1 px-1.5 py-0.5 rounded text-[8px] font-bold bg-green-100 text-green-800 align-middle">🟢 API</span>
+    : loading ? <span className="inline-block ml-1 px-1.5 py-0.5 rounded text-[8px] font-bold bg-yellow-100 text-yellow-800 align-middle">⏳</span>
+    : error ? <span className="inline-block ml-1 px-1.5 py-0.5 rounded text-[8px] font-bold bg-red-100 text-red-800 align-middle" title={error}>⚠️</span>
+    : null
 
   return (
     <div className="space-y-4">
@@ -85,28 +112,28 @@ export default function CustomersTab() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <div className="kpi-accent kpi-users" title={`ลูกค้าที่มาสแกน รวม ${selectedDays.length} วันในช่วงเลือก (unique users)`}>
           <div className="text-[11px] text-[var(--text-secondary)] font-semibold uppercase tracking-wider mb-1">
-            👥 ลูกค้าทั้งหมด <ApiSourceBadge endpoint="/api/scans/totals" params="from&to" />
+            👥 ลูกค้าทั้งหมด {apiBadge(apiTotals.loading, apiTotals.error, !!apiTotals.data)}
           </div>
           <div className="text-[26px] font-bold leading-tight">{numFmt(totalUsers)}</div>
           <div className="text-[11px] text-[var(--text-muted)] mt-1">unique users · {selectedDays.length} วัน</div>
         </div>
         <div className="kpi-accent kpi-engage" title="% ของ user ที่กลับมาสแกนซ้ำ (2+ ครั้ง)">
           <div className="text-[11px] text-[var(--text-secondary)] font-semibold uppercase tracking-wider mb-1">
-            🔁 Repeat Rate <ApiSourceBadge endpoint="/api/customers/engagement" params="from&to" />
+            🔁 Repeat Rate {apiBadge(apiEngagement.loading, apiEngagement.error, !!apiEngagement.data)}
           </div>
           <div className="text-[26px] font-bold leading-tight">{repeatRate}%</div>
           <div className="text-[11px] text-[var(--text-muted)] mt-1">industry avg 25-30%</div>
         </div>
         <div className="kpi-accent kpi-new" title="ผู้ใช้ที่สแกน 30+ ครั้ง — อาจเป็นสายเก็บหรือ fraud">
           <div className="text-[11px] text-[var(--text-secondary)] font-semibold uppercase tracking-wider mb-1">
-            🚩 Heavy Users <ApiSourceBadge endpoint="/api/customers/heavy-users" params="date&limit" />
+            🚩 Heavy Users {apiBadge(apiHeavy.loading, apiHeavy.error, !!apiHeavy.data)}
           </div>
           <div className="text-[26px] font-bold leading-tight">{heavyCount}</div>
           <div className="text-[11px] text-[var(--text-muted)] mt-1">{'>'} 30 scans / วัน รวม</div>
         </div>
         <div className="kpi-accent kpi-success" title="การเปลี่ยนแปลง newSignup ของ Day แรก vs ล่าสุด">
           <div className="text-[11px] text-[var(--text-secondary)] font-semibold uppercase tracking-wider mb-1">
-            📈 Signup Δ <ApiSourceBadge endpoint="/api/members/daily" params="from&to" />
+            📈 Signup Δ {apiBadge(apiMembers.loading, apiMembers.error, !!apiMembers.data)}
           </div>
           <div className={`text-[26px] font-bold leading-tight ${newSignupGrowth >= 0 ? 'text-[var(--positive)]' : 'text-[var(--danger)]'}`}>
             {newSignupGrowth >= 0 ? '+' : ''}{newSignupGrowth.toFixed(1)}%
