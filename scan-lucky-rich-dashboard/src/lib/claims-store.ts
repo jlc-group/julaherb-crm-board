@@ -4,7 +4,8 @@ import path from 'path'
 import type { NextRequest } from 'next/server'
 import type { DrawWinner, DrawClaim } from '@/config/draw-rounds'
 
-export const DATA_DIR = path.join(process.cwd(), 'data')
+// DATA_DIR override ได้ด้วย env — production ต้องชี้ออกนอก app folder เพราะ deploy.ps1 robocopy /PURGE ลบทุกอย่างที่ไม่ได้ exclude
+export const DATA_DIR = process.env.DATA_DIR || path.join(process.cwd(), 'data')
 export const WINNERS_FILE = path.join(DATA_DIR, 'draw-winners.json')
 export const CLAIMS_FILE = path.join(DATA_DIR, 'draw-claims.json')
 export const CLAIMS_DIR = path.join(DATA_DIR, 'claims')

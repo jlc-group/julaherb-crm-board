@@ -9,7 +9,8 @@ import type { DrawWinner } from '@/config/draw-rounds'
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
-const DATA_DIR = path.join(process.cwd(), 'data')
+// DATA_DIR override ได้ด้วย env — production ชี้ออกนอก app folder (กัน robocopy /PURGE ลบ PII)
+const DATA_DIR = process.env.DATA_DIR || path.join(process.cwd(), 'data')
 const FILE = path.join(DATA_DIR, 'draw-winners.json')
 
 type WinnerRecord = DrawWinner
