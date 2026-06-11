@@ -20,13 +20,13 @@ Dashboard **รันแล้วบน sunflower** ผ่าน PM2 → `http:/
 2. Firewall: Node.js มี inbound allow rule อยู่แล้ว — เข้าจาก LAN ได้เลย
 3. `data/` เริ่มว่างตามคาด (winner เทสต์ไม่ตามมา)
 
-## ⏳ Blocker ที่เหลือ (ต้องทำฝั่งเครื่อง dev 10.10.10.4)
-1. **TCP 30400 จาก sunflower → 10.10.10.4 ยังเข้าไม่ได้** (ping ได้ แต่ port ปิด)
-   → ฝั่งเครื่อง dev ต้องเปิด firewall inbound 30400 + ตรวจว่า saversureV2 bind `0.0.0.0` ไม่ใช่ `localhost`
+## ⏳ Blocker ที่เหลือ
+1. ~~TCP 30400 จาก sunflower → 10.10.10.4 เข้าไม่ได้~~ ✅ **แก้แล้ว (2026-06-11 เย็น)** — เปิด firewall inbound 30400 บนเครื่อง saversure (scope เฉพาะ `192.168.0.60`) · ทดสอบจาก sunflower: `/api/v1/dashboard/campaign-daily` ตอบ **401** = ถึง backend จริง เหลือแค่ token
+   (หมายเหตุ: rule ถูกสร้างซ้ำ 2 อัน ชื่อ "saversureV2 API 30400 (LAN)" — ลบอันเกินได้ ไม่ลบก็ไม่เสียหาย)
 2. **`.env.local` ยังไม่มี credentials** — ต้องเติมเอง (ห้าม commit):
    `SAVERSURE_API_TOKEN` · `SAVERSURE_LOGIN_EMAIL` · `SAVERSURE_LOGIN_PASSWORD`
-   (อยู่ใน `.env.local` ของเครื่อง dev — copy ค่ามาใส่มือ)
-3. จนกว่า 1+2 เสร็จ หน้าที่เรียก API saversureV2 จะ error/ว่าง (หน้าเว็บ render ได้ปกติ)
+   (อยู่ใน `.env.local` ของเครื่อง dev — copy ค่ามาใส่มือ) → แล้ว `pm2 restart scan-lucky-rich-prod`
+3. จนกว่า 2 เสร็จ หน้าที่เรียก API saversureV2 จะ error/ว่าง (หน้าเว็บ render ได้ปกติ)
 4. ก่อนเปิด public ให้ลูกค้า (LINE OA) → ตั้ง `ADMIN_KEY` ตาม DEPLOY.md ข้อ 8
 
 ## วิธี operate บน sunflower
