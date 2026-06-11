@@ -59,14 +59,14 @@ export function middleware(req: NextRequest) {
     return res
   }
 
-  // API → 401 JSON · หน้าเว็บ → ข้อความสั้น (ไม่ redirect ไปไหน — ไม่มีหน้า login)
+  // API → 401 JSON · หน้าเว็บที่ไม่มี key → เด้งไปหน้าประกาศผล (UX: คนทั่วไปเปิด domain แล้วเจอของที่ใช้ได้เลย)
   if (pathname.startsWith('/api/')) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
   }
-  return new NextResponse('unauthorized — เปิดด้วย ?key=<ADMIN_KEY> ครั้งแรกเพื่อเข้าหน้าแอดมิน', {
-    status: 401,
-    headers: { 'content-type': 'text/plain; charset=utf-8' },
-  })
+  const toWinners = req.nextUrl.clone()
+  toWinners.pathname = '/winners'
+  toWinners.search = ''
+  return NextResponse.redirect(toWinners)
 }
 
 export const config = {
