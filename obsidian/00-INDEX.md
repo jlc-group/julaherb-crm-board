@@ -1,11 +1,12 @@
 # SaversureV2 Dashboard Integration Index
 
-Last updated: 2026-06-11 (Deploy readiness — build ผ่าน + push origin สำหรับ sunflower · ถอด mock calendar ออกจากแท็บรับรางวัล)
+Last updated: 2026-06-11 (Deploy บน sunflower สำเร็จ — รันจริงที่ http://192.168.0.60:3101 ผ่าน PM2)
 
 ไฟล์นี้เป็นจุดเริ่มต้นหลักสำหรับเปิดอ่านสถานะงาน dashboard integration ระหว่าง `julaherb-crm-board` และ `saversureV2`
 
 ## Current Truth
 
+- ✅ **2026-06-11 (เย็น)**: **Deploy บน sunflower สำเร็จ — รันจริงที่ `http://192.168.0.60:3101`** (⚠️ port เปลี่ยนจาก 3100 → **3101** เพราะ 3100 บน sunflower ถูก `wepurchase-frontend-prod` ใช้อยู่) · PM2 `scan-lucky-rich-prod` + `pm2 save` · `/` `/winners` `/claim` ตอบ 200 ทั้ง localhost/LAN · **blocker เหลือฝั่งเครื่อง dev (10.10.10.4)**: เปิด firewall/bind port 30400 ให้ sunflower เข้าได้ + เติม token/login ใน `.env.local` บน sunflower (ดู [26-Deployed-On-Sunflower-2026-06-11.md](26-Deployed-On-Sunflower-2026-06-11.md))
 - ✅ **2026-06-11 (PM)**: **พร้อม deploy ไป sunflower (192.168.0.60)** — แก้ 8 TS errors → `next build` ผ่าน 21 หน้า · `.gitignore` กัน PII (`รายชื่อ*`, xlsx/pdf/pptx) · commit `08ddfaa` (85 ไฟล์ ไม่มี secret/PII) + push `origin/feat/saversure-api-integration` · คู่มือ `scan-lucky-rich-dashboard/DEPLOY.md` (จุดสำคัญ: สร้าง `.env.local` เอง + ชี้ `SAVERSURE_API_BASE_URL` ให้ถูกเครื่อง) · **ถอด mock ปฏิทินรับรางวัล (PickupCalendarPanel) ออกจากแท็บรับรางวัล** ตามคำสั่งเจ้าของ "API เท่านั้น ไม่เอา mockup" (ไฟล์ยังอยู่ แค่ไม่ถูก import) (ดู [25-Deploy-Readiness-Sunflower-2026-06-11.md](25-Deploy-Readiness-Sunflower-2026-06-11.md))
 - ✅ **2026-06-11 (AM)**: **รับรางวัล: checklist เอกสาร + ปฏิทินคิวรับรางวัล** — `/claim` เปลี่ยนจากอัปโหลดเอกสารเป็นตรวจสิทธิ์ + checklist เอกสารที่ต้องนำมาแสดงตัวจริง · ปิด `POST /api/claim/submit` เป็น `410 Gone` · หน้า admin `รับรางวัล` เพิ่ม sub-view `ปฏิทินรับรางวัล` สำหรับ Ops monitor Jul-Dec 2569 พร้อม mock occupancy, detail slots, filter, CSV export (ดู [24-Claim-Checklist-and-Pickup-Calendar-2026-06-11.md](24-Claim-Checklist-and-Pickup-Calendar-2026-06-11.md))
 - ✅ **2026-06-10**: **วันจับรางวัล + ลูกค้ารับรางวัล + ประกาศผล** — Operations บันทึกผู้ชนะ 7 รอบ + ป้าย "ผู้โชคดีประจำวันที่ X" · `/claim` ลูกค้าส่งเอกสาร (รื้อใหม่ + ตัวอย่าง SVG) · `/winners` ประกาศผลสาธารณะ (gate วันประกาศฝั่ง server + mask `081-123-xxxx`) · cross-tab Operations→รับรางวัล · mobile/LINE OA (viewport+safe-area) · ผ่าน adversarial review (6 fix) (ดู [23-Draw-Claim-Winners-Pages-2026-06-10.md](23-Draw-Claim-Winners-Pages-2026-06-10.md)) — ⚠️ ยังเป็น localhost ต้อง deploy ก่อนใช้ LINE OA จริง
@@ -19,7 +20,10 @@ Last updated: 2026-06-11 (Deploy readiness — build ผ่าน + push origin 
 
 ## Active Documents
 
-1. `25-Deploy-Readiness-Sunflower-2026-06-11.md` ⭐ **NEWEST — พร้อม deploy sunflower**
+1. `26-Deployed-On-Sunflower-2026-06-11.md` ⭐ **NEWEST — deploy จริงบน sunflower แล้ว (port 3101)**
+   - PM2 `scan-lucky-rich-prod` · ทุกหน้า 200 · เหตุผลย้าย port 3100→3101 (ชน We-Purchase) · blocker: เปิด 30400 ฝั่ง dev + เติม creds
+
+2. `25-Deploy-Readiness-Sunflower-2026-06-11.md` — พร้อม deploy sunflower
    - audit secret/PII · แก้ 8 TS errors → build ผ่าน · .gitignore กัน PII · commit+push origin · DEPLOY.md (env + network checklist)
 
 2. `24-Claim-Checklist-and-Pickup-Calendar-2026-06-11.md` — รับรางวัล checklist + admin calendar

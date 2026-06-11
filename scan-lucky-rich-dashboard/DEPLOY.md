@@ -1,6 +1,8 @@
 # 🚀 Deploy / รันบนเครื่องอื่น (เช่น sunflower 192.168.0.60)
 
-Dashboard "สแกนลุ้นรวย สวยลุ้นล้าน" — Next.js 14 · port **3100**
+Dashboard "สแกนลุ้นรวย สวยลุ้นล้าน" — Next.js 14 · port default **3100**
+
+> ✅ **Deploy บน sunflower แล้ว (2026-06-11)** ที่ `http://192.168.0.60:3101` — ใช้ **3101** ไม่ใช่ 3100 เพราะ 3100 บน sunflower เป็นของ `wepurchase-frontend-prod` (PM2 cluster — ดูเหมือนว่างแต่ไม่ว่าง) · รันผ่าน PM2 ชื่อ `scan-lucky-rich-prod` (`next start -p 3101`) · รายละเอียด [obsidian/26-Deployed-On-Sunflower-2026-06-11.md](../obsidian/26-Deployed-On-Sunflower-2026-06-11.md)
 
 ---
 
