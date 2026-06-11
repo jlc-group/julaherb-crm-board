@@ -1,0 +1,42 @@
+# 🏭 ย้ายเข้าระบบ we-platform + ADMIN_KEY gate — 2026-06-12
+
+## ผลลัพธ์
+Dashboard ย้ายจาก "รันมือจาก Github folder" → **production มาตรฐานเครื่อง sunflower** แล้ว
+
+- PM2 `scan-lucky-rich-prod` (cluster) รันจาก `D:\AI_WORKSPACE\Production\scan-lucky-rich` port **3101** · `pm2 save` แล้ว
+- GitHub webhook id `639839273` → push branch `feat/saversure-api-integration` (หรือ main) = **auto-deploy** (git pull → robocopy → build → pm2 restart)
+- Cloudflare ingress ใส่แล้ว: `scanlucky.wejlc.com → localhost:3101` — ⏳ **รอ 2 คำสั่ง admin** (DNS route + restart cloudflared) ถึงจะเปิด public ได้
+- ทดสอบ gate ครบ: `/winners` `/claim` เปิดได้ไม่ต้อง key · `/` + `/api/print-slips` (PII) ตอบ 401 · ใส่ key ผ่าน · API ดึงข้อมูลจริง saversureV2 ได้
+
+## 🔐 ADMIN_KEY (ใหม่ในรอบนี้)
+- `src/middleware.ts` — ตั้ง `ADMIN_KEY` แล้วทุกอย่างถูกล็อกยกเว้น public surface (`/winners`, `/claim`, `/api/winners/public`, `/api/claim/verify|submit`)
+- วิธีเข้าแอดมิน: เปิด `http://<host>:3101/?key=<ADMIN_KEY>` ครั้งแรก → ระบบ set cookie 30 วัน + ตัด key ออกจาก URL · หรือ client เดิมที่ส่ง header `x-admin-key` (localStorage `adminKey`) ใช้ได้เหมือนเดิม
+- `/api/auth/refresh` เรียกได้เฉพาะ localhost (สำหรับ scheduled task ในเครื่อง)
+- **ค่า key อยู่ใน** `D:\AI_WORKSPACE\Production\scan-lucky-rich\.env.local` (ห้าม commit)
+- ไม่ตั้ง ADMIN_KEY = เปิดหมด (dev ในเครื่อง 10.10.10.4 ไม่กระทบ)
+
+## 📁 DATA_DIR ออกนอก app folder (กัน robocopy /PURGE ลบ PII)
+- โค้ดรองรับ env `DATA_DIR` แล้ว (`claims-store.ts` + `api/draw/winners/route.ts`)
+- prod ชี้ไป `D:\AI_WORKSPACE\Production\scan-lucky-rich-data\` (สร้าง + ย้ายไฟล์เดิมแล้ว)
+- dev ไม่ตั้ง env → ใช้ `<app>/data` เหมือนเดิม
+
+## ⚙️ สิ่งที่แก้ใน we-platform (เครื่อง sunflower — ยังไม่ commit เพราะ repo มีงาน IDE อื่นปนอยู่)
+| ไฟล์ | อะไร |
+|---|---|
+| `main.py` | DEPLOY_OVERRIDES: dev = `julaherb-crm-board/scan-lucky-rich-dashboard` (script เดาผิดเป็น root) · REPO_TO_DEV_FOLDER = `julaherb-crm-board` · REPO_ALLOWED_BRANCHES เพิ่ม `feat/saversure-api-integration` · projects list path |
+| `scripts/deploy.ps1` | PM2_MAP `scan-lucky-rich` → `scan-lucky-rich-prod` (script ใส่ให้) |
+| `ecosystem.config.cjs` (ทั้ง we-platform + `Production\ecosystem.config.cjs`) | app block `next start -H 0.0.0.0` PORT=3101 |
+| `C:\Users\ADMIN\.cloudflared\we-platform-api.yml` | ingress scanlucky.wejlc.com (script ใส่ให้) |
+| sync แล้ว | `Production\we-platform\main.py` + restart `we-platform-prod` |
+
+## ⏳ เหลือ 2 คำสั่ง (ต้องรันเองด้วยสิทธิ์ admin — AI ถูกห้ามเปิด public DNS เอง)
+```powershell
+cloudflared tunnel route dns we-platform-api scanlucky.wejlc.com
+Restart-Service cloudflared
+```
+แล้วทดสอบ: `https://scanlucky.wejlc.com/winners` จากมือถือ 4G (ไม่ใช่ WiFi ออฟฟิศ)
+
+## วิธี deploy รอบถัดไป
+แค่ `git push` branch `feat/saversure-api-integration` → webhook auto-deploy เอง (~3-5 นาที) · ดู log ที่ we-platform
+- `.env.local` + `data/` ฝั่ง prod รอดข้าม deploy (robocopy exclude `.env*` + DATA_DIR อยู่นอก folder)
+- token refresh: `POST http://localhost:3101/api/auth/refresh` (localhost เท่านั้น) → hot-reload เอง ไม่ต้อง restart
