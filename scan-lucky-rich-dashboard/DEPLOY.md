@@ -1,8 +1,10 @@
 # 🚀 Deploy / รันบนเครื่องอื่น (เช่น sunflower 192.168.0.60)
 
-Dashboard "สแกนลุ้นรวย สวยลุ้นล้าน" — Next.js 14 · port default **3100**
+Dashboard "สแกนลุ้นรวย สวยลุ้นล้าน" — Next.js 14 · port **3101**
 
-> ✅ **Deploy บน sunflower แล้ว (2026-06-11)** ที่ `http://192.168.0.60:3101` — ใช้ **3101** ไม่ใช่ 3100 เพราะ 3100 บน sunflower เป็นของ `wepurchase-frontend-prod` (PM2 cluster — ดูเหมือนว่างแต่ไม่ว่าง) · รันผ่าน PM2 ชื่อ `scan-lucky-rich-prod` (`next start -p 3101`) · รายละเอียด [obsidian/26-Deployed-On-Sunflower-2026-06-11.md](../obsidian/26-Deployed-On-Sunflower-2026-06-11.md)
+> ✅ **Deploy บน sunflower แล้ว (2026-06-11)** ที่ `http://192.168.0.60:3101` — รันผ่าน PM2 ชื่อ `scan-lucky-rich-prod` · รายละเอียด [obsidian/26-Deployed-On-Sunflower-2026-06-11.md](../obsidian/26-Deployed-On-Sunflower-2026-06-11.md)
+>
+> ⚠️ **port มาตรฐานเปลี่ยนจาก 3100 → 3101 แล้ว (2026-06-12)** ใน `package.json` ทั้ง dev/start — เพราะ 3100 บน sunflower เป็นของ `wepurchase-frontend-prod` (PM2 cluster mode — เช็คด้วย `Get-NetTCPConnection` จะดูเหมือนว่าง แต่ HTTP ตอบเป็น We-Purchase) · เครื่อง dev ที่เคยเปิด `localhost:3100` ให้เปลี่ยนเป็น `localhost:3101`
 
 ---
 
@@ -50,12 +52,12 @@ SAVERSURE_TENANT_ID=00000000-0000-0000-0000-000000000001
 ## 5) รัน
 **โหมดพัฒนา (แก้โค้ดเห็นทันที):**
 ```bash
-npm run dev          # → http://localhost:3100
+npm run dev          # → http://localhost:3101
 ```
 **โหมด production (เร็วกว่า · ใช้จริง):**
 ```bash
 npm run build
-npm start            # → http://localhost:3100
+npm start            # → http://localhost:3101
 ```
 
 ## 6) หน้าเว็บ

@@ -25,9 +25,9 @@
 
 **ต้องทำ**:
 - ✅ ตรวจ port ที่ฟังอยู่ก่อนเสมอ ก่อนสตาร์ท server
-- ✅ ใช้ port ของ julaherb-crm-board ที่กำหนดไว้ใน `package.json` เท่านั้น (ปัจจุบัน: **3100**)
-- ✅ ถ้า 3100 ไม่ว่าง → หา port อื่นในช่วง 3100-3999 ที่ว่าง (ห้าม 3000, 3001)
-- ✅ Verify ด้วย `Get-NetTCPConnection -LocalPort <port> -State Listen` ก่อนสตาร์ท
+- ✅ ใช้ port ของ julaherb-crm-board ที่กำหนดไว้ใน `package.json` เท่านั้น (ปัจจุบัน: **3101** — เปลี่ยนจาก 3100 เมื่อ 2026-06-12 เพราะบน sunflower 3100 เป็นของ wepurchase-frontend-prod)
+- ✅ ถ้า 3101 ไม่ว่าง → หา port อื่นในช่วง 3102-3999 ที่ว่าง (ห้าม 3000, 3001, 3100)
+- ✅ Verify ด้วย `Get-NetTCPConnection -LocalPort <port> -State Listen` ก่อนสตาร์ท — ⚠️ แอป PM2 cluster mode (เช่น wepurchase :3100) socket ถูกถือโดย PM2 daemon ทำให้คำสั่งนี้ดูเหมือนว่างทั้งที่ไม่ว่าง → ยิง HTTP เช็คซ้ำเสมอ (`Invoke-WebRequest http://localhost:<port>`)
 
 ### คำสั่งตรวจสอบ port ก่อนสตาร์ท
 
