@@ -1,12 +1,13 @@
 # SaversureV2 Dashboard Integration Index
 
-Last updated: 2026-06-11 (Claim checklist + admin pickup calendar)
+Last updated: 2026-06-11 (Deploy readiness — build ผ่าน + push origin สำหรับ sunflower · ถอด mock calendar ออกจากแท็บรับรางวัล)
 
 ไฟล์นี้เป็นจุดเริ่มต้นหลักสำหรับเปิดอ่านสถานะงาน dashboard integration ระหว่าง `julaherb-crm-board` และ `saversureV2`
 
 ## Current Truth
 
-- ✅ **2026-06-11**: **รับรางวัล: checklist เอกสาร + ปฏิทินคิวรับรางวัล** — `/claim` เปลี่ยนจากอัปโหลดเอกสารเป็นตรวจสิทธิ์ + checklist เอกสารที่ต้องนำมาแสดงตัวจริง · ปิด `POST /api/claim/submit` เป็น `410 Gone` · หน้า admin `รับรางวัล` เพิ่ม sub-view `ปฏิทินรับรางวัล` สำหรับ Ops monitor Jul-Dec 2569 พร้อม mock occupancy, detail slots, filter, CSV export (ดู [24-Claim-Checklist-and-Pickup-Calendar-2026-06-11.md](24-Claim-Checklist-and-Pickup-Calendar-2026-06-11.md))
+- ✅ **2026-06-11 (PM)**: **พร้อม deploy ไป sunflower (192.168.0.60)** — แก้ 8 TS errors → `next build` ผ่าน 21 หน้า · `.gitignore` กัน PII (`รายชื่อ*`, xlsx/pdf/pptx) · commit `08ddfaa` (85 ไฟล์ ไม่มี secret/PII) + push `origin/feat/saversure-api-integration` · คู่มือ `scan-lucky-rich-dashboard/DEPLOY.md` (จุดสำคัญ: สร้าง `.env.local` เอง + ชี้ `SAVERSURE_API_BASE_URL` ให้ถูกเครื่อง) · **ถอด mock ปฏิทินรับรางวัล (PickupCalendarPanel) ออกจากแท็บรับรางวัล** ตามคำสั่งเจ้าของ "API เท่านั้น ไม่เอา mockup" (ไฟล์ยังอยู่ แค่ไม่ถูก import) (ดู [25-Deploy-Readiness-Sunflower-2026-06-11.md](25-Deploy-Readiness-Sunflower-2026-06-11.md))
+- ✅ **2026-06-11 (AM)**: **รับรางวัล: checklist เอกสาร + ปฏิทินคิวรับรางวัล** — `/claim` เปลี่ยนจากอัปโหลดเอกสารเป็นตรวจสิทธิ์ + checklist เอกสารที่ต้องนำมาแสดงตัวจริง · ปิด `POST /api/claim/submit` เป็น `410 Gone` · หน้า admin `รับรางวัล` เพิ่ม sub-view `ปฏิทินรับรางวัล` สำหรับ Ops monitor Jul-Dec 2569 พร้อม mock occupancy, detail slots, filter, CSV export (ดู [24-Claim-Checklist-and-Pickup-Calendar-2026-06-11.md](24-Claim-Checklist-and-Pickup-Calendar-2026-06-11.md))
 - ✅ **2026-06-10**: **วันจับรางวัล + ลูกค้ารับรางวัล + ประกาศผล** — Operations บันทึกผู้ชนะ 7 รอบ + ป้าย "ผู้โชคดีประจำวันที่ X" · `/claim` ลูกค้าส่งเอกสาร (รื้อใหม่ + ตัวอย่าง SVG) · `/winners` ประกาศผลสาธารณะ (gate วันประกาศฝั่ง server + mask `081-123-xxxx`) · cross-tab Operations→รับรางวัล · mobile/LINE OA (viewport+safe-area) · ผ่าน adversarial review (6 fix) (ดู [23-Draw-Claim-Winners-Pages-2026-06-10.md](23-Draw-Claim-Winners-Pages-2026-06-10.md)) — ⚠️ ยังเป็น localhost ต้อง deploy ก่อนใช้ LINE OA จริง
 - ✅ **2026-06-09 (PM)**: **Print List พร้อมใช้จับฉลากจริง** — PDF ตรงจอเป๊ะ (Google Fonts Sarabun + line-height 1.5) · ตัดพนักงาน 188 คน (เบอร์+ชื่อ) · แก้ `Page.printToPDF timed out` (protocolTimeout 540s) · **auto-split หลายไฟล์** เมื่อ >15k/วัน · ตรวจ rights logic = **ไม่เบิ้ล** (verified code+data) (ดู [22-PrintList-PDF-Hardening-and-Rights-Audit-2026-06-09.md](22-PrintList-PDF-Hardening-and-Rights-Audit-2026-06-09.md))
 - ✅ **2026-06-09 (AM)**: **Print List LIVE** — endpoint `/dashboard/print-slips` deployed, dashboard ดึงของจริง end-to-end (`source:"api"`, `total=65173`); แก้ draw-fairness + campaign-report/daily 500 (/dev/shm) ครบ (ดู [21-PrintList-LIVE-2026-06-09.md](21-PrintList-LIVE-2026-06-09.md))
@@ -18,10 +19,13 @@ Last updated: 2026-06-11 (Claim checklist + admin pickup calendar)
 
 ## Active Documents
 
-1. `24-Claim-Checklist-and-Pickup-Calendar-2026-06-11.md` ⭐ **NEWEST — รับรางวัล checklist + admin calendar**
-   - `/claim` = ตรวจสิทธิ์ + รายการเอกสารที่ต้องเตรียม ไม่รับ upload แล้ว · `claim/submit` ตอบ 410 · `รับรางวัล` มี sub-view `รายชื่อผู้โชคดี` / `ปฏิทินรับรางวัล` · calendar ใช้ mock data inline, Jul-Dec 2569, 7 slots/day, holiday/substitute/draw markers, CSV export
+1. `25-Deploy-Readiness-Sunflower-2026-06-11.md` ⭐ **NEWEST — พร้อม deploy sunflower**
+   - audit secret/PII · แก้ 8 TS errors → build ผ่าน · .gitignore กัน PII · commit+push origin · DEPLOY.md (env + network checklist)
 
-1. `23-Draw-Claim-Winners-Pages-2026-06-10.md` ⭐ **NEWEST — วันจับรางวัล + รับรางวัล + ประกาศผล**
+2. `24-Claim-Checklist-and-Pickup-Calendar-2026-06-11.md` — รับรางวัล checklist + admin calendar
+   - `/claim` = ตรวจสิทธิ์ + รายการเอกสารที่ต้องเตรียม ไม่รับ upload แล้ว · `claim/submit` ตอบ 410 · ⚠️ **sub-view ปฏิทินรับรางวัล ถูกถอดออกแล้ว** (mock data — เจ้าของสั่ง "API เท่านั้น" · ไฟล์ `PickupCalendarPanel.tsx` ยังอยู่ ไม่ถูก import)
+
+3. `23-Draw-Claim-Winners-Pages-2026-06-10.md` — วันจับรางวัล + รับรางวัล + ประกาศผล
    - Operations บันทึกผู้ชนะ + "ผู้โชคดีประจำวันที่ X" · `/claim` รื้อใหม่ + ตัวอย่างเอกสาร SVG · `/winners` ประกาศผลสาธารณะ (gate วันประกาศ + mask 081-123-xxxx) · cross-tab flow + adversarial review (6 fix) · viewport/safe-area mobile · กฎวันประกาศ: รอบจับปลายเดือน→ผู้โชคดีรายวันเดือนถัดไป
 
 2. `22-PrintList-PDF-Hardening-and-Rights-Audit-2026-06-09.md` — PDF เป๊ะ + auto-split + rights audit
