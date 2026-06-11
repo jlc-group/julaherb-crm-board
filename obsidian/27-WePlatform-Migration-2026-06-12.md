@@ -29,12 +29,10 @@ Dashboard ย้ายจาก "รันมือจาก Github folder" → 
 | `C:\Users\ADMIN\.cloudflared\we-platform-api.yml` | ingress scanlucky.wejlc.com (script ใส่ให้) |
 | sync แล้ว | `Production\we-platform\main.py` + restart `we-platform-prod` |
 
-## ⏳ เหลือ 2 คำสั่ง (ต้องรันเองด้วยสิทธิ์ admin — AI ถูกห้ามเปิด public DNS เอง)
-```powershell
-cloudflared tunnel route dns we-platform-api scanlucky.wejlc.com
-Restart-Service cloudflared
-```
-แล้วทดสอบ: `https://scanlucky.wejlc.com/winners` จากมือถือ 4G (ไม่ใช่ WiFi ออฟฟิศ)
+## 🌐 Domain LIVE แล้ว (2026-06-12 — user ยืนยันเปิด public)
+- `https://scanlucky.wejlc.com/winners` → **200** ✅ · `https://scanlucky.wejlc.com/` (ไม่มี key) → **401** ✅ gate ทำงานผ่าน tunnel
+- DNS route ถูกสร้างไว้แล้วฝั่ง Cloudflare (`cloudflared tunnel route dns` ตอบ already configured) · ไม่ต้อง restart service — tunnel โหลด ingress เอง
+- ⚠️ ก่อนแจกลิงก์ลูกค้าจริง: ทดสอบจากมือถือ **4G** (ไม่ใช่ WiFi ออฟฟิศ) อีกครั้ง
 
 ## วิธี deploy รอบถัดไป
 แค่ `git push` branch `feat/saversure-api-integration` → webhook auto-deploy เอง (~3-5 นาที) · ดู log ที่ we-platform
