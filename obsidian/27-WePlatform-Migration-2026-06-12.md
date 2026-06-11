@@ -8,12 +8,14 @@ Dashboard ย้ายจาก "รันมือจาก Github folder" → 
 - Cloudflare ingress ใส่แล้ว: `scanlucky.wejlc.com → localhost:3101` — ⏳ **รอ 2 คำสั่ง admin** (DNS route + restart cloudflared) ถึงจะเปิด public ได้
 - ทดสอบ gate ครบ: `/winners` `/claim` เปิดได้ไม่ต้อง key · `/` + `/api/print-slips` (PII) ตอบ 401 · ใส่ key ผ่าน · API ดึงข้อมูลจริง saversureV2 ได้
 
-## 🔐 ADMIN_KEY (ใหม่ในรอบนี้)
-- `src/middleware.ts` — ตั้ง `ADMIN_KEY` แล้วทุกอย่างถูกล็อกยกเว้น public surface (`/winners`, `/claim`, `/api/winners/public`, `/api/claim/verify|submit`)
-- วิธีเข้าแอดมิน: เปิด `http://<host>:3101/?key=<ADMIN_KEY>` ครั้งแรก → ระบบ set cookie 30 วัน + ตัด key ออกจาก URL · หรือ client เดิมที่ส่ง header `x-admin-key` (localStorage `adminKey`) ใช้ได้เหมือนเดิม
-- `/api/auth/refresh` เรียกได้เฉพาะ localhost (สำหรับ scheduled task ในเครื่อง)
+## 🔐 ADMIN_KEY (ปรับนโยบาย 2 รอบ — สุดท้าย: เปิดหน้า ล็อกเฉพาะ PII)
+- รอบแรกล็อกทุกหน้า → ผู้ใช้ confused ("เด้งไปอีกหน้า") → **ผู้ใช้ยืนยันเลือก "เปิด public เลย"** (2026-06-12)
+- นโยบายปัจจุบัน (`src/middleware.ts`): **หน้าเว็บ + API ตัวเลขรวมเปิด public ทั้งหมด** (เปิด domain เจอ dashboard ทันที) · ADMIN_KEY ล็อกเฉพาะ 5 API PII: `print-slips(-pdf)`, `claim/file` (บัตร ปชช.), `draw/claims`, `draw/winners` (raw ไม่ mask), `customers/search`
+- ปลดล็อก PII: เปิด `?key=<ADMIN_KEY>` ครั้งแรก → cookie 30 วัน · หรือ header `x-admin-key` (UI ClaimsTab มีช่องใส่ key)
+- `/api/auth/refresh` เรียกได้เฉพาะ localhost · `/winners` ใช้ `/api/winners/public` (mask เบอร์) เหมือนเดิม
 - **ค่า key อยู่ใน** `D:\AI_WORKSPACE\Production\scan-lucky-rich\.env.local` (ห้าม commit)
 - ไม่ตั้ง ADMIN_KEY = เปิดหมด (dev ในเครื่อง 10.10.10.4 ไม่กระทบ)
+- verified ผ่าน domain: หน้าหลัก/winners/ตัวเลขรวม = 200 · print-slips + customers/search = 401
 
 ## 📁 DATA_DIR ออกนอก app folder (กัน robocopy /PURGE ลบ PII)
 - โค้ดรองรับ env `DATA_DIR` แล้ว (`claims-store.ts` + `api/draw/winners/route.ts`)
