@@ -17,7 +17,7 @@ import InsightInline from '@/components/ui/InsightInline'
 import ApiSourceBadge from '@/components/ui/ApiSourceBadge'
 
 import { DAILY_ENTRIES } from '@/lib/daily-update-data'  // ใช้สำหรับ SegmentMixCard, EngagementDistribution, HeavyUsersCard, TopProvincesCard ที่ต้องการ DailyEntry shape
-import { numFmt } from '@/lib/utils'
+import { numFmt, getCampaignToday } from '@/lib/utils'
 import { useApi } from '@/lib/hooks/useApi'
 import type { ScansTotalsResponse, EngagementResponse, HeavyUsersResponse, MembersDailyResponse } from '@/lib/api/types'
 
@@ -27,7 +27,7 @@ ChartJS.defaults.font.size = 11
 ChartJS.defaults.color = '#6b7280'
 
 export default function CustomersTab() {
-  const [range, setRange] = useState<DateRangeV2>(() => defaultRange({ preset: 'campaign', today: new Date('2026-05-24') }))
+  const [range, setRange] = useState<DateRangeV2>(() => defaultRange({ preset: 'campaign', today: getCampaignToday() }))
 
   const selectedDays = useMemo(
     () => DAILY_ENTRIES.filter(d => d.date >= range.from && d.date <= range.to),
@@ -52,8 +52,11 @@ export default function CustomersTab() {
   const apiHeavy = useApi<HeavyUsersResponse>(`/api/customers/heavy-users?date=${range.to}&limit=100`)
   const apiMembers = useApi<MembersDailyResponse>(`/api/members/daily?from=${range.from}&to=${range.to}`)
 
-  // Aggregate customer KPIs — API-first with static fallback
-  const totalUsers = apiTotals.data?.uniqueUsers ?? selectedDays.reduce((s, d) => s + d.uniqueUsers, 0)
+  // Aggregate customer KPIs — ใช้ distinct จริง (ทั้งแคมเปญ) ถ้ามี, ไม่งั้น fallback sum-of-daily
+  const distinctUsers = apiTotals.data?.distinctUsers
+  const sumDailyUsers = apiTotals.data?.uniqueUsers ?? selectedDays.reduce((s, d) => s + d.uniqueUsers, 0)
+  const totalUsers = distinctUsers ?? sumDailyUsers
+  const usersIsDistinct = distinctUsers != null
   // Repeat rate from API engagement buckets (or fallback to static)
   const repeatRate = apiEngagement.data
     ? (() => {
@@ -102,7 +105,7 @@ export default function CustomersTab() {
           title="Customers"
           subtitle="Customer analytics — segmentation • behavior • retention • geography"
         />
-        <UnifiedDateRange value={range} onChange={setRange} today={new Date('2026-05-24')} />
+        <UnifiedDateRange value={range} onChange={setRange} today={getCampaignToday()} />
       </div>
 
       {/* ════════════════════════════════════════════════════
@@ -110,12 +113,17 @@ export default function CustomersTab() {
       ════════════════════════════════════════════════════ */}
       <ZoneTitle num="A" title="ภาพรวมลูกค้า" dayTag={isMultiDay ? `รวม ${selectedDays.length} วัน` : dayTag} />
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <div className="kpi-accent kpi-users" title={`ลูกค้าที่มาสแกน รวม ${selectedDays.length} วันในช่วงเลือก (unique users)`}>
+        <div className="kpi-accent kpi-users"
+             title={usersIsDistinct
+               ? `ผู้เข้าร่วมจริง (distinct) ทั้งแคมเปญ — นับคนไม่ซ้ำ\n(ผู้สแกนสะสมรายวัน = ${numFmt(sumDailyUsers)} ครั้ง นับคนเดิมหลายวันซ้ำ)`
+               : `ผู้สแกนสะสมรายวัน ${selectedDays.length} วัน (นับคนเดิมหลายวันซ้ำ)`}>
           <div className="text-[11px] text-[var(--text-secondary)] font-semibold uppercase tracking-wider mb-1">
-            👥 ลูกค้าทั้งหมด {apiBadge(apiTotals.loading, apiTotals.error, !!apiTotals.data)}
+            👥 ลูกค้าทั้งหมด {usersIsDistinct && <span className="text-[8px] font-bold text-[var(--brand-700)]">distinct</span>} {apiBadge(apiTotals.loading, apiTotals.error, !!apiTotals.data)}
           </div>
           <div className="text-[26px] font-bold leading-tight">{numFmt(totalUsers)}</div>
-          <div className="text-[11px] text-[var(--text-muted)] mt-1">unique users · {selectedDays.length} วัน</div>
+          <div className="text-[11px] text-[var(--text-muted)] mt-1">
+            {usersIsDistinct ? `คนไม่ซ้ำ · สแกนสะสม ${numFmt(sumDailyUsers)}` : `ผู้สแกนสะสม · ${selectedDays.length} วัน`}
+          </div>
         </div>
         <div className="kpi-accent kpi-engage" title="% ของ user ที่กลับมาสแกนซ้ำ (2+ ครั้ง)">
           <div className="text-[11px] text-[var(--text-secondary)] font-semibold uppercase tracking-wider mb-1">
@@ -158,7 +166,7 @@ export default function CustomersTab() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div>
           <div className="mb-1"><ApiSourceBadge endpoint="/api/customers/engagement" params="from&to" /></div>
-          <EngagementDistribution day={day} rangeLabel={dayTag} />
+          <EngagementDistribution from={range.from} to={range.to} rangeLabel={dayTag} />
         </div>
         <div>
           <div className="mb-1"><ApiSourceBadge endpoint="/api/customers/retention" params="date" /></div>
@@ -173,11 +181,11 @@ export default function CustomersTab() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div>
           <div className="mb-1"><ApiSourceBadge endpoint="/api/customers/heavy-users" params="date&limit" /></div>
-          <HeavyUsersCard day={day} />
+          <HeavyUsersCard date={range.to} limit={20} />
         </div>
         <div>
           <div className="mb-1"><ApiSourceBadge endpoint="/api/customers/provinces" params="date&limit" /></div>
-          <TopProvincesCard day={day} />
+          <TopProvincesCard date={range.to} limit={10} />
         </div>
       </div>
 

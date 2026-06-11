@@ -70,7 +70,7 @@ export const CROSS_SIZE_GROUPS: CrossSizeRow[] = (() => {
     map.set(s.productGroup, list)
   }
   const rows: CrossSizeRow[] = []
-  for (const [grp, variants] of map.entries()) {
+  for (const [grp, variants] of Array.from(map.entries())) {
     if (variants.length < 2) continue
     variants.sort((a, b) => b.rights - a.rights)
     const ratio = variants[0].rights / Math.max(1, variants[variants.length - 1].rights)

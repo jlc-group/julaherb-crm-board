@@ -256,3 +256,48 @@ export interface UptimeResponse {
   uptimePct: number              // ((total - outage) / total) × 100
   outages: OutageInfo[]
 }
+
+// ─── CRM Segments ──────────────────────────────────────────────────
+export interface SegmentRow {
+  name: string
+  count: number                  // cached_count จาก saversureV2
+  description?: string
+}
+export interface SegmentsResponse {
+  segments: SegmentRow[]
+}
+
+// ─── Print Slips (จับฉลาก: 1 สิทธิ์ = 1 ใบ) ─────────────────────────
+// Backend contract: GET /api/v1/dashboard/print-slips (rollup-based, expand-by-rights)
+// — dashboard ห้าม page scan_history ดิบ (HOT write-table) ดังนั้น backend ต้องขยายตาม rights ให้
+export interface PrintSlipRow {
+  name: string                   // ชื่อ-นามสกุล (display_name)
+  phone: string                  // raw 10 หลัก — mask ตอน render (maskPhone6)
+  scanCode: string               // รหัสการสแกน (legacy_qr_code_serial)
+  productName: string            // ชื่อสินค้าสั้น (ตัด size/SKU แล้ว)
+  productSku: string             // SKU (สำหรับ debug — ไม่โชว์บนสลิป)
+}
+export interface PrintSlipsResponse {
+  from: DateString
+  to: DateString
+  total: number                  // จำนวนใบสลิปที่คืน (= Σ scans × rights)
+  slips: PrintSlipRow[]
+  excludedNames?: string[]       // ชื่อพนักงานที่ถูกตัดออก (พบในชุดนี้) — ทีมจุฬาเฮิร์บ
+  meta?: {
+    source: 'api' | 'mock' | 'mock-fallback'
+    preview?: boolean            // true = ตัวอย่าง (ยังไม่ใช่ข้อมูลจริงครบ)
+    note?: string
+  }
+}
+
+// ─── Customer search (หน้า Operation: ค้นผู้ได้รางวัลมาบันทึก) ───────────
+// Backend: GET /api/v1/customers/search?q= (ILIKE ชื่อ/เบอร์/email · read-only · เบา)
+export interface CustomerSearchResult {
+  id: string
+  name: string
+  phone: string                  // raw — mask ตอน render
+}
+export interface CustomerSearchResponse {
+  q: string
+  results: CustomerSearchResult[]
+}

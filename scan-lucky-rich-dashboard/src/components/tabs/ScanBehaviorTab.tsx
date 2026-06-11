@@ -14,7 +14,7 @@ import ScanFunnel from '@/components/ui/ScanFunnel'
 import RetentionCohort from '@/components/ui/RetentionCohort'
 import VerificationPanel from '@/components/ui/VerificationPanel'
 import DemoBanner from '@/components/ui/DemoBanner'
-import { numFmt } from '@/lib/utils'
+import { numFmt, getCampaignToday, CAMPAIGN_START } from '@/lib/utils'
 import { VERIFICATION_KPIS, SAME_DAY_REPEAT, FUNNEL_DATA, TV_LIFT } from '@/lib/scan-behavior-data'
 import { REAL_CAMPAIGN } from '@/lib/real-data'
 
@@ -69,7 +69,7 @@ export default function ScanBehaviorTab() {
       />
 
       {/* ── Baseline Comparison (3-month) ── */}
-      <BaselineComparison />
+      <BaselineComparison from={CAMPAIGN_START} to={getCampaignToday().toISOString().slice(0, 10)} />
 
       {/* ── Apples-to-Apples weekday-matched ── */}
       <AppleToAppleComparison />

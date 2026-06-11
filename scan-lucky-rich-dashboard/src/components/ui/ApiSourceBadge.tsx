@@ -1,6 +1,8 @@
 // Tiny inline badge showing which API endpoint feeds a widget
 // Toggle visibility via NEXT_PUBLIC_SHOW_API_SOURCE=1 (default: shown in dev)
 export default function ApiSourceBadge({ endpoint, params }: { endpoint: string; params?: string }) {
+  // ซ่อนโดย default (เป็นป้าย debug สำหรับ dev) — เปิดด้วย NEXT_PUBLIC_SHOW_API_SOURCE=1
+  if (process.env.NEXT_PUBLIC_SHOW_API_SOURCE !== '1') return null
   const fullPath = params ? `${endpoint}?${params}` : endpoint
   return (
     <span

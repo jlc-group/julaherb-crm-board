@@ -21,7 +21,7 @@ import { buildSkuTable, getTierBuckets } from '@/lib/sku-redemption'
 import { RANK_MOVEMENT } from '@/lib/daily-sku-data'
 import { DAILY_ENTRIES } from '@/lib/daily-update-data'
 import type { DayKey } from '@/lib/per-sku-daily'
-import { numFmt } from '@/lib/utils'
+import { numFmt, getCampaignToday } from '@/lib/utils'
 import { useApi } from '@/lib/hooks/useApi'
 import type { SkuPerDayResponse, SkuListResponse } from '@/lib/api/types'
 
@@ -44,7 +44,7 @@ const TREND_ICON: Record<string, { icon: string; color: string }> = {
 }
 
 export default function ProductsTab() {
-  const [range, setRange] = useState<DateRangeV2>(() => defaultRange({ preset: 'campaign', today: new Date('2026-05-24') }))
+  const [range, setRange] = useState<DateRangeV2>(() => defaultRange({ preset: 'campaign', today: getCampaignToday() }))
   const selectedDays = useMemo(
     () => DAILY_ENTRIES.filter(d => d.date >= range.from && d.date <= range.to),
     [range.from, range.to]
@@ -106,7 +106,17 @@ export default function ProductsTab() {
           title="Products"
           subtitle="SKU analytics — 97 SKUs • Hero / Tier / Cross-size / Master table"
         />
-        <UnifiedDateRange value={range} onChange={setRange} today={new Date('2026-05-24')} />
+        <UnifiedDateRange value={range} onChange={setRange} today={getCampaignToday()} />
+      </div>
+
+      {/* ⚠️ SKU detail snapshot indicator */}
+      <div className="card p-2.5 text-[11px] flex items-start gap-2"
+           style={{ background: '#fef3c7', borderColor: '#f59e0b', borderWidth: 1, borderRadius: 8 }}>
+        <span className="text-base flex-shrink-0">⚠️</span>
+        <div className="flex-1">
+          <b className="text-yellow-800">SKU breakdown ใช้ snapshot ถึง 24 พ.ค.</b>
+          <span className="text-[var(--text)]"> — saversureV2 <code className="bg-white/60 px-1 rounded">/dashboard/campaign-report</code> ยังไม่ส่ง <code className="bg-white/60 px-1 rounded">section_16_sku_daily_matrix</code> (per-day SKU rollup) → Hero / Top5 / Cross-size / Master table ยังอ่านจาก <code className="bg-white/60 px-1 rounded">PRODUCTS_MASTER</code> + <code className="bg-white/60 px-1 rounded">DAILY_ENTRIES</code> ที่ค้างวันที่ 24 พ.ค. KPI ด้านบนเป็น live count จาก <code className="bg-white/60 px-1 rounded">/products</code></span>
+        </div>
       </div>
 
       {/* ════════════════════════════════════════════════════

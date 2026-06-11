@@ -1,15 +1,37 @@
 'use client'
-import type { DailyEntry } from '@/lib/daily-update-data'
+import { useApi } from '@/lib/hooks/useApi'
+import type { ProvincesResponse } from '@/lib/api/types'
 import { numFmt } from '@/lib/utils'
 
-export default function TopProvincesCard({ day }: { day: DailyEntry }) {
-  if (!day.topProvinces || day.topProvinces.length === 0) {
+interface Props {
+  date: string
+  limit?: number
+}
+
+export default function TopProvincesCard({ date, limit = 10 }: Props) {
+  const { data, loading, error } = useApi<ProvincesResponse>(
+    `/api/customers/provinces?date=${date}&limit=${limit}`
+  )
+
+  const provinces = data?.provinces ?? []
+  const dayLabel = date.split('-')[2]
+
+  if (loading) {
     return (
       <div className="card p-4">
-        <h3 className="text-[14px] font-bold text-[var(--dark)] mb-1">📍 Top 10 จังหวัด — {day.date.split('-')[2]} พ.ค.</h3>
+        <h3 className="text-[14px] font-bold text-[var(--dark)] mb-1">📍 Top จังหวัด — {dayLabel}</h3>
+        <div className="text-[11px] text-[var(--text-muted)] py-8 text-center">⏳ กำลังโหลด...</div>
+      </div>
+    )
+  }
+
+  if (error || provinces.length === 0) {
+    return (
+      <div className="card p-4">
+        <h3 className="text-[14px] font-bold text-[var(--dark)] mb-1">📍 Top จังหวัด — {dayLabel}</h3>
         <div className="flex items-center justify-center py-12 text-[12px] text-[var(--text-muted)]">
           <i className="ti ti-map-off text-2xl mr-2" />
-          ยังไม่มีข้อมูลจังหวัดสำหรับวันนี้ (รอ DB)
+          {error ? `⚠️ ${error}` : 'ยังไม่มีข้อมูลจังหวัดสำหรับวันนี้'}
         </div>
       </div>
     )
@@ -17,7 +39,10 @@ export default function TopProvincesCard({ day }: { day: DailyEntry }) {
 
   return (
     <div className="card p-4">
-      <h3 className="text-[14px] font-bold text-[var(--dark)] mb-1">📍 Top 10 จังหวัด — {day.date.split('-')[2]} พ.ค.</h3>
+      <h3 className="text-[14px] font-bold text-[var(--dark)] mb-1">
+        📍 Top {provinces.length} จังหวัด — {dayLabel}
+        <span className="inline-block ml-1 px-1.5 py-0.5 rounded text-[8px] font-bold bg-green-100 text-green-800 align-middle">🟢 API</span>
+      </h3>
       <p className="text-[11.5px] text-[var(--text-muted)] mb-3">เน้นจังหวัดที่มี avg/user ผิดปกติ (&gt; 5)</p>
       <div className="overflow-x-auto">
         <table className="w-full text-[12px]">
@@ -31,14 +56,14 @@ export default function TopProvincesCard({ day }: { day: DailyEntry }) {
             </tr>
           </thead>
           <tbody>
-            {day.topProvinces.map(p => {
-              const avg = p.scans / p.users
+            {provinces.map(p => {
+              const avg = p.avgPerUser
               const isAnomaly = avg > 5
               const isCritical = avg > 10
               const anomalyMsg = isCritical
-                ? `🚨 ผิดปกติร้ายแรง — ${numFmt(p.users)} users สแกน ${numFmt(p.scans)} ครั้ง = ${avg.toFixed(1)} ครั้ง/คน (avg แคมเปญ ~2.9)\nสงสัย: cluster ผู้ค้าส่ง / multi-account / bot\nควร investigate ก่อนจ่ายของรางวัล`
+                ? `🚨 ผิดปกติร้ายแรง — ${numFmt(p.users)} users สแกน ${numFmt(p.scans)} ครั้ง = ${avg.toFixed(1)} ครั้ง/คน\nสงสัย: cluster ผู้ค้าส่ง / multi-account / bot\nควร investigate ก่อนจ่ายของรางวัล`
                 : isAnomaly
-                  ? `⚠️ ผิดปกติ — ${numFmt(p.users)} users สแกน ${numFmt(p.scans)} ครั้ง = ${avg.toFixed(1)} ครั้ง/คน (เทียบ avg ~2.9 ครั้ง/คน)\nอาจเป็นจุดขายเดียวที่ขายเยอะ หรือผู้ค้าปลีก — ดู heavy users ในจังหวัดนี้`
+                  ? `⚠️ ผิดปกติ — ${numFmt(p.users)} users สแกน ${numFmt(p.scans)} ครั้ง = ${avg.toFixed(1)} ครั้ง/คน\nอาจเป็นจุดขายเดียวที่ขายเยอะ หรือผู้ค้าปลีก — ดู heavy users ในจังหวัดนี้`
                   : `${numFmt(p.users)} users • ${avg.toFixed(2)} ครั้ง/คน (ปกติ)`
               return (
                 <tr key={p.name}

@@ -1,5 +1,7 @@
 # Migration Status — Static → Internal API
 
+> Status note 2026-06-04: ไฟล์นี้เป็น history ของ migration ช่วง mock/db-source เดิม ไม่ใช่สถานะล่าสุดของ API integration ให้เริ่มจาก `00-INDEX.md` และ `09-saversureV2-endpoints-needed.md`
+
 **Updated**: 2026-05-28
 **Architecture**: Component → `fetch('/api/*')` → `adapter.ts` → `mock-source.ts` (default) / `db-source.ts` (stub)
 

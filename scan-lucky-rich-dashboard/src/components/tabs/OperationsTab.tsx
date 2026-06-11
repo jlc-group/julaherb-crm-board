@@ -1,264 +1,222 @@
 'use client'
-import { useState } from 'react'
-import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, LineElement, PointElement, ArcElement, Tooltip, Legend, Filler } from 'chart.js'
-import KpiCard from '@/components/ui/KpiCard'
-import ChartCard from '@/components/ui/ChartCard'
-import InsightInline from '@/components/ui/InsightInline'
-import InsightCard from '@/components/ui/InsightCard'
-import ProgressBar from '@/components/ui/ProgressBar'
-import DemoBanner from '@/components/ui/DemoBanner'
-import { numFmt, maskPhone, statusColor, statusLabel } from '@/lib/utils'
-import { PRIZES } from '@/config/campaign'
-import type { Winner } from '@/types'
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, LineElement, PointElement, ArcElement, Tooltip, Legend, Filler)
+import { useCallback, useEffect, useState } from 'react'
+import {
+  DRAW_ROUNDS,
+  getRound,
+  roundSlots,
+  DRAW_TOTAL_PRIZES,
+  DRAW_TOTAL_VALUE,
+} from '@/config/draw-rounds'
+import type { DrawWinner, PrizeSlot } from '@/config/draw-rounds'
+import type { PoolCustomer } from '@/components/operations/draw-utils'
+import { numFmt } from '@/lib/utils'
+import TabHeader from '@/components/ui/TabHeader'
+import DrawRoundSelector from '@/components/operations/DrawRoundSelector'
+import DrawSlotList from '@/components/operations/DrawSlotList'
+import WinnerPicker from '@/components/operations/WinnerPicker'
 
-// ── Mock Winners ──
-const MOCK_WINNERS: Winner[] = [
-  { id: 1, userId: 1, name: 'สมชาย ใจดี', phone: '0891234567', province: 'กรุงเทพฯ', tier: '10K', prizeLabel: 'ทองคำ 10,000', status: 'confirmed', date: '2026-07-01', products: [] },
-  { id: 2, userId: 5, name: 'พิมพ์ เจริญ', phone: '0654321987', province: 'เชียงใหม่', tier: '10K', prizeLabel: 'ทองคำ 10,000', status: 'confirmed', date: '2026-07-03', products: [] },
-  { id: 3, userId: 12, name: 'อนุชา ศรีสุข', phone: '0912345678', province: 'ชลบุรี', tier: '10K', prizeLabel: 'ทองคำ 10,000', status: 'pending', date: '2026-07-05', products: [] },
-  { id: 4, userId: 8, name: 'จิตรา วงษ์วาน', phone: '0823456789', province: 'ขอนแก่น', tier: '10K', prizeLabel: 'ทองคำ 10,000', status: 'confirmed', date: '2026-07-10', products: [] },
-  { id: 5, userId: 3, name: 'วิภา รักดี', phone: '0934567890', province: 'นนทบุรี', tier: '10K', prizeLabel: 'ทองคำ 10,000', status: 'forfeited', date: '2026-07-12', products: [] },
-  { id: 6, userId: 15, name: 'สุภาพ ทองดี', phone: '0845678901', province: 'สงขลา', tier: '100K', prizeLabel: 'ทองคำ 100,000', status: 'confirmed', date: '2026-07-15', products: [] },
-  { id: 7, userId: 20, name: 'ชัยวัฒน์ ทองดี', phone: '0956789012', province: 'ภูเก็ต', tier: '10K', prizeLabel: 'ทองคำ 10,000', status: 'confirmed', date: '2026-07-18', products: [] },
-  { id: 8, userId: 2, name: 'สมหญิง สุขสม', phone: '0867890123', province: 'ปทุมธานี', tier: '10K', prizeLabel: 'ทองคำ 10,000', status: 'pending', date: '2026-07-20', products: [] },
-  { id: 9, userId: 9, name: 'ปวีณ์ แก้วมา', phone: '0678901234', province: 'นครราชสีมา', tier: '10K', prizeLabel: 'ทองคำ 10,000', status: 'confirmed', date: '2026-07-22', products: [] },
-  { id: 10, userId: 14, name: 'มานะ ทองดี', phone: '0989012345', province: 'ลำปาง', tier: '10K', prizeLabel: 'ทองคำ 10,000', status: 'unannounced', date: '2026-07-25', products: [] },
-  // August
-  { id: 11, userId: 4, name: 'ณัฐ มีทรัพย์', phone: '0890123456', province: 'ชลบุรี', tier: '10K', prizeLabel: 'ทองคำ 10,000', status: 'confirmed', date: '2026-08-01', products: [] },
-  { id: 12, userId: 7, name: 'ธนา พงษ์พาณิช', phone: '0801234567', province: 'เชียงราย', tier: '10K', prizeLabel: 'ทองคำ 10,000', status: 'confirmed', date: '2026-08-05', products: [] },
-  { id: 13, userId: 11, name: 'ศิริ วงษ์วาน', phone: '0612345678', province: 'พิษณุโลก', tier: '10K', prizeLabel: 'ทองคำ 10,000', status: 'pending', date: '2026-08-08', products: [] },
-  { id: 14, userId: 16, name: 'รัชนี ใจดี', phone: '0923456789', province: 'สมุทรปราการ', tier: '100K', prizeLabel: 'ทองคำ 100,000', status: 'confirmed', date: '2026-08-15', products: [] },
-  { id: 15, userId: 18, name: 'บุญมี รักดี', phone: '0834567890', province: 'ราชบุรี', tier: '10K', prizeLabel: 'ทองคำ 10,000', status: 'confirmed', date: '2026-08-18', products: [] },
-  { id: 16, userId: 10, name: 'กัญญา ทองดี', phone: '0745678901', province: 'สุราษฎร์ธานี', tier: '10K', prizeLabel: 'ทองคำ 10,000', status: 'forfeited', date: '2026-08-20', products: [] },
-  { id: 17, userId: 6, name: 'อรุณ พงษ์พาณิช', phone: '0856789012', province: 'เชียงใหม่', tier: '10K', prizeLabel: 'ทองคำ 10,000', status: 'confirmed', date: '2026-08-25', products: [] },
-  // September
-  { id: 18, userId: 13, name: 'ดวงใจ แก้วมา', phone: '0967890123', province: 'นครราชสีมา', tier: '10K', prizeLabel: 'ทองคำ 10,000', status: 'confirmed', date: '2026-09-02', products: [] },
-  { id: 19, userId: 19, name: 'วรรณา ลพบุรี', phone: '0878901234', province: 'ลพบุรี', tier: '10K', prizeLabel: 'ทองคำ 10,000', status: 'pending', date: '2026-09-10', products: [] },
-  { id: 20, userId: 17, name: 'ประเสริฐ ศรีสุข', phone: '0689012345', province: 'ระยอง', tier: '100K', prizeLabel: 'ทองคำ 100,000', status: 'confirmed', date: '2026-09-15', products: [] },
-  // October
-  { id: 21, userId: 1, name: 'สมชาย ใจดี', phone: '0891234567', province: 'กรุงเทพฯ', tier: '10K', prizeLabel: 'ทองคำ 10,000', status: 'confirmed', date: '2026-10-01', products: [] },
-  { id: 22, userId: 5, name: 'พิมพ์ เจริญ', phone: '0654321987', province: 'เชียงใหม่', tier: '10K', prizeLabel: 'ทองคำ 10,000', status: 'confirmed', date: '2026-10-08', products: [] },
-  { id: 23, userId: 8, name: 'จิตรา วงษ์วาน', phone: '0823456789', province: 'ขอนแก่น', tier: '10K', prizeLabel: 'ทองคำ 10,000', status: 'pending', date: '2026-10-12', products: [] },
-  { id: 24, userId: 15, name: 'สุภาพ ทองดี', phone: '0845678901', province: 'สงขลา', tier: '100K', prizeLabel: 'ทองคำ 100,000', status: 'pending', date: '2026-10-15', products: [] },
-  // November
-  { id: 25, userId: 20, name: 'ชัยวัฒน์ ทองดี', phone: '0956789012', province: 'ภูเก็ต', tier: '10K', prizeLabel: 'ทองคำ 10,000', status: 'confirmed', date: '2026-11-01', products: [] },
-  { id: 26, userId: 2, name: 'สมหญิง สุขสม', phone: '0867890123', province: 'ปทุมธานี', tier: '10K', prizeLabel: 'ทองคำ 10,000', status: 'unannounced', date: '2026-11-05', products: [] },
-  { id: 27, userId: 9, name: 'ปวีณ์ แก้วมา', phone: '0678901234', province: 'นครราชสีมา', tier: '100K', prizeLabel: 'ทองคำ 100,000', status: 'unannounced', date: '2026-11-15', products: [] },
-]
+// หน้า "จับรางวัล" สำหรับวันงานจริง — บันทึกผู้ได้รางวัล 7 รอบ
+// การจับจริง = ปริ้นสลิปกระดาษ → โยนจับด้วยมือ · หน้านี้ใช้ "บันทึก" คนที่จับได้
+export default function OperationsTab({ onOpenClaim }: { onOpenClaim?: (phoneLast9: string) => void }) {
+  const [winners, setWinners] = useState<DrawWinner[]>([])
+  const [selectedRound, setSelectedRound] = useState<number | null>(null)
+  const [picker, setPicker] = useState<{ slot: PrizeSlot; existing?: DrawWinner } | null>(null)
+  const [today, setToday] = useState('')
+  // พูลค้นหาของรอบที่เลือก (ดึงครั้งเดียวตอนเลือกรอบ)
+  const [pool, setPool] = useState<PoolCustomer[]>([])
+  const [poolMeta, setPoolMeta] = useState<{ loading: boolean; capped: boolean; total: number; error: string }>({
+    loading: false,
+    capped: false,
+    total: 0,
+    error: '',
+  })
 
-// ── Helpers ──
-const MONTH_NAMES: Record<string, string> = { '07': 'ก.ค.', '08': 'ส.ค.', '09': 'ก.ย.', '10': 'ต.ค.', '11': 'พ.ย.', '12': 'ธ.ค.' }
+  const load = useCallback(async () => {
+    try {
+      const r = await fetch('/api/draw/winners')
+      const b = await r.json()
+      setWinners(b.winners ?? [])
+    } catch {
+      /* เก็บค่าเดิม */
+    }
+  }, [])
 
-function groupByMonth(winners: Winner[]): Record<string, Winner[]> {
-  const groups: Record<string, Winner[]> = {}
-  for (const w of winners) {
-    const month = w.date.slice(5, 7)
-    if (!groups[month]) groups[month] = []
-    groups[month].push(w)
+  useEffect(() => {
+    load()
+    const d = new Date()
+    setToday(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`)
+  }, [load])
+
+  // ดึงพูลค้นหาเมื่อเลือกรอบ (ครั้งเดียว/รอบ · มี s-maxage กันยิงซ้ำ)
+  useEffect(() => {
+    if (!selectedRound) {
+      setPool([])
+      return
+    }
+    let cancelled = false
+    setPoolMeta({ loading: true, capped: false, total: 0, error: '' })
+    fetch('/api/draw/pool?round=' + selectedRound)
+      .then(async (r) => {
+        const b = await r.json().catch(() => ({}))
+        if (cancelled) return
+        if (!r.ok) {
+          setPool([])
+          setPoolMeta({ loading: false, capped: false, total: 0, error: b.error ?? 'โหลดพูลไม่สำเร็จ' })
+          return
+        }
+        setPool(b.customers ?? [])
+        setPoolMeta({ loading: false, capped: !!b.capped, total: b.totalSlips ?? 0, error: '' })
+      })
+      .catch((e) => {
+        if (!cancelled) {
+          setPool([])
+          setPoolMeta({ loading: false, capped: false, total: 0, error: String(e?.message ?? e) })
+        }
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [selectedRound])
+
+  const round = selectedRound ? getRound(selectedRound) ?? null : null
+
+  async function removeSlot(slot: PrizeSlot) {
+    if (!confirm('ลบผู้ได้รางวัลช่องนี้?')) return
+    await fetch('/api/draw/winners?slotId=' + encodeURIComponent(slot.slotId), { method: 'DELETE' })
+    load()
   }
-  return groups
-}
 
-// ── Prize burn overrides (for display) ──
-const PRIZE_BURN: Record<string, { used: number; total: number }> = {
-  'gold-10k': { used: 45, total: 167 },
-  'gold-100k': { used: 10, total: 30 },
-  'gold-1m': { used: 0, total: 1 },
-}
-
-export default function OperationsTab() {
-  const [selectedTier, setSelectedTier] = useState<number>(10000)
-  const [expandedMonths, setExpandedMonths] = useState<Set<string>>(new Set(['07']))
-  const [winnerName, setWinnerName] = useState('')
-  const [drawDate, setDrawDate] = useState('')
-
-  const grouped = groupByMonth(MOCK_WINNERS)
-  const monthKeys = Object.keys(grouped).sort()
-
-  const toggleMonth = (month: string) => {
-    setExpandedMonths(prev => {
-      const next = new Set(prev)
-      if (next.has(month)) next.delete(month)
-      else next.add(month)
-      return next
-    })
+  function exportCsv() {
+    if (!round) return
+    const slots = roundSlots(round)
+    const bySlot = new Map(winners.filter((w) => w.round === round.round).map((w) => [w.slotId, w]))
+    const rows: string[][] = [['รอบ', 'วันจับ', 'รางวัล', 'ลำดับ', 'ชื่อ-นามสกุล', 'เบอร์', 'รหัสสแกน']]
+    for (const s of slots) {
+      const w = bySlot.get(s.slotId)
+      rows.push([String(round.round), round.drawDateLabel, s.tierLabel, String(s.indexInTier), w?.name ?? '', w?.phone ?? '', w?.scanCode ?? ''])
+    }
+    const csv = '﻿' + rows.map((r) => r.map((c) => `"${(c || '').replace(/"/g, '""')}"`).join(',')).join('\n')
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `ผู้ได้รางวัล_รอบ${round.round}_${round.drawDate}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
   }
-
-  const confirmedCount = MOCK_WINNERS.filter(w => w.status === 'confirmed').length
-  const pendingCount = MOCK_WINNERS.filter(w => w.status === 'pending').length
-  const forfeitedCount = MOCK_WINNERS.filter(w => w.status === 'forfeited').length
 
   return (
-    <div>
-      <DemoBanner reason="OperationsTab ยังไม่มี API endpoint (ต้องการ /api/winners CRUD + /api/prize-allocations + /api/scan-log/export) — รอ backend ทำ endpoint เพิ่ม" />
-      {/* ── Gold KPI Card ── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
-        <KpiCard
-          label="การจับรางวัลวันนี้"
-          value="ทองคำ 10,000"
-          sub="สถานะ: พร้อมจับ"
-          gold
-        />
+    <div className="space-y-4">
+      <TabHeader
+        icon="🎁"
+        title="จับรางวัล — บันทึกผู้โชคดี"
+        subtitle={`7 รอบ · ${DRAW_TOTAL_PRIZES} รางวัล · ${numFmt(DRAW_TOTAL_VALUE)} บาท · บันทึกแล้ว ${winners.length}`}
+      />
+
+      <div className="text-[12px] text-[var(--text-secondary)] bg-[var(--bg-soft)] rounded-md px-3 py-2 leading-relaxed">
+        การจับจริง = ปริ้นสลิปกระดาษ → โยนจับด้วยมือ · หน้านี้ใช้ <b>บันทึกคนที่จับได้</b> ลงช่องรางวัล
+        <br />
+        เลือกวันจับด้านล่าง → กดช่องรางวัล → ค้นชื่อ/เบอร์ หรือกรอกเองจากกระดาษ · <b>1 คนได้รางวัลเดียวต่อรอบ</b> (ข้ามรอบได้ ระบบเตือนให้)
       </div>
 
-      <InsightInline html={`<b>Burn rate:</b> ทองคำ 10K ใช้ไป 45/167 (${(45/167*100).toFixed(1)}%) — pace สอดคล้องกับระยะเวลาแคมเปญ | ทองคำ 100K ใช้ไป 10/30 — on track`} />
+      <AnnouncePageLink />
 
-      {/* ── Winner Form ── */}
-      <ChartCard title="เพิ่มผู้โชคดี" icon="ti-trophy" className="mb-4">
-        {/* Tier Buttons */}
-        <div className="flex gap-2 mb-3">
-          {[10000, 100000, 1000000].map(tier => (
-            <button
-              key={tier}
-              onClick={() => setSelectedTier(tier)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                selectedTier === tier
-                  ? 'bg-[var(--primary)] text-white shadow-sm'
-                  : 'bg-[var(--light)] text-[var(--dark)] hover:bg-[var(--primary)] hover:text-white'
-              }`}
-            >
-              {numFmt(tier)}
-            </button>
-          ))}
-        </div>
+      <DrawRoundSelector rounds={DRAW_ROUNDS} winners={winners} selected={selectedRound} onSelect={setSelectedRound} today={today} />
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-3">
-          {/* Date Picker */}
-          <div>
-            <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">วันที่จับรางวัล</label>
-            <input
-              type="date"
-              value={drawDate}
-              onChange={e => setDrawDate(e.target.value)}
-              className="w-full border border-[var(--border)] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
-            />
-          </div>
-
-          {/* Name Input */}
-          <div>
-            <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">ชื่อผู้โชคดี</label>
-            <input
-              type="text"
-              value={winnerName}
-              onChange={e => setWinnerName(e.target.value)}
-              placeholder="พิมพ์ชื่อเพื่อค้นหา..."
-              className="w-full border border-[var(--border)] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
-            />
-          </div>
-
-          {/* Phone (readonly) */}
-          <div>
-            <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">เบอร์โทร</label>
-            <input
-              type="text"
-              readOnly
-              value="xxx-xxx-XXXX"
-              className="w-full border border-[var(--border)] rounded-lg px-3 py-2 text-sm bg-gray-50 text-[var(--text-secondary)]"
-            />
-          </div>
-
-          {/* Submit */}
-          <div className="flex items-end">
-            {/* TODO: Connect to POST /api/winners */}
-            <button
-              disabled
-              className="w-full px-4 py-2 rounded-lg text-sm font-medium bg-gray-200 text-gray-400 cursor-not-allowed"
-              title="TODO: เชื่อมต่อ API"
-            >
-              เพิ่มผู้โชคดี
-            </button>
-          </div>
-        </div>
-      </ChartCard>
-
-      {/* ── Winners List (Grouped by Month) ── */}
-      <ChartCard title="รายชื่อผู้โชคดี" icon="ti-list" full className="mb-4">
-        {monthKeys.map(month => {
-          const winners = grouped[month]
-          const isExpanded = expandedMonths.has(month)
-          return (
-            <div key={month} className="mb-2">
-              <button
-                onClick={() => toggleMonth(month)}
-                className="w-full flex items-center justify-between px-3 py-2 bg-[var(--light)] rounded-lg text-sm font-semibold text-[var(--dark)] hover:bg-[#d4efe4] transition-colors"
-              >
-                <span>
-                  <i className={`ti ${isExpanded ? 'ti-chevron-down' : 'ti-chevron-right'} text-xs mr-1.5`} />
-                  {MONTH_NAMES[month] || month} 2569 ({winners.length} คน)
-                </span>
-              </button>
-              {isExpanded && (
-                <div className="overflow-x-auto mt-1">
-                  <table className="w-full border-collapse text-xs">
-                    <thead>
-                      <tr>
-                        <th className="bg-[var(--light)] text-[var(--dark)] font-semibold text-left p-2">ชื่อ</th>
-                        <th className="bg-[var(--light)] text-[var(--dark)] font-semibold text-left p-2">เบอร์โทร</th>
-                        <th className="bg-[var(--light)] text-[var(--dark)] font-semibold text-left p-2">รางวัล</th>
-                        <th className="bg-[var(--light)] text-[var(--dark)] font-semibold text-left p-2">สถานะ</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {winners.map(w => (
-                        <tr key={w.id} className="border-b border-[var(--border)] hover:bg-gray-50">
-                          <td className="p-2">{w.name}</td>
-                          <td className="p-2">{maskPhone(w.phone)}</td>
-                          <td className="p-2">{w.prizeLabel}</td>
-                          <td className="p-2">
-                            <span
-                              className="inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold text-white"
-                              style={{ background: statusColor(w.status) }}
-                            >
-                              {statusLabel(w.status)}
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+      {round ? (
+        <>
+          {/* สถานะพูลค้นหา */}
+          {poolMeta.loading ? (
+            <div className="text-[12px] text-[var(--text-secondary)]">⏳ กำลังโหลดพูลค้นหาของรอบนี้…</div>
+          ) : poolMeta.error ? (
+            <div className="text-[12px] text-amber-800 bg-amber-50 border border-amber-200 rounded px-3 py-1.5">
+              ⚠️ โหลดพูลค้นหาไม่สำเร็จ — ใช้ “กรอกเอง” ได้ ({poolMeta.error})
             </div>
-          )
-        })}
-      </ChartCard>
-
-      <InsightInline html={`<b>สรุป:</b> ยืนยันแล้ว ${confirmedCount} | รอยืนยัน ${pendingCount} | สละสิทธิ์ ${forfeitedCount} — อัตราสละสิทธิ์ ${(forfeitedCount / MOCK_WINNERS.length * 100).toFixed(1)}%`} />
-
-      {/* ── Prize Burn Rate ── */}
-      <ChartCard title="Prize Burn Rate" icon="ti-flame" className="mb-4">
-        {PRIZES.map(p => {
-          const burn = PRIZE_BURN[p.id] || { used: p.used, total: p.totalCount }
-          return (
-            <ProgressBar
-              key={p.id}
-              label={p.tierLabel}
-              current={burn.used}
-              total={burn.total}
-            />
-          )
-        })}
-      </ChartCard>
-
-      {/* ── Prize Depletion Forecast ── */}
-      <ChartCard title="Prize Depletion Forecast" icon="ti-calendar-stats" className="mb-4">
-        <div className="text-sm text-[var(--text)] leading-relaxed py-2">
-          <i className="ti ti-alert-circle text-[var(--gold)] mr-1" />
-          ตามอัตราปัจจุบัน รางวัลทั้งหมดจะหมดประมาณ <b>15 ธ.ค. 2569</b>
+          ) : (
+            <div className="text-[12px] text-[var(--text-secondary)]">
+              🔎 พูลค้นหา: <b>{numFmt(pool.length)}</b> คน
+              {poolMeta.capped && <span className="text-amber-700"> · พูลใหญ่ ค้นได้บางส่วน (~50k สลิปแรก) — ถ้าไม่เจอใช้กรอกเอง</span>}
+            </div>
+          )}
+          <DrawSlotList
+            round={round}
+            winners={winners}
+            onPick={(slot, existing) => setPicker({ slot, existing })}
+            onRemove={removeSlot}
+            onExport={exportCsv}
+            onOpenClaim={onOpenClaim}
+          />
+        </>
+      ) : (
+        <div className="card p-8 text-center text-[var(--text-secondary)] text-sm">
+          👆 เลือกรอบวันจับด้านบนเพื่อเริ่มบันทึกผู้ได้รางวัล
         </div>
-      </ChartCard>
+      )}
 
-      <InsightInline html="<b>Burn rate analysis:</b> ทองคำ 10K = 26.9% used (45/167) ในเดือนที่ 4/7 → pace ดี | ทองคำ 100K = 33.3% used (10/30) → เร็วกว่าแผนเล็กน้อย monitor" severity="warn" />
+      {picker && round && (
+        <WinnerPicker
+          slot={picker.slot}
+          roundDateLabel={round.drawDateLabel}
+          winners={winners}
+          pool={pool}
+          poolLoading={poolMeta.loading}
+          poolCapped={poolMeta.capped}
+          existing={picker.existing}
+          onClose={() => setPicker(null)}
+          onSaved={load}
+        />
+      )}
+    </div>
+  )
+}
 
-      {/* ── Actions ── */}
-      <InsightCard html={`
-        1. ผู้โชคดี <b>รอยืนยัน เกิน 7 วัน</b> → ทีม CS โทรติดตามทันที<br/>
-        2. <b>สละสิทธิ์ &gt; 10%</b> → ปรับขั้นตอนให้ง่ายขึ้น<br/>
-        3. ประกาศเรื่องจริงของผู้ได้รางวัลผ่าน content — <b>build trust</b><br/>
-        4. Prize burn: ตามแผน — <b>maintain pace</b>
-      `} />
+// การ์ดลิงก์หน้าประกาศผลสาธารณะ (ให้ลูกค้าดูผลผู้โชคดี) — เปิด / พรีวิว(แอดมินเห็นทุกวัน) / คัดลอก
+function AnnouncePageLink() {
+  const [url, setUrl] = useState('/winners')
+  const [copied, setCopied] = useState(false)
+  useEffect(() => {
+    if (typeof window !== 'undefined') setUrl(window.location.origin + '/winners')
+  }, [])
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(url)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1800)
+    } catch {
+      /* คัดลอกไม่ได้ — กดเปิดลิงก์เองได้ */
+    }
+  }
+  return (
+    <div className="card p-3 flex items-center gap-2 flex-wrap">
+      <div className="flex items-center gap-2 flex-1 min-w-0">
+        <span className="text-[18px]">🏆</span>
+        <div className="min-w-0">
+          <div className="text-[12.5px] font-semibold text-[var(--dark)]">หน้าประกาศผลผู้โชคดี (สาธารณะ · ให้ลูกค้าดู)</div>
+          <div className="text-[11px] text-[var(--text-secondary)] truncate">{url}</div>
+        </div>
+      </div>
+      <a
+        href="/winners?preview=1"
+        target="_blank"
+        rel="noreferrer"
+        className="px-3 py-1.5 rounded-md border border-[var(--border)] text-[12.5px] font-semibold flex-shrink-0 hover:bg-[var(--bg-soft)]"
+        title="พรีวิวแบบแอดมิน — เห็นทุกวันรวมที่ยังไม่ถึงกำหนด (ลูกค้าจะไม่เห็นรายการอนาคต)"
+      >
+        👁 พรีวิว
+      </a>
+      <a
+        href="/winners"
+        target="_blank"
+        rel="noreferrer"
+        className="px-3 py-1.5 rounded-md text-white text-[12.5px] font-semibold flex-shrink-0"
+        style={{ background: 'linear-gradient(135deg,#16a34a,#15803d)' }}
+      >
+        เปิดหน้าประกาศผล ↗
+      </a>
+      <button onClick={copy} className="px-3 py-1.5 rounded-md border border-[var(--border)] text-[12.5px] font-semibold flex-shrink-0 hover:bg-[var(--bg-soft)]">
+        {copied ? '✓ คัดลอกแล้ว' : '📋 คัดลอกลิงก์'}
+      </button>
     </div>
   )
 }

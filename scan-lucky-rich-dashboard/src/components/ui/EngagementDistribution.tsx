@@ -3,31 +3,55 @@ import { Bar } from 'react-chartjs-2'
 import ChartDataLabels from 'chartjs-plugin-datalabels'
 import ChartCard from '@/components/ui/ChartCard'
 import InsightInline from '@/components/ui/InsightInline'
-import type { DailyEntry } from '@/lib/daily-update-data'
 import { numFmt } from '@/lib/utils'
+import { useApi } from '@/lib/hooks/useApi'
+import type { EngagementResponse } from '@/lib/api/types'
 
 const BUCKET_COLORS = ['#94a3b8', '#6366f1', '#4338ca', '#10b981']
 
 interface Props {
-  day: DailyEntry
+  /** Date range from parent tab */
+  from: string
+  to: string
   rangeLabel?: string
 }
 
-export default function EngagementDistribution({ day, rangeLabel }: Props) {
-  const total = day.engagementBuckets.reduce((s, b) => s + b.users, 0)
-  const oneShot = day.engagementBuckets[0]?.users || 0
-  const heavyUsers = (day.engagementBuckets[2]?.users || 0) + (day.engagementBuckets[3]?.users || 0)
-  const hasData = day.engagementBuckets.length > 0 && total > 0
+export default function EngagementDistribution({ from, to, rangeLabel }: Props) {
+  const { data, loading, error } = useApi<EngagementResponse>(
+    `/api/customers/engagement?from=${from}&to=${to}`
+  )
 
-  if (!hasData) {
+  if (loading) {
     return (
       <ChartCard title="พฤติกรรมการสแกน — กี่ครั้งต่อคน" icon="ti-chart-histogram">
-        <div className="text-[10.5px] text-[var(--text-muted)] mb-2">
-          {rangeLabel ? `📅 ${rangeLabel}` : `📅 ${day.date.split('-')[2]} พ.ค.`}
-        </div>
+        <div className="flex items-center justify-center py-12 text-[12px] text-[var(--text-muted)]">⏳ กำลังโหลด...</div>
+      </ChartCard>
+    )
+  }
+
+  if (error || !data) {
+    return (
+      <ChartCard title="พฤติกรรมการสแกน — กี่ครั้งต่อคน" icon="ti-chart-histogram">
         <div className="flex items-center justify-center py-12 text-[12px] text-[var(--text-muted)]">
           <i className="ti ti-chart-bar-off text-2xl mr-2" />
-          ยังไม่มีข้อมูล engagement สำหรับวันนี้ (รอ DB)
+          ⚠️ {error ?? 'ไม่มีข้อมูล'}
+        </div>
+      </ChartCard>
+    )
+  }
+
+  const buckets = data.buckets || []
+  const total = data.totalUsers
+  const oneShot = buckets[0]?.users || 0
+  const heavyUsers = (buckets[2]?.users || 0) + (buckets[3]?.users || 0)
+
+  if (total === 0) {
+    return (
+      <ChartCard title="พฤติกรรมการสแกน — กี่ครั้งต่อคน" icon="ti-chart-histogram">
+        <div className="text-[10.5px] text-[var(--text-muted)] mb-2">{rangeLabel ?? `📅 ${from} – ${to}`}</div>
+        <div className="flex items-center justify-center py-12 text-[12px] text-[var(--text-muted)]">
+          <i className="ti ti-chart-bar-off text-2xl mr-2" />
+          ยังไม่มีข้อมูล engagement สำหรับช่วงนี้
         </div>
       </ChartCard>
     )
@@ -35,26 +59,26 @@ export default function EngagementDistribution({ day, rangeLabel }: Props) {
 
   return (
     <ChartCard title="พฤติกรรมการสแกน — กี่ครั้งต่อคน" icon="ti-chart-histogram">
-      <div className="text-[10.5px] text-[var(--text-muted)] mb-2">
-        {rangeLabel ? `📅 ${rangeLabel}` : `📅 ${day.date.split('-')[2]} พ.ค. (${day.weekday})`}
-        {day.outage && <span className="ml-2 text-[var(--red)]"><i className="ti ti-alert-octagon" /> Outage</span>}
+      <div className="text-[10.5px] text-[var(--text-muted)] mb-2 flex items-center gap-2">
+        <span>{rangeLabel ? `📅 ${rangeLabel}` : `📅 ${from} – ${to}`}</span>
+        <span className="inline-block px-1.5 py-0.5 rounded text-[8px] font-bold bg-green-100 text-green-800">🟢 API</span>
       </div>
 
       {/* Engagement KPIs */}
       <div className="grid grid-cols-3 gap-2 mb-3">
         <div className="bg-[var(--bg-soft)] rounded-lg p-2 border border-[var(--border-soft)]">
           <div className="text-[9.5px] text-[var(--text-secondary)] uppercase font-bold">Average</div>
-          <div className="text-[18px] num text-[var(--brand-700)]">{day.avgScansPerUser.toFixed(2)}</div>
+          <div className="text-[18px] num text-[var(--brand-700)]">{data.avgScansPerUser.toFixed(2)}</div>
           <div className="text-[9px] text-[var(--text-muted)]">scan/คน</div>
         </div>
         <div className="bg-[var(--bg-soft)] rounded-lg p-2 border border-[var(--border-soft)]">
           <div className="text-[9.5px] text-[var(--text-secondary)] uppercase font-bold">Median</div>
-          <div className="text-[18px] num text-[var(--dark)]">{day.medianScansPerUser}</div>
+          <div className="text-[18px] num text-[var(--dark)]">{data.medianScansPerUser}</div>
           <div className="text-[9px] text-[var(--text-muted)]">scan/คน</div>
         </div>
         <div className="bg-red-50 rounded-lg p-2 border border-red-100">
           <div className="text-[9.5px] text-[var(--red)] uppercase font-bold">Max</div>
-          <div className="text-[18px] num text-[var(--red)]">{day.maxScansPerUser}</div>
+          <div className="text-[18px] num text-[var(--red)]">{data.maxScansPerUser}</div>
           <div className="text-[9px] text-[var(--text-muted)]">scan/คน</div>
         </div>
       </div>
@@ -63,10 +87,10 @@ export default function EngagementDistribution({ day, rangeLabel }: Props) {
       <div style={{ height: 200 }}>
         <Bar
           data={{
-            labels: day.engagementBuckets.map(b => b.label),
+            labels: buckets.map(b => b.label),
             datasets: [{
               label: 'Users',
-              data: day.engagementBuckets.map(b => b.users),
+              data: buckets.map(b => b.users),
               backgroundColor: BUCKET_COLORS,
               borderRadius: 4,
             }],
@@ -79,7 +103,7 @@ export default function EngagementDistribution({ day, rangeLabel }: Props) {
               legend: { display: false },
               tooltip: {
                 callbacks: {
-                  afterLabel: (ctx: any) => `${day.engagementBuckets[ctx.dataIndex].pct.toFixed(1)}%`,
+                  afterLabel: (ctx: any) => `${buckets[ctx.dataIndex].pct.toFixed(1)}%`,
                 },
               },
               datalabels: {
@@ -88,19 +112,19 @@ export default function EngagementDistribution({ day, rangeLabel }: Props) {
                 offset: 2,
                 color: '#1e1b4b',
                 font: { size: 11, weight: 'bold' },
-                formatter: (v: number, ctx: any) => `${numFmt(v)}\n(${day.engagementBuckets[ctx.dataIndex].pct.toFixed(0)}%)`,
+                formatter: (v: number, ctx: any) => `${numFmt(v)}\n(${buckets[ctx.dataIndex].pct.toFixed(0)}%)`,
               },
             } as any,
             scales: {
               x: { grid: { display: false } },
-              y: { beginAtZero: true, grid: { color: '#f1f5f9' }, suggestedMax: Math.max(...day.engagementBuckets.map(b => b.users)) * 1.18 },
+              y: { beginAtZero: true, grid: { color: '#f1f5f9' }, suggestedMax: Math.max(...buckets.map(b => b.users), 1) * 1.18 },
             },
           }}
         />
       </div>
 
       <InsightInline
-        html={`<b>${((oneShot / total) * 100).toFixed(1)}%</b> สแกนแค่ครั้งเดียว → <b>${numFmt(oneShot)} คน</b> มีโอกาส upsell • Heavy users (6+ ครั้ง) = <b>${numFmt(heavyUsers)} คน</b>`}
+        html={`<b>${total > 0 ? ((oneShot / total) * 100).toFixed(1) : 0}%</b> สแกนแค่ครั้งเดียว → <b>${numFmt(oneShot)} คน</b> มีโอกาส upsell • Heavy users (6+ ครั้ง) = <b>${numFmt(heavyUsers)} คน</b>`}
       />
     </ChartCard>
   )

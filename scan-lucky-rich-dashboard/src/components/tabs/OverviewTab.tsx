@@ -18,7 +18,7 @@ import TrendLineChart from '@/components/ui/TrendLineChart'
 import WeekdayMatchedCard from '@/components/ui/WeekdayMatchedCard'
 
 import { DAILY_ENTRIES } from '@/lib/daily-update-data'  // ใช้สำหรับ chart components ที่ต้องการ timeOfDay/peakHours fields (ยังไม่มี API endpoint รองรับ)
-import { numFmt } from '@/lib/utils'
+import { numFmt, getCampaignToday } from '@/lib/utils'
 import { useApi } from '@/lib/hooks/useApi'
 import type { ScansTotalsResponse, MembersDailyResponse, UptimeResponse, DailyRow } from '@/lib/api/types'
 
@@ -28,7 +28,7 @@ ChartJS.defaults.font.size = 11
 ChartJS.defaults.color = '#6b7280'
 
 export default function OverviewTab() {
-  const [range, setRange] = useState<DateRangeV2>(() => defaultRange({ preset: 'campaign', today: new Date('2026-05-24') }))
+  const [range, setRange] = useState<DateRangeV2>(() => defaultRange({ preset: 'campaign', today: getCampaignToday() }))
 
   // Resolve range → days array → primary day
   const selectedDays = useMemo(
@@ -56,8 +56,16 @@ export default function OverviewTab() {
   const apiTotals = useApi<ScansTotalsResponse>(`/api/scans/totals?from=${range.from}&to=${range.to}`, { refreshMs: LIVE_REFRESH_MS })
   const apiMembers = useApi<MembersDailyResponse>(`/api/members/daily?from=${range.from}&to=${range.to}`, { refreshMs: LIVE_REFRESH_MS })
   const apiUptime = useApi<UptimeResponse>(`/api/system/uptime?from=${range.from}&to=${range.to}`, { refreshMs: LIVE_REFRESH_MS })
-  // Fetch full campaign range for tables (always show all days regardless of date filter)
-  const apiDaily = useApi<DailyRow[]>(`/api/daily?from=2026-05-16&to=2026-05-24`)
+  // ดึงข้อมูลจริงรายวันตามช่วงที่เลือก (saversureV2 /campaign-daily) — ใช้ทั้งกราฟ + ตาราง
+  const apiDaily = useApi<DailyRow[]>(`/api/daily?from=${range.from}&to=${range.to}`, { refreshMs: LIVE_REFRESH_MS })
+  // ข้อมูลรายวันที่ใช้แสดงผล: ของจริงจาก API ถ้ามี, ไม่งั้น fallback static
+  const dailyRows = apiDaily.data ?? selectedDays
+  // ตารางเรียงล่าสุดอยู่บนสุด (ใหม่ → เก่า) — กราฟยังใช้ dailyRows (เก่า → ใหม่) ตามปกติ
+  const dailyTableRows = useMemo(() => [...dailyRows].sort((a, b) => b.date.localeCompare(a.date)), [dailyRows])
+  const firstDate = useMemo(() => dailyRows.reduce((min, d) => (d.date < min ? d.date : min), dailyRows[0]?.date ?? ''), [dailyRows])
+  // เดือนไทยแบบย่อ ตามเดือนจริงของแต่ละวัน (ไม่ hardcode พ.ค.)
+  const TH_MO = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.']
+  const fmtDay = (date: string) => { const p = date.split('-'); return `${parseInt(p[2])} ${TH_MO[parseInt(p[1]) - 1]}` }
 
   // Aggregate KPI for multi-day mode (static fallback ระหว่าง API loading)
   const agg = useMemo(() => {
@@ -91,12 +99,11 @@ export default function OverviewTab() {
           title="Scan Overview"
           subtitle="รายงานการสแกน QR แคมเปญ • 16 พ.ค. – 18 ธ.ค. 2026"
         />
-        <UnifiedDateRange value={range} onChange={setRange} today={new Date('2026-05-24')} />
+        <UnifiedDateRange value={range} onChange={setRange} today={getCampaignToday()} />
       </div>
 
-      {/* ── 3. ALERT BAR ── */}
-      <div className="mb-1"><ApiSourceBadge endpoint="/api/system/uptime" params="from&to → outages[]" /></div>
-      <AlertBar />
+      {/* ── 3. ALERT BAR (outage จริงจาก API) ── */}
+      <AlertBar outages={apiUptime.data?.outages} />
 
       {/* ════════════════════════════════════════════════════
           ZONE 1 — KPI Snapshot (per-day)
@@ -189,7 +196,14 @@ export default function OverviewTab() {
       ════════════════════════════════════════════════════ */}
       <ZoneTitle num="B" title="แนวโน้ม + ตารางรายวัน (สแกน / สมาชิก)" dayTag={dayTag} />
       <div className="mb-1"><ApiSourceBadge endpoint="/api/scans/timeseries" params="from&to" /></div>
-      <TrendLineChart days={selectedDays} rangeLabel={dayTag} />
+      <TrendLineChart days={dailyRows} rangeLabel={dayTag} />
+      <div className="text-[10.5px] text-[var(--text-muted)] -mt-2 mb-1 flex items-start gap-1.5 px-1">
+        <span>ℹ️</span>
+        <span>
+          <b>สิทธิ์ตามสเปก</b> = สแกนสำเร็จ × สิทธิ์ต่อสินค้า (จาก <code>max_tickets_per_user</code> ของ saversureV2, เฉลี่ย ×1.36) —
+          เป็นค่าโดยประมาณเพราะ backend ยังไม่ส่งจำนวนสแกนแยกราย SKU รายวัน • <b>DB ออกจริง</b> ยังมี bug 1:1 จึงต่ำกว่าสเปก
+        </span>
+      </div>
 
       {/* ───────────────────────────────────────────────────
           📱 ตาราง A — สถิติสแกน (ครั้ง / events)
@@ -209,6 +223,26 @@ export default function OverviewTab() {
             <span className="text-[var(--text-secondary)]">คอลัมน์สีแดง = <b>ไม่นับรวมในสแกนสำเร็จ</b></span>
           </span>
         </div>
+        {/* กล่องสรุปของตารางสแกน */}
+        {(() => {
+          const sSuccess = dailyRows.reduce((s, d) => s + d.success, 0)
+          const sDupSelf = dailyRows.reduce((s, d) => s + d.dupSelf, 0)
+          const sDupOther = dailyRows.reduce((s, d) => s + d.dupOther, 0)
+          const sNotFound = dailyRows.reduce((s, d) => s + (d.notFound ?? 0), 0)
+          const sFailed = dailyRows.reduce((s, d) => s + ((d as { scanFailedOther?: number }).scanFailedOther ?? 0), 0)
+          const sAttempts = sSuccess + sDupSelf + sDupOther + sNotFound + sFailed
+          const sSpec = dailyRows.reduce((s, d) => s + (d.expectedTickets ?? d.tickets), 0)
+          const rate = sAttempts > 0 ? (sSuccess / sAttempts) * 100 : 0
+          return (
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-2 mb-3">
+              <MiniStat label="⭐ สแกนสำเร็จ" value={numFmt(sSuccess)} tone="green" />
+              <MiniStat label="การสแกนทั้งหมด" value={numFmt(sAttempts)} tone="plain" />
+              <MiniStat label="% สำเร็จ" value={`${rate.toFixed(1)}%`} tone="plain" />
+              <MiniStat label="⛔ ซ้ำ/ไม่พบ" value={numFmt(sDupSelf + sDupOther + sNotFound + sFailed)} tone="red" />
+              <MiniStat label="🎟️ สิทธิ์ (สเปก)" value={numFmt(sSpec)} tone="gold" />
+            </div>
+          )
+        })()}
         <div className="overflow-x-auto">
           <table className="w-full text-[11.5px]">
             <thead>
@@ -227,17 +261,17 @@ export default function OverviewTab() {
               </tr>
             </thead>
             <tbody>
-              {(apiDaily.data ?? DAILY_ENTRIES).map(d => {
+              {dailyTableRows.map(d => {
                 const failedOther = (d as { scanFailedOther?: number }).scanFailedOther ?? 0
                 const attempts = d.success + failedOther + d.dupSelf + d.dupOther + (d.notFound ?? 0)
-                const sourceList = apiDaily.data ?? DAILY_ENTRIES
-                const tag = d.outage ? { l: 'ระบบล่ม 6 ชม.', c: 'chip-red' }
-                          : d.success === Math.max(...sourceList.map(x => x.success)) ? { l: 'peak', c: '' }
-                          : d.date === sourceList[0].date ? { l: 'วันแรก', c: 'chip-gray' }
+                const maxSuccess = Math.max(...dailyRows.map(x => x.success))
+                const tag = d.outage ? { l: 'ระบบล่ม', c: 'chip-red' }
+                          : d.success === maxSuccess ? { l: 'peak', c: '' }
+                          : d.date === firstDate ? { l: 'วันแรก', c: 'chip-gray' }
                           : { l: 'วันธรรมดา', c: 'chip-blue' }
                 return (
                   <tr key={d.date} className={`border-b border-[var(--border-soft)] hover:bg-[var(--bg-soft)] ${d.outage ? 'bg-red-50/40' : ''}`}>
-                    <td className="py-2 px-2 font-bold text-[var(--dark)]">{d.date.split('-')[2]} พ.ค.</td>
+                    <td className="py-2 px-2 font-bold text-[var(--dark)]">{fmtDay(d.date)}</td>
                     <td className="py-2 px-2 text-[var(--text-muted)]">{d.weekday}</td>
                     <td className="text-right py-2 px-2 num text-[var(--green-700)] font-bold bg-green-50/40"
                         title={d.tickets < d.success ? `DB tickets: ${numFmt(d.tickets)} (น้อยกว่าสำเร็จ ${d.success - d.tickets} จาก race condition — ไม่ critical)` : `DB tickets: ${numFmt(d.tickets)}`}>
@@ -274,6 +308,21 @@ export default function OverviewTab() {
         <p className="text-[11.5px] text-[var(--text-muted)] mb-3">
           ใหม่ = สมัครใหม่วันนี้ • เก่า = สมาชิกเก่าที่มาวันนี้ • สะสม = สมาชิกทั้งหมดในระบบ (cumulative)
         </p>
+        {/* กล่องสรุปของตารางสมาชิก */}
+        {(() => {
+          const mNew = dailyRows.reduce((s, d) => s + (d.memberNew ?? (d as { newSignup?: number }).newSignup ?? 0), 0)
+          const mOld = dailyRows.reduce((s, d) => s + (d.memberOld ?? 0), 0)
+          const scanners = dailyRows.reduce((s, d) => s + d.uniqueUsers, 0)
+          const lastTotal = [...dailyRows].reverse().find(d => d.memberTotal != null)?.memberTotal
+          return (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-3">
+              <MiniStat label="🆕 สมัครใหม่ (รวม)" value={numFmt(mNew)} tone="green" />
+              <MiniStat label="🔁 เก่ามาสแกน (รวม)" value={numFmt(mOld)} tone="plain" />
+              <MiniStat label="ผู้สแกนสะสม" value={numFmt(scanners)} tone="plain" sub="นับซ้ำรายวัน" />
+              <MiniStat label="📈 สมาชิกสะสม (ล่าสุด)" value={lastTotal != null ? numFmt(lastTotal) : '—'} tone="gold" />
+            </div>
+          )
+        })()}
         <div className="overflow-x-auto">
           <table className="w-full text-[11.5px]">
             <thead>
@@ -289,14 +338,14 @@ export default function OverviewTab() {
               </tr>
             </thead>
             <tbody>
-              {(apiDaily.data ?? DAILY_ENTRIES).map(d => {
+              {dailyTableRows.map(d => {
                 const dailyAny = d as { memberNew?: number; newSignup?: number; memberOld?: number; newScanned?: number; memberTotal?: number; signedNotScanned?: number }
                 const mNew = dailyAny.memberNew ?? dailyAny.newSignup ?? 0
                 const mOld = dailyAny.memberOld ?? ((d.uniqueUsers ?? 0) - (dailyAny.newScanned ?? 0))
                 const mTotal = dailyAny.memberTotal
                 return (
                   <tr key={d.date} className={`border-b border-[var(--border-soft)] hover:bg-[var(--bg-soft)] ${d.outage ? 'bg-red-50/40' : ''}`}>
-                    <td className="py-2 px-2 font-bold text-[var(--dark)]">{d.date.split('-')[2]} พ.ค.</td>
+                    <td className="py-2 px-2 font-bold text-[var(--dark)]">{fmtDay(d.date)}</td>
                     <td className="py-2 px-2 text-[var(--text-muted)]">{d.weekday}</td>
                     <td className="text-right py-2 px-2 num text-[var(--green-700)] font-bold bg-green-50/40">{numFmt(mNew)}</td>
                     <td className="text-right py-2 px-2 num">{numFmt(mOld)}</td>
@@ -318,20 +367,6 @@ export default function OverviewTab() {
         </div>
       </div>
 
-      {/* Info callout: DB ticket bug impact */}
-      <div className="card p-3 flex items-start gap-3 text-[12px]" style={{ background: '#fef3c7', borderColor: '#f59e0b', borderWidth: 1.5 }}>
-        <span className="text-[20px] flex-shrink-0">🟡</span>
-        <div className="flex-1">
-          <div className="font-bold text-yellow-800 mb-1">DB Bug: ขาดสิทธิ์ ~11,500 ใบ ในแคมเปญ 5 วัน</div>
-          <div className="text-[11px] text-[var(--text)] leading-relaxed">
-            <b>ตามสเปก Excel:</b> SKU 40g/70g/30g บางตัวให้ <b>2-5 สิทธิ์/scan</b> (L3-40G ×5, D3-70G ×2, C4-35G ×4 ฯลฯ)
-            <br/>
-            <b>DB ตอนนี้:</b> ให้ <b>1 สิทธิ์ทุก scan ทุก SKU</b> (1:1 bug) + บางวัน race condition เล็กน้อย
-            <br/>
-            <b>ตัวเลขจริง 5 วัน:</b> DB <b>35,651 ใบ</b> vs ตามสเปก <b>47,127 ใบ</b> → <b className="text-red-700">ขาด 11,476 ใบ (~32%)</b> ส่วนใหญ่จาก L3-40G, L4-40G, L10-30G, L6-40G, L7-30G — <b>ต้อง verify + แก้ DB ก่อน prize draw</b>
-          </div>
-        </div>
-      </div>
 
       {/* ════════════════════════════════════════════════════
           C — เวลาที่สแกน (TimeOfDay only)
@@ -345,9 +380,9 @@ export default function OverviewTab() {
       ════════════════════════════════════════════════════ */}
       <ZoneTitle num="D" title="เทียบเดือน + แผน" />
       <div className="mb-1"><ApiSourceBadge endpoint="/api/baseline/compare" params="from&to" /></div>
-      <BaselineComparison />
+      <BaselineComparison from={range.from} to={range.to} />
       <div className="mb-1"><ApiSourceBadge endpoint="/api/baseline/compare" params="from&to" /></div>
-      <WeekdayMatchedCard />
+      <WeekdayMatchedCard from={range.from} to={range.to} />
       <RecommendationsZone />
 
       {/* Footer: where did the other widgets go? */}
@@ -359,6 +394,21 @@ export default function OverviewTab() {
           &nbsp;•&nbsp; ดู Top SKU รายวัน ที่หน้า <b className="text-[var(--brand-700)]">Products</b>
         </span>
       </div>
+    </div>
+  )
+}
+
+// กล่องสรุปเล็ก (สรุปผลรวมของแต่ละตาราง)
+function MiniStat({ label, value, sub, tone }: { label: string; value: string; sub?: string; tone: 'green' | 'gold' | 'red' | 'plain' }) {
+  const c = tone === 'green' ? { bg: '#f0faf3', bd: '#15803d22', fg: 'var(--green-700)' }
+          : tone === 'gold' ? { bg: '#fffbf0', bd: '#b4530922', fg: '#b45309' }
+          : tone === 'red' ? { bg: '#fef4f2', bd: '#dc262622', fg: '#c0392b' }
+          : { bg: 'var(--bg-soft)', bd: 'var(--border-soft)', fg: 'var(--dark)' }
+  return (
+    <div className="rounded-lg px-3 py-2" style={{ background: c.bg, border: `1px solid ${c.bd}` }}>
+      <div className="text-[10px] text-[var(--text-secondary)] font-semibold">{label}</div>
+      <div className="text-[18px] num font-extrabold leading-tight" style={{ color: c.fg }}>{value}</div>
+      {sub && <div className="text-[9px] text-[var(--text-muted)]">{sub}</div>}
     </div>
   )
 }

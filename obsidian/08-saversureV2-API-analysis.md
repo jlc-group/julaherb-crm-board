@@ -1,5 +1,7 @@
 # saversureV2 API — ผลวิเคราะห์ (read-only) สำหรับเชื่อม dashboard
 
+> Status note 2026-06-04: ไฟล์นี้เป็น analysis/rationale ก่อน implementation local ล่าสุด ถ้าต้องการสถานะ endpoint จริงให้ดู `09-saversureV2-endpoints-needed.md`
+
 **Analyzed**: 2026-06-03 (read-only ตาม 00-RULES ข้อ "ทำได้: Read source saversureV2")
 **Source**: `C:\projects\Github\saversureV2\backend` (Go/Gin)
 

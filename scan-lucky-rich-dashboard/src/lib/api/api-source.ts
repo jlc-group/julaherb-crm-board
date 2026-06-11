@@ -45,8 +45,10 @@ import type {
   UptimeResponse,
   OutageInfo,
   PrintSlipsResponse,
+  CustomerSearchResponse,
 } from './types'
 import { scansToSpecRights } from '@/lib/rights-multiplier'
+import { matchExcluded } from '@/config/employee-exclude'
 import { stripProductSuffix } from '@/lib/utils'
 
 // ─── Config (server-only env — ปลอดภัย ไม่หลุดไป client) ────────────
@@ -526,7 +528,7 @@ export async function getBaselineCompare(from: DateString, to: DateString): Prom
 //    Backend คืน { total, rows:[{scanner_name, scanner_phone, legacy_qr_code_serial,
 //    product_name, product_sku}] } → map เป็น PrintSlip shape ของ dashboard ตรงนี้.
 //    ถ้า backend ยังไม่ deploy/unreachable → sv() throw → route fallback เป็น mock preview.
-export async function getPrintSlips(from: DateString, to: DateString): Promise<PrintSlipsResponse> {
+export async function getPrintSlips(from: DateString, to: DateString, limit = 5000): Promise<PrintSlipsResponse> {
   const r = await sv<{
     total: number
     rows: Array<{
@@ -536,18 +538,56 @@ export async function getPrintSlips(from: DateString, to: DateString): Promise<P
       product_name: string
       product_sku: string
     }>
-  }>('/dashboard/print-slips', { ...campaignParams(), from, to, limit: 5000 })
+  }>('/dashboard/print-slips', { ...campaignParams(), from, to, limit })
+  const rows = r.rows ?? []
+  // 🚫 ตัดพนักงาน (ทีมจุฬาเฮิร์บ) ออก — ไม่มีสิทธิ์เข้าร่วมจับฉลาก (ดู config/employee-exclude)
+  const excluded = new Set<string>()
+  const kept = rows.filter((row) => {
+    const match = matchExcluded(row.scanner_name, row.scanner_phone)
+    if (match) {
+      excluded.add(match)
+      return false
+    }
+    return true
+  })
+  const removed = rows.length - kept.length
   return {
     from,
     to,
-    total: r.total,
-    slips: (r.rows ?? []).map((row) => ({
+    total: Math.max(0, r.total - removed), // หักจำนวนที่ตัดออกจาก total เท่าที่นับได้ในชุดนี้
+    slips: kept.map((row) => ({
       name: row.scanner_name ?? '',
       phone: row.scanner_phone ?? '',
       scanCode: row.legacy_qr_code_serial ?? '',
       productName: stripProductSuffix(row.product_name ?? ''),
       productSku: row.product_sku ?? '',
     })),
+    excludedNames: Array.from(excluded).sort((a, b) => a.localeCompare(b, 'th')),
     meta: { source: 'api' },
   }
+}
+
+// ─── ค้นหาลูกค้า (หน้า Operation: หาผู้ได้รางวัลมาบันทึก) ───────────────
+//     GET /customers/search?q= — ค้น users (ชื่อ/นามสกุล/เบอร์/email, ILIKE) คืนเฉพาะที่ตรง
+//     เบา · read-only · ไม่แตะ scan_history → ปลอดภัยต่อ prod (realtime-safety)
+interface SvUserSearch {
+  id?: string
+  email?: string
+  phone?: string
+  display_name?: string
+  first_name?: string
+  last_name?: string
+}
+export async function searchCustomers(q: string): Promise<CustomerSearchResponse> {
+  const query = (q ?? '').trim()
+  if (query.length < 2) return { q: query, results: [] }
+  const r = await sv<{ data: SvUserSearch[] }>('/customers/search', { q: query })
+  const results = (r.data ?? [])
+    .map((u) => ({
+      id: String(u.id ?? ''),
+      name: (u.display_name?.trim() || `${u.first_name ?? ''} ${u.last_name ?? ''}`.trim() || u.email || '').trim(),
+      phone: u.phone ?? '',
+    }))
+    .filter((c) => c.name || c.phone)
+  return { q: query, results }
 }

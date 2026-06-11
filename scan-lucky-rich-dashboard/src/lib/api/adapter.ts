@@ -21,11 +21,14 @@ import type {
   EngagementResponse,
   ProvincesResponse,
   RetentionResponse,
+  SegmentsResponse,
   SkuListResponse,
   SkuPerDayResponse,
   SkuTimeseriesResponse,
   BaselineCompareResponse,
   UptimeResponse,
+  PrintSlipsResponse,
+  CustomerSearchResponse,
 } from './types'
 
 import * as mock from './mock-source'
@@ -50,6 +53,7 @@ export interface DataSource {
   getEngagement(from: DateString, to: DateString): Promise<EngagementResponse>
   getProvinces(date: DateString, limit?: number): Promise<ProvincesResponse>
   getRetention(date: DateString): Promise<RetentionResponse>
+  getSegments(): Promise<SegmentsResponse>
 
   // SKU
   getSkuList(): Promise<SkuListResponse>
@@ -61,6 +65,12 @@ export interface DataSource {
 
   // System
   getUptime(from: DateString, to: DateString): Promise<UptimeResponse>
+
+  // Print Slips (จับฉลาก: 1 สิทธิ์ = 1 ใบ)
+  getPrintSlips(from: DateString, to: DateString, limit?: number): Promise<PrintSlipsResponse>
+
+  // ค้นหาลูกค้า (หน้า Operation: หาผู้ได้รางวัลมาบันทึก)
+  searchCustomers(q: string): Promise<CustomerSearchResponse>
 }
 
 const SOURCE = process.env.DATA_SOURCE ?? 'mock'

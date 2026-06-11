@@ -6,6 +6,7 @@
 import { DAILY_ENTRIES } from '@/lib/daily-update-data'
 import { PER_SKU_DAILY, DAY_KEYS, type DayKey } from '@/lib/per-sku-daily'
 import { PRODUCTS_MASTER } from '@/config/products-real'
+import { stripProductSuffix } from '@/lib/utils'
 
 import type {
   DateString,
@@ -18,11 +19,15 @@ import type {
   EngagementResponse,
   ProvincesResponse,
   RetentionResponse,
+  SegmentsResponse,
   SkuListResponse,
   SkuPerDayResponse,
   SkuTimeseriesResponse,
   BaselineCompareResponse,
   UptimeResponse,
+  PrintSlipsResponse,
+  PrintSlipRow,
+  CustomerSearchResponse,
 } from './types'
 
 // ─── Helpers ───────────────────────────────────────────────────────
@@ -267,6 +272,14 @@ export async function getRetention(date: DateString): Promise<RetentionResponse>
   }
 }
 
+// CRM Segments — mock: คืนตัวอย่างคงที่ (DATA_SOURCE=api จะดึงจริง)
+export async function getSegments(): Promise<SegmentsResponse> {
+  return { segments: [
+    { name: 'Loyal Scanners', count: 0, description: 'mock' },
+    { name: 'Champions', count: 0, description: 'mock' },
+  ] }
+}
+
 // ════════════════════════════════════════════════════════════════
 // SKU
 // ════════════════════════════════════════════════════════════════
@@ -377,6 +390,67 @@ export async function getBaselineCompare(from: DateString, to: DateString): Prom
       deltaApr: tApr > 0 ? +((tMay - tApr) / tApr * 100).toFixed(1) : 0,
     },
   }
+}
+
+// ════════════════════════════════════════════════════════════════
+// Print Slips (จับฉลาก: 1 สิทธิ์ = 1 ใบ) — MOCK preview
+// ════════════════════════════════════════════════════════════════
+// ⚠️ mock สังเคราะห์ชื่อ/เบอร์/รหัสสแกน (DAILY_ENTRIES เป็น aggregate ไม่มีรายคน)
+//    → ใช้ "ดูตัวอย่าง layout + พฤติกรรม expand by rights" เท่านั้น
+//    ข้อมูลจริงทั้งหมดมาจาก backend endpoint (ดู api-source.getPrintSlips)
+const FIRST_NAMES = ['สมชาย', 'มาลี', 'วิภา', 'ปรีชา', 'รัตนา', 'อนุชา', 'สุดา', 'ธนวัฒน์', 'นภา', 'กิตติพงษ์', 'ปิยะ', 'จิราพร', 'อรทัย', 'ภาณุพงศ์', 'เพ็ญพิชชา', 'ชลธิชา', 'ธีรพล', 'พรทิพย์', 'ศักดิ์ดา', 'มณีรัตน์']
+const LAST_NAMES = ['ศรีสุข', 'ใจดี', 'พงษ์ไพร', 'ทองคำ', 'แก้วใส', 'อ่อนหวาน', 'มั่นคง', 'รักไทย', 'ก้าวหน้า', 'พิทักษ์', 'ขจรกิตติ', 'รุ่งโรจน์', 'นาคา', 'วงศ์งาม', 'เจริญสุข', 'สุวรรณ', 'บุญมา', 'ไชยศรี', 'พรหมเทพ', 'รัตนกุล']
+
+function rand(seed: number): number {
+  let t = seed + 0x6d2b79f5
+  t = Math.imul(t ^ (t >>> 15), t | 1)
+  t ^= t + Math.imul(t ^ (t >>> 7), t | 61)
+  return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+}
+function pick<T>(arr: T[], seed: number): T { return arr[Math.floor(rand(seed) * arr.length)] }
+function thaiPhone(seed: number): string {
+  const prefixes = ['081', '082', '083', '084', '085', '086', '087', '088', '089', '090', '091', '092', '093', '094', '095', '096', '097', '098', '099']
+  const p = pick(prefixes, seed)
+  const mid = String(Math.floor(rand(seed + 1) * 900 + 100))
+  const end = String(Math.floor(rand(seed + 2) * 9000 + 1000))
+  return `${p}${mid}${end}`   // raw 10 หลัก — mask ตอน render
+}
+function scanCodeGen(seed: number): string {
+  const chars = '0123456789ABCDEF'
+  let out = ''
+  for (let i = 0; i < 8; i++) out += chars[Math.floor(rand(seed + i) * 16)]
+  return out
+}
+
+// preview sample ต่อวัน (mock ทำของจริง 255k ไม่ได้ — backend ทำ)
+const MOCK_SAMPLE_PER_DAY = 8
+
+export async function getPrintSlips(from: DateString, to: DateString, limit = 5000): Promise<PrintSlipsResponse> {
+  const slips: PrintSlipRow[] = []
+  let seed = 1000
+  for (const day of entriesInRange(from, to)) {
+    const base = Math.min(day.success, MOCK_SAMPLE_PER_DAY)
+    for (let i = 0; i < base; i++) {
+      seed += 7
+      const product = PRODUCTS_MASTER[Math.floor(rand(seed) * PRODUCTS_MASTER.length)]
+      const name = `${pick(FIRST_NAMES, seed + 100)} ${pick(LAST_NAMES, seed + 200)}`
+      const phone = thaiPhone(seed + 300)
+      const scanCode = scanCodeGen(seed)
+      const productName = stripProductSuffix(product.displayName)
+      const rights = Math.max(1, product.rightsPerScan)
+      // ⭐ 1 สิทธิ์ = 1 ใบ — สแกนสินค้า rights=5 → ออก 5 ใบเหมือนกันเป๊ะ
+      for (let k = 0; k < rights; k++) {
+        slips.push({ name, phone, scanCode, productName, productSku: product.sku })
+      }
+    }
+  }
+  const capped = slips.slice(0, limit)
+  return { from, to, total: capped.length, slips: capped, meta: { source: 'mock', preview: true } }
+}
+
+// ค้นหาลูกค้า (mock = ไม่มีฐานลูกค้าจริง → คืนว่าง · ใช้ของจริงเมื่อ DATA_SOURCE=api)
+export async function searchCustomers(q: string): Promise<CustomerSearchResponse> {
+  return { q: (q ?? '').trim(), results: [] }
 }
 
 // ════════════════════════════════════════════════════════════════

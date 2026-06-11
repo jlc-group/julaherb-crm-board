@@ -1,138 +1,145 @@
 'use client'
 /**
- * 🖨️ PrintListTab — รายชื่อสำหรับปริ้นลงสลิป (4 คอลัมน์ A4)
+ * 🖨️ PrintListTab — สลิปจับฉลาก (1 สิทธิ์ = 1 ใบ)
  *
- * Data flow (เมื่อต่อ DB จริง):
- *   GET /api/v1/scan-history?from=YYYY-MM-DD&to=YYYY-MM-DD&limit=10000
- *   หรือ direct SQL: SELECT u.display_name, u.phone, sh.id, p.display_name AS product, p.size
- *                    FROM scan_history sh JOIN users u JOIN products p
- *                    WHERE sh.scan_type='success' AND sh.scanned_at BETWEEN $1 AND $2
+ * Data: GET /api/print-slips → ds.getPrintSlips
+ *   - DATA_SOURCE=api: เรียก backend rollup endpoint (เมื่อ saversureV2 ship แล้ว)
+ *   - ระหว่างรอ backend: route fallback เป็น mock preview อัตโนมัติ (rule-safe)
+ *   - 🔴 กฎ: ห้าม page scan_history ดิบจาก dashboard (HOT write-table) — ดู obsidian/18
  *
- * ตอนนี้ใช้ mock generator จาก DAILY_ENTRIES + PRODUCTS_MASTER เพื่อ preview layout
- * Phone: แสดง mask — เปิดเฉพาะ 3 ตัวท้าย (xxx-xxx-x789) เพื่อความเป็นส่วนตัวบนสลิป
+ * Logic จับฉลาก: ลูกค้าสแกนสินค้าที่ได้ N สิทธิ์ → มีชื่อในกล่อง N ใบ (เหมือนกันเป๊ะ)
+ * การ์ด: 8 × 3 ซม. · 4 บรรทัด (ชื่อ / เบอร์ / รหัสสแกน / ชื่อสินค้า) · ชิดกัน (gap 0) · ข้อความ center เผื่อระยะตัด
+ * Phone: mask 4 ตัวท้าย — "081-123-xxxx"
  */
 import { useMemo, useState } from 'react'
 import { DAILY_ENTRIES } from '@/lib/daily-update-data'
-import { PRODUCTS_MASTER } from '@/config/products-real'
-import { numFmt } from '@/lib/utils'
+import { numFmt, getCampaignToday, maskPhone6 } from '@/lib/utils'
+import { useApi } from '@/lib/hooks/useApi'
+import type { PrintSlipsResponse, ScansTotalsResponse } from '@/lib/api/types'
+import { EMPLOYEE_EXCLUDE_NAMES } from '@/config/employee-exclude'
 import TabHeader from '@/components/ui/TabHeader'
 import UnifiedDateRange, { defaultRange, type DateRangeV2 } from '@/components/ui/UnifiedDateRange'
 
-interface ScanSlip {
-  id: string          // 8-char scan code (uppercase hex-ish)
-  name: string        // ชื่อ-นามสกุล
-  phone: string       // เบอร์โทร 10 หลัก (raw — จะ mask ตอน render)
-  productName: string // ชื่อภาษาไทย (ไม่มี SKU)
-  sku: string         // รหัสสินค้า เช่น "L4-40G"
-  scannedAt: string   // YYYY-MM-DD
-}
-
-/** Mask phone: เหลือ 3 ตัวท้าย — "092-841-2014" → "xxx-xxx-x014" */
-function maskPhone(phone: string): string {
-  const digits = phone.replace(/-/g, '')              // "0928412014"
-  const visible = digits.slice(-3)                    // "014"
-  const hidden = digits.slice(0, -3).replace(/\d/g, 'x') // "xxxxxxx"
-  const all = hidden + visible                        // "xxxxxxx014"
-  return `${all.slice(0, 3)}-${all.slice(3, 6)}-${all.slice(6)}` // "xxx-xxx-x014"
-}
-
-// ─── Mock generator ────────────────────────────────────────────────────────
-const FIRST_NAMES = ['สมชาย', 'มาลี', 'วิภา', 'ปรีชา', 'รัตนา', 'อนุชา', 'สุดา', 'ธนวัฒน์', 'นภา', 'กิตติพงษ์', 'ปิยะ', 'จิราพร', 'อรทัย', 'ภาณุพงศ์', 'เพ็ญพิชชา', 'ชลธิชา', 'ธีรพล', 'พรทิพย์', 'ศักดิ์ดา', 'มณีรัตน์']
-const LAST_NAMES  = ['ศรีสุข', 'ใจดี', 'พงษ์ไพร', 'ทองคำ', 'แก้วใส', 'อ่อนหวาน', 'มั่นคง', 'รักไทย', 'ก้าวหน้า', 'พิทักษ์', 'ขจรกิตติ', 'รุ่งโรจน์', 'นาคา', 'วงศ์งาม', 'เจริญสุข', 'สุวรรณ', 'บุญมา', 'ไชยศรี', 'พรหมเทพ', 'รัตนกุล']
-
-function rand(seed: number): number {
-  // Mulberry32 PRNG for stable output per seed
-  let t = seed + 0x6D2B79F5
-  t = Math.imul(t ^ (t >>> 15), t | 1)
-  t ^= t + Math.imul(t ^ (t >>> 7), t | 61)
-  return ((t ^ (t >>> 14)) >>> 0) / 4294967296
-}
-function pick<T>(arr: T[], seed: number): T { return arr[Math.floor(rand(seed) * arr.length)] }
-function thaiPhone(seed: number): string {
-  const prefixes = ['081', '082', '083', '084', '085', '086', '087', '088', '089', '090', '091', '092', '093', '094', '095', '096', '097', '098', '099']
-  const p = pick(prefixes, seed)
-  const mid = String(Math.floor(rand(seed + 1) * 900 + 100))
-  const end = String(Math.floor(rand(seed + 2) * 9000 + 1000))
-  return `${p}-${mid}-${end}`
-}
-function scanCode(seed: number): string {
-  const chars = '0123456789ABCDEF'
-  let out = ''
-  for (let i = 0; i < 8; i++) out += chars[Math.floor(rand(seed + i) * 16)]
-  return out
-}
-
-function generateSlips(from: string, to: string): ScanSlip[] {
-  const slips: ScanSlip[] = []
-  let seed = 1000
-  for (const day of DAILY_ENTRIES) {
-    if (day.date < from || day.date > to) continue
-    // Generate ~20 sample slips per day (reduced from real count for browser perf)
-    const sampleCount = Math.min(day.success, 25)
-    for (let i = 0; i < sampleCount; i++) {
-      seed += 7
-      const product = PRODUCTS_MASTER[Math.floor(rand(seed) * PRODUCTS_MASTER.length)]
-      // strip "(SKU)" suffix AND size suffix like " 8 กรัม", " 70 มล.", " 200 มล."
-      const shortName = product.displayName
-        .replace(/\s*\([^)]+\)$/, '')                 // remove "(L4-8G)"
-        .replace(/\s+\d+(\.\d+)?\s*(กรัม|ก\.|มล\.|มล|ml|g)\s*$/i, '')  // remove " 8 กรัม"
-        .trim()
-      slips.push({
-        id: scanCode(seed),
-        name: `${pick(FIRST_NAMES, seed + 100)} ${pick(LAST_NAMES, seed + 200)}`,
-        phone: thaiPhone(seed + 300),
-        productName: shortName,
-        sku: product.sku,
-        scannedAt: day.date,
-      })
-    }
-  }
-  return slips
-}
-
-// ─── Component ─────────────────────────────────────────────────────────────
 export default function PrintListTab() {
-  const [range, setRange] = useState<DateRangeV2>(() => defaultRange({ preset: 'campaign', today: new Date('2026-05-24') }))
+  const [range, setRange] = useState<DateRangeV2>(() => defaultRange({ preset: 'campaign', today: getCampaignToday() }))
   const { from, to } = range
 
-  const slips = useMemo(() => generateSlips(from, to), [from, to])
+  // ผู้ใช้สั่ง: "ถ้าเป็น mock ห้ามเอามาโชว์" → default ซ่อนสลิป mock, เปิดดูได้เฉพาะเช็ค layout
+  const [showMockPreview, setShowMockPreview] = useState(false)
+  const [showExcluded, setShowExcluded] = useState(false)
+  const [pdfLoading, setPdfLoading] = useState(false)
+  const [pdfMsg, setPdfMsg] = useState('')
 
-  // ── สรุปช่วงวันที่จาก DAILY_ENTRIES (ข้อมูลจริง ไม่ใช่ mock slips) ──
-  const rangeSummary = useMemo(() => {
+  // ดาวน์โหลด PDF ครบทั้งช่วง (สร้างฝั่ง server · ตัดพนักงานแล้ว · ไม่ติด cap 5,000)
+  // วันที่สลิปเยอะ server จะแบ่งเป็นหลายไฟล์ (part) — โหลดทีละส่วนเรียงกัน
+  async function downloadPdf() {
+    setPdfLoading(true)
+    setPdfMsg('')
+    try {
+      let part = 1
+      let totalParts = 1
+      do {
+        setPdfMsg(totalParts > 1 ? `กำลังสร้างส่วน ${part}/${totalParts}…` : 'กำลังสร้าง PDF…')
+        const res = await fetch(`/api/print-slips-pdf?from=${from}&to=${to}&part=${part}`)
+        if (!res.ok) {
+          const e = await res.json().catch(() => ({}))
+          alert('สร้าง PDF ไม่สำเร็จ: ' + (e.error || `HTTP ${res.status}`) + '\n(ลองเลือกช่วงวันที่แคบลง เช่น รายวัน)')
+          return
+        }
+        totalParts = Number(res.headers.get('X-Total-Parts') || 1)
+        const blob = await res.blob()
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download =
+          totalParts > 1
+            ? `สลิปจับฉลาก_${from}_ถึง_${to}_ส่วน${part}-จาก${totalParts}.pdf`
+            : `สลิปจับฉลาก_${from}_ถึง_${to}.pdf`
+        document.body.appendChild(a)
+        a.click()
+        a.remove()
+        URL.revokeObjectURL(url)
+        part++
+      } while (part <= totalParts)
+    } catch (err: any) {
+      alert('ดาวน์โหลดไม่สำเร็จ: ' + (err?.message ?? err))
+    } finally {
+      setPdfLoading(false)
+      setPdfMsg('')
+    }
+  }
+
+  const slipsApi = useApi<PrintSlipsResponse>(`/api/print-slips?from=${from}&to=${to}`)
+  const totalsApi = useApi<ScansTotalsResponse>(`/api/scans/totals?from=${from}&to=${to}`)
+
+  // ⚠️ กัน browser ค้าง: เมื่อ backend คืนสลิปจริง (อาจ 255k+ ใบ) การ render DOM ทั้งหมด
+  //    รอบเดียวจะหนัก/ค้าง + print path พัง. react-window ใช้ไม่ได้ (window.print ต้องมีทุก node
+  //    ใน DOM พร้อมกัน) → soft cap + แนะนำให้ narrow ช่วงวันที่ / ใช้ PDF export ฝั่ง backend
+  const MAX_RENDER = 8000
+  const allSlips = slipsApi.data?.slips ?? []
+  const slips = allSlips.length > MAX_RENDER ? allSlips.slice(0, MAX_RENDER) : allSlips
+  const truncated = allSlips.length > MAX_RENDER
+  const isMock = (slipsApi.data?.meta?.source ?? 'mock') !== 'api'
+  const realData = !isMock && slips.length > 0
+  // โชว์การ์ดเมื่อ: เป็นข้อมูลจริง — หรือ mock ที่ผู้ใช้กดเปิดดู layout เอง
+  const renderCards = realData || (isMock && showMockPreview)
+
+  // 🚫 พนักงานที่ถูกตัดออก: excludedFound = พบในช่วงนี้จริง · EMPLOYEE_EXCLUDE_NAMES = ลิสต์ทั้งหมด
+  const excludedFound = slipsApi.data?.excludedNames ?? []
+  const excludedFoundSet = new Set(excludedFound)
+
+  // ── สรุปช่วง (chip) — ใช้ live /api/scans/totals, fallback DAILY_ENTRIES ──
+  const summary = useMemo(() => {
     const days = DAILY_ENTRIES.filter(d => d.date >= from && d.date <= to)
-    const totalScans   = days.reduce((s, d) => s + d.success, 0)
-    const totalRights  = days.reduce((s, d) => s + (d.expectedTickets ?? d.tickets), 0)
-    const totalUsers   = days.reduce((s, d) => s + d.uniqueUsers, 0)   // unique ต่อวัน (อาจซ้ำข้ามวัน)
-    return { totalScans, totalRights, totalUsers, days: days.length }
-  }, [from, to])
+    const fbScans = days.reduce((s, d) => s + d.success, 0)
+    const fbRights = days.reduce((s, d) => s + (d.expectedTickets ?? d.tickets), 0)
+    const t = totalsApi.data
+    return {
+      days: days.length,
+      scans: t?.success ?? fbScans,
+      rights: t?.expectedTickets ?? fbRights,        // = จำนวนใบสลิปจริง
+      users: t?.distinctUsers ?? t?.uniqueUsers,
+    }
+  }, [from, to, totalsApi.data])
 
-  const COLS = 4
-  const ROWS_PER_PAGE = 14  // 14 rows × 4 cols = 56 slips per A4 (card ~19mm — 5 บรรทัด)
-  const PAGES = Math.ceil(slips.length / (COLS * ROWS_PER_PAGE))
+  // การ์ด 8×3 ซม. → A4 landscape 3 คอลัมน์ (3×8=24ซม. พอดี A4 แนวนอน 29.7ซม.)
+  const COLS = 3
+  const ROWS_PER_PAGE = 6                             // 3×6 = 18 ใบ/หน้า (A4 แนวนอน · 80×30mm · 6×30=180mm พอดี 200mm)
+  const PER_PAGE = COLS * ROWS_PER_PAGE
+  const previewPages = Math.ceil(slips.length / PER_PAGE)
+  const realPages = Math.ceil((summary.rights ?? 0) / PER_PAGE)
 
   return (
     <div className="space-y-4">
-      {/* ── STICKY HEADER (Title + Date range — เลื่อนตามคอนเทนต์) ── */}
+      {/* ── STICKY HEADER ── */}
       <div
         className="sticky top-0 z-30 -mx-6 px-6 pt-6 pb-3 space-y-3 print:hidden"
         style={{ background: 'var(--bg)', boxShadow: '0 4px 12px -8px rgba(15,23,42,0.15)' }}
       >
-        <TabHeader
-          icon="🖨️"
-          title="Print List"
-          subtitle="พิมพ์รายชื่อสำหรับจับฉลาก • Grid 4 คอลัมน์ A4"
-        />
+        <TabHeader icon="🖨️" title="Print List" subtitle="สลิปจับฉลาก • 1 สิทธิ์ = 1 ใบ • การ์ด 8×3 ซม." />
         <div className="flex items-center gap-3 flex-wrap">
           <div className="flex-1 min-w-[400px]">
-            <UnifiedDateRange value={range} onChange={setRange} today={new Date('2026-05-24')} />
+            <UnifiedDateRange value={range} onChange={setRange} today={getCampaignToday()} />
           </div>
           <button
-            onClick={() => window.print()}
-            className="px-4 py-2 rounded-md text-white font-semibold text-[13px] hover:opacity-90 transition whitespace-nowrap"
+            onClick={downloadPdf}
+            disabled={pdfLoading}
+            title="สร้าง PDF ครบทั้งช่วง (ตัดพนักงานแล้ว) ฝั่ง server — โหลดได้เลย"
+            className="px-4 py-2 rounded-md text-white font-semibold text-[13px] hover:opacity-90 transition whitespace-nowrap disabled:opacity-50 disabled:cursor-wait"
             style={{ background: 'var(--brand-700, #14532d)' }}
           >
+            <i className="ti ti-file-download mr-1.5" />
+            {pdfLoading ? (pdfMsg || 'กำลังสร้าง PDF…') : 'ดาวน์โหลด PDF (ตัดพนักงานแล้ว)'}
+          </button>
+          <button
+            onClick={() => window.print()}
+            disabled={isMock || slips.length === 0}
+            title={isMock ? 'พิมพ์ไม่ได้ — ยังเป็น mock ไม่ใช่สิทธิ์จริงของลูกค้า' : 'พิมพ์จากหน้าจอ (จำกัด ~5,000 ใบ) — แนะนำใช้ปุ่มดาวน์โหลด PDF สำหรับครบทั้งวัน'}
+            className="px-3 py-2 rounded-md font-semibold text-[13px] hover:opacity-90 transition whitespace-nowrap disabled:opacity-40 disabled:cursor-not-allowed border"
+            style={{ borderColor: 'var(--brand-700, #14532d)', color: 'var(--brand-700, #14532d)' }}
+          >
             <i className="ti ti-printer mr-1.5" />
-            ปริ้น ({slips.length} รายการ · {PAGES} หน้า)
+            {isMock ? 'พิมพ์ไม่ได้ (mock)' : `พิมพ์จอ (${numFmt(slips.length)})`}
           </button>
         </div>
       </div>
@@ -141,93 +148,147 @@ export default function PrintListTab() {
         {/* Summary chips */}
         <div className="flex flex-wrap gap-2 text-[11px]">
           <span className="px-2.5 py-1 rounded-full bg-[var(--brand-50)] text-[var(--brand-700)] font-semibold">
-            📅 {from} → {to} ({rangeSummary.days} วัน)
+            📅 {from} → {to} ({summary.days} วัน)
           </span>
           <span className="px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 font-semibold">
-            🧾 สแกนสำเร็จ {numFmt(rangeSummary.totalScans)} ครั้ง
+            🧾 สแกนสำเร็จ {numFmt(summary.scans)} ครั้ง
           </span>
           <span className="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800 font-semibold">
-            🎟️ สิทธิ์ทั้งหมด {numFmt(rangeSummary.totalRights)} สิทธิ์
+            🎟️ สิทธิ์ทั้งหมด {numFmt(summary.rights)} ใบ
+            {realPages > 0 && <span className="opacity-60 font-normal ml-1">(~{numFmt(realPages)} หน้า A4)</span>}
           </span>
-          <span className="px-2.5 py-1 rounded-full bg-blue-50 text-blue-800 font-semibold">
-            👤 User ที่สแกน ~{numFmt(rangeSummary.totalUsers)} คน
-            <span className="opacity-60 font-normal ml-1">(รวมทุกวัน อาจซ้ำข้ามวัน)</span>
-          </span>
-          <span className="px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 font-semibold">
-            📄 {PAGES} หน้า A4 ({COLS * ROWS_PER_PAGE} ใบ/หน้า)
-          </span>
-          <span className="px-2.5 py-1 rounded-full bg-yellow-50 text-yellow-800 font-semibold">
-            ⚠ สลิปเป็น mock — wire DB เมื่อ <code className="font-mono">/api/v1/scan-history</code> พร้อม
-          </span>
+          {summary.users != null && (
+            <span className="px-2.5 py-1 rounded-full bg-blue-50 text-blue-800 font-semibold">
+              👤 ผู้สแกน {numFmt(summary.users)} คน
+            </span>
+          )}
         </div>
 
-        {/* Preview note */}
-        <div className="mt-2 text-[11px] text-[var(--text-muted)] italic">
-          💡 preview แบบ on-screen — กดปริ้นเพื่อดู A4 layout จริง (4 columns · gap 2.5mm) · เบอร์โทรจะแสดง mask xxx-xxx-x789 บนสลิป
+        {/* Status banner */}
+        {slipsApi.loading && slips.length === 0 ? (
+          <div className="mt-2 text-[11px] text-[var(--text-muted)]">⏳ กำลังโหลดสลิป…</div>
+        ) : isMock ? (
+          <div className="mt-2 px-3 py-2 rounded-md bg-red-50 border border-red-200 text-[11px] text-red-800 leading-relaxed">
+            🔴 <b>ยังไม่มีข้อมูลจริง</b> — สลิปรายคนจริง (ชื่อ/เบอร์/รหัสสแกน) ต้องรอ backend ทำ endpoint{' '}
+            <code className="font-mono">/dashboard/print-slips</code> (อ่านจาก rollup ปลอดภัย · กฎห้าม dashboard ดึง scan_history ดิบ)
+            <br />สิทธิ์ที่ต้องพิมพ์จริง = <b>{numFmt(summary.rights)} ใบ</b> (เลขนี้จริงจาก live API)
+            <button
+              onClick={() => setShowMockPreview(v => !v)}
+              className="ml-2 underline font-semibold hover:opacity-70"
+            >
+              {showMockPreview ? 'ซ่อนตัวอย่าง layout' : 'ดูตัวอย่าง layout (mock · ไม่ใช่ข้อมูลจริง)'}
+            </button>
+          </div>
+        ) : (
+          <div className="mt-2 text-[11px] text-emerald-700 font-semibold">
+            🟢 ข้อมูลจริงจาก saversureV2 · {numFmt(slips.length)} ใบ
+          </div>
+        )}
+
+        {isMock && showMockPreview && (
+          <div className="mt-2 px-3 py-1.5 rounded bg-yellow-100 text-yellow-900 text-[11px] font-semibold">
+            ⚠️ ด้านล่างเป็น <b>ตัวอย่าง layout (mock)</b> — ชื่อ/เบอร์/รหัสปลอม ใช้ตรวจหน้าตาเท่านั้น · ห้ามใช้พิมพ์จับฉลากจริง
+          </div>
+        )}
+
+        {truncated && (
+          <div className="mt-2 px-3 py-2 rounded-md bg-orange-50 border border-orange-200 text-[11px] text-orange-800 leading-relaxed">
+            ⚠️ <b>ชุดข้อมูลใหญ่มาก</b> — แสดง/ปริ้นได้ <b>{numFmt(MAX_RENDER)} ใบแรก</b> จาก {numFmt(allSlips.length)} ใบ (กัน browser ค้าง)
+            <br />ปริ้นครบทุกชุด: narrow ช่วงวันที่ให้แคบลง (เช่น รายวัน) แล้วปริ้นทีละช่วง · หรือใช้ PDF export ฝั่ง server (backend)
+          </div>
+        )}
+
+        {/* 🚫 รายชื่อพนักงานที่ถูกตัดออก (ทีมจุฬาเฮิร์บ — ไม่มีสิทธิ์เข้าร่วม) */}
+        <div className="mt-2 px-3 py-2 rounded-md bg-slate-50 border border-slate-200 text-[11px] text-slate-700">
+          <div className="flex items-center gap-x-2 gap-y-1 flex-wrap">
+            <span className="font-semibold">🚫 ตัดพนักงานออก {EMPLOYEE_EXCLUDE_NAMES.length} คน</span>
+            <span className="opacity-60">(ทีมจุฬาเฮิร์บ — ไม่มีสิทธิ์เข้าร่วม)</span>
+            {excludedFound.length > 0 && (
+              <span className="px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 font-semibold">
+                ✂️ พบ &amp; ตัดในช่วงนี้ {excludedFound.length} คน
+              </span>
+            )}
+            <button
+              onClick={() => setShowExcluded(v => !v)}
+              className="underline font-semibold hover:opacity-70"
+            >
+              {showExcluded ? 'ซ่อนรายชื่อ' : 'ดูรายชื่อทั้งหมด'}
+            </button>
+          </div>
+          {showExcluded && (
+            <div className="mt-2 grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-x-4 gap-y-0.5 text-[10.5px]">
+              {EMPLOYEE_EXCLUDE_NAMES.map((n, i) => {
+                const found = excludedFoundSet.has(n)
+                return (
+                  <div key={i} className={found ? 'text-amber-700 font-semibold' : 'text-slate-500'}>
+                    {i + 1}. {n}{found ? ' ✂️' : ''}
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
+
+        <div className="mt-1 text-[11px] text-[var(--text-muted)] italic">
+          💡 กดปริ้นเพื่อดู A4 จริง (แนวนอน · 3 คอลัมน์ · การ์ด 8×3 ซม.) · เบอร์โทรแสดง mask <code className="font-mono">081-123-xxxx</code>
         </div>
       </div>
 
-      {/* ─── Print area (visible both on screen + on paper) ─── */}
+      {/* ─── Print area (visible on screen + paper) ─── */}
       <div className="print-area">
+        {!renderCards ? (
+          !slipsApi.loading && (
+            <div className="text-center py-20 text-[var(--text-muted)] text-[13px] print:hidden">
+              {isMock
+                ? '🔒 ซ่อนข้อมูล mock อยู่ (ตามที่สั่ง) — กด “ดูตัวอย่าง layout” ด้านบนเพื่อเช็คหน้าตา · ข้อมูลจริงจะแสดงเมื่อ backend พร้อม'
+                : 'ไม่มีข้อมูลในช่วงวันที่เลือก'}
+            </div>
+          )
+        ) : (
         <div
           className="grid"
-          style={{
-            gridTemplateColumns: `repeat(${COLS}, 1fr)`,
-            gap: '2.5mm',
-          }}
+          style={{ gridTemplateColumns: `repeat(${COLS}, 80mm)`, justifyContent: 'center', gap: '0' }}
         >
           {slips.map((s, i) => (
             <div
-              key={`${s.id}-${i}`}
+              key={i}
               className="slip-card"
               style={{
+                width: '80mm',
+                height: '30mm',
+                boxSizing: 'border-box',
                 border: '1px solid #94a3b8',
-                padding: '2mm 3mm',
-                textAlign: 'center',
-                lineHeight: 1.2,
-                background: 'white',
                 borderRadius: '2px',
+                background: 'white',
+                padding: '2mm 4mm',
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '1.2mm', // ใช้ gap เดียวกันทุกบรรทัด — ทุกการ์ดเป็นระเบียบเท่ากัน
+                justifyContent: 'flex-start',   // ข้อความชิดบน · ความสูงที่เพิ่มไปอยู่ด้านล่าง (เผื่อระยะตัด)
+                textAlign: 'center',
+                gap: '0.8mm',
                 overflow: 'hidden',
                 fontFamily: "'Sarabun', sans-serif",
-                fontSize: '13px',
                 color: '#000000',
-                fontWeight: 400,
               }}
             >
-              <div style={{ fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {/* 1. ชื่อ-นามสกุล (ใหญ่กว่าเพื่อน) */}
+              <div style={{ fontWeight: 700, fontSize: '15px', lineHeight: 1.5, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 {s.name}
               </div>
-              <div>
-                {s.id}
-              </div>
-              {/* บรรทัด 3: ชื่อสินค้าภาษาไทย (เผื่อ 2 บรรทัด — การ์ดสูงเท่ากันเสมอ) */}
+              {/* 2. เบอร์โทรศัพท์ */}
+              <div style={{ fontSize: '12px', lineHeight: 1.5 }}>{maskPhone6(s.phone)}</div>
+              {/* 3. รหัสการสแกน */}
+              <div style={{ fontSize: '12px', lineHeight: 1.5, letterSpacing: '0.5px' }}>{s.scanCode}</div>
+              {/* 4. ชื่อสินค้า (ใช้ภายใน) */}
               <div
-                style={{
-                  wordBreak: 'break-word',
-                  minHeight: '2.4em',
-                }}
+                style={{ fontSize: '11.5px', lineHeight: 1.5, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
                 title={s.productName}
               >
                 {s.productName}
               </div>
-              {/* บรรทัด 4: รหัส SKU */}
-              <div>
-                ({s.sku})
-              </div>
-              <div>
-                {maskPhone(s.phone)}
-              </div>
             </div>
           ))}
         </div>
-
-        {slips.length === 0 && (
-          <div className="text-center py-20 text-[var(--text-muted)] text-[14px]">
-            ไม่มีข้อมูลในช่วงวันที่เลือก
-          </div>
         )}
       </div>
     </div>

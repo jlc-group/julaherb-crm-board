@@ -7,10 +7,22 @@ import {
 } from 'chart.js'
 import ChartDataLabels from 'chartjs-plugin-datalabels'
 
-import type { DailyEntry } from '@/lib/daily-update-data'
 import { numFmt } from '@/lib/utils'
+import { groupByPeriod, monthLabel, type Period } from '@/lib/period-group'
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Legend, Filler)
+
+// เดือนไทยแบบย่อ ตามเดือนจริงของแต่ละวัน (ไม่ hardcode พ.ค.)
+const TH_MO = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.']
+// วันในสัปดาห์แบบย่อ — index ตาม getDay() (0=อาทิตย์ ... 6=เสาร์)
+const TH_DOW = ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส']
+const dowIndex = (date: string) => new Date(`${date}T00:00:00+07:00`).getDay()
+const isWeekend = (date: string) => { const d = dowIndex(date); return d === 0 || d === 6 }
+// label: "ส 16 พ.ค." (วันย่อ + วันที่ + เดือนย่อ)
+const fmtDay = (date: string) => {
+  const p = date.split('-')
+  return `${TH_DOW[dowIndex(date)]} ${parseInt(p[2])} ${TH_MO[parseInt(p[1]) - 1]}`
+}
 
 interface Series {
   key: 'tickets' | 'success'
@@ -20,8 +32,8 @@ interface Series {
 }
 
 interface Props {
-  /** Days within the selected date range (from top filter) */
-  days: DailyEntry[]
+  /** Days within the selected date range — รับได้ทั้ง DailyEntry (static) และ DailyRow (API) */
+  days: { date: string; success: number; tickets: number; expectedTickets?: number }[]
   rangeLabel?: string
 }
 
@@ -30,30 +42,40 @@ export default function TrendLineChart({ days, rangeLabel }: Props) {
     { key: 'tickets', label: '🎟️ สิทธิ์ (ตามสเปก)', color: '#6366f1', enabled: true },
     { key: 'success', label: '⭐ สแกนสำเร็จ',        color: '#10b981', enabled: true },
   ])
+  // โหมดมุมมอง: รายวัน (เดิม) / รายเดือน (ผลรวมต่อเดือน) — ไม่กระทบของเดิม
+  const [period, setPeriod] = useState<Period>('day')
 
-  // Use days from prop (driven by top-level date range)
+  // รวมตามช่วงเวลา: 'day' = rows เดิม, 'month' = ผลรวมต่อเดือน (พ.ค. = 1 จุด)
+  const rows = useMemo(
+    () => groupByPeriod(days, period, ['success', 'tickets', 'expectedTickets']),
+    [days, period],
+  )
+  const isMonth = period === 'month'
+
+  // Use grouped rows (driven by top-level date range + period toggle)
   const { labels, ticketsData, scansData, totals } = useMemo(() => {
-    if (days.length === 0) {
+    if (rows.length === 0) {
       return { labels: [], ticketsData: [], scansData: [], totals: { tickets: 0, success: 0 } }
     }
     return {
-      labels: days.map(d => `${d.date.split('-')[2]} พ.ค.`),
-      ticketsData: days.map(d => d.expectedTickets ?? d.tickets),
-      scansData: days.map(d => d.success),
+      labels: rows.map(d => isMonth ? monthLabel(d.date) : fmtDay(d.date)),
+      ticketsData: rows.map(d => d.expectedTickets ?? d.tickets),
+      scansData: rows.map(d => d.success),
       totals: {
-        tickets: days.reduce((s, d) => s + (d.expectedTickets ?? d.tickets), 0),
-        success: days.reduce((s, d) => s + d.success, 0),
+        tickets: rows.reduce((s, d) => s + (d.expectedTickets ?? d.tickets), 0),
+        success: rows.reduce((s, d) => s + d.success, 0),
       },
     }
-  }, [days])
+  }, [rows, isMonth])
 
   const datasets: any[] = []
-  if (series[0].enabled && days.length > 0) {
+  if (series[0].enabled && rows.length > 0) {
     datasets.push({
       label: series[0].label,
       data: ticketsData,
       borderColor: series[0].color,
       backgroundColor: series[0].color + '15',
+      borderDash: [6, 4],          // เส้นประ — ช่วงที่สิทธิ์ = สแกน (ค่าทับกัน) จะเห็นเส้นเขียวทึบโผล่สลับ รู้ว่ามี 2 เส้น
       tension: 0.35,
       pointRadius: 5,
       pointHoverRadius: 7,
@@ -64,7 +86,7 @@ export default function TrendLineChart({ days, rangeLabel }: Props) {
       fill: true,
     })
   }
-  if (series[1].enabled && days.length > 0) {
+  if (series[1].enabled && rows.length > 0) {
     datasets.push({
       label: series[1].label,
       data: scansData,
@@ -92,13 +114,29 @@ export default function TrendLineChart({ days, rangeLabel }: Props) {
         <div>
           <h3 className="text-[14px] font-bold text-[var(--dark)] mb-0.5">📈 แนวโน้ม สิทธิ์ vs สแกนสำเร็จ</h3>
           <p className="text-[11px] text-[var(--text-muted)]">
-            {rangeLabel ? `${rangeLabel} • ` : ''}{days.length} จุดข้อมูล
-            {days.length === 0 && <span className="ml-1 text-[var(--warn)]">— ไม่มีข้อมูลในช่วงที่เลือก</span>}
+            {rangeLabel ? `${rangeLabel} • ` : ''}{rows.length} {isMonth ? 'เดือน' : 'จุดข้อมูล'}
+            {rows.length === 0 && <span className="ml-1 text-[var(--warn)]">— ไม่มีข้อมูลในช่วงที่เลือก</span>}
           </p>
         </div>
 
-        {/* Series toggle pills */}
-        <div className="flex gap-2 flex-wrap">
+        <div className="flex gap-2 flex-wrap items-center">
+          {/* Period toggle: รายวัน / รายเดือน */}
+          <div className="inline-flex rounded-full border border-[var(--border)] overflow-hidden">
+            {(['day', 'month'] as Period[]).map((pmode) => (
+              <button
+                key={pmode}
+                onClick={() => setPeriod(pmode)}
+                className={`px-3 py-1.5 text-[11.5px] font-semibold transition-all ${
+                  period === pmode ? 'text-white' : 'text-[var(--text-muted)] bg-white hover:bg-[var(--bg-soft)]'
+                }`}
+                style={period === pmode ? { background: 'var(--brand-700, #14532d)' } : {}}
+              >
+                {pmode === 'day' ? '📆 รายวัน' : '🗓️ รายเดือน'}
+              </button>
+            ))}
+          </div>
+
+          {/* Series toggle pills */}
           {series.map((s, i) => (
             <button
               key={s.key}
@@ -124,7 +162,7 @@ export default function TrendLineChart({ days, rangeLabel }: Props) {
       <div style={{ height: 280 }}>
         {datasets.length === 0 ? (
           <div className="h-full flex items-center justify-center text-[12px] text-[var(--text-muted)]">
-            {days.length === 0
+            {rows.length === 0
               ? 'ไม่มีข้อมูลในช่วงเวลาที่เลือก — ลองเลือกช่วงอื่นที่ด้านบน'
               : 'เลือกอย่างน้อย 1 เส้นเพื่อแสดงกราฟ'}
           </div>
@@ -153,13 +191,31 @@ export default function TrendLineChart({ days, rangeLabel }: Props) {
                   anchor: 'end',
                   offset: 6,
                   color: (ctx: any) => ctx.dataset.borderColor,
-                  font: { size: 10.5, weight: 'bold', family: "'Mali', 'Noto Sans Thai', sans-serif" },
-                  formatter: (v: number) => numFmt(v),
-                  display: (ctx: any) => ctx.dataset.data.length <= 10,
+                  font: { size: 10, weight: 'bold', family: "'Mali', 'Noto Sans Thai', sans-serif" },
+                  // จุดเยอะ (>12) → ย่อเป็น k กันตัวเลขทับกัน, จุดน้อย → เลขเต็ม
+                  formatter: (v: number, ctx: any) => {
+                    const many = (ctx?.dataset?.data?.length ?? 0) > 12
+                    return many ? (v >= 1000 ? (v / 1000).toFixed(1) + 'k' : `${v}`) : numFmt(v)
+                  },
+                  // โชว์เสมอจนถึง 40 จุด (เกินนั้นแน่นไปจะซ่อน)
+                  display: (ctx: any) => (ctx?.dataset?.data?.length ?? 0) <= 40,
                 },
               },
               scales: {
-                x: { grid: { display: false }, ticks: { color: '#64748b', font: { size: 11 } } },
+                x: {
+                  grid: { display: false },
+                  ticks: {
+                    // รายวัน: เสาร์-อาทิตย์ = แดง+ตัวหนา · รายเดือน: เทาปกติ
+                    color: (ctx: any) => {
+                      const d = rows[ctx.index]
+                      return !isMonth && d && isWeekend(d.date) ? '#e11d48' : '#64748b'
+                    },
+                    font: (ctx: any) => {
+                      const d = rows[ctx.index]
+                      return { size: 11, weight: !isMonth && d && isWeekend(d.date) ? 'bold' : 'normal' }
+                    },
+                  },
+                },
                 y: {
                   beginAtZero: true,
                   grid: { color: '#f1f5f9' },
@@ -172,7 +228,7 @@ export default function TrendLineChart({ days, rangeLabel }: Props) {
       </div>
 
       {/* Footer — totals */}
-      {days.length > 1 && (
+      {rows.length >= 1 && (
         <div className="mt-3 pt-3 border-t border-[var(--border-soft)] flex flex-wrap gap-4 text-[11.5px]">
           {series[0].enabled && (
             <div className="flex items-center gap-2">
