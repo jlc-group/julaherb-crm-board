@@ -1,51 +1,31 @@
 // ═══════════════════════════════════════════════════════════════
-// Middleware gate ทั้งแอปสำหรับ public deploy (Cloudflare Tunnel)
+// Middleware: เปิดหน้าเว็บทั้งหมด · ล็อกเฉพาะ API ที่มี PII จริง
 // ═══════════════════════════════════════════════════════════════
-// - ถ้าไม่ตั้ง ADMIN_KEY → เปิดหมด (local dev สะดวก — semantics เดิมของ adminKeyOk)
-// - ตั้ง ADMIN_KEY แล้ว:
-//   · public surface (ลูกค้า): /winners /claim + API ที่หน้าพวกนี้ใช้ → ผ่านเสมอ
-//   · ที่เหลือทั้งหมด (หน้า admin / + ทุก API ที่มี PII เช่น print-slips) → ต้องมี key
-//     ทาง 1: header `x-admin-key` (client fetch เดิมใช้อยู่)
-//     ทาง 2: เปิด browser ครั้งแรกด้วย ?key=<ADMIN_KEY> → set cookie แล้วใช้ต่อได้เลย
-//   · /api/auth/refresh อนุญาตเฉพาะเรียกจาก localhost (scheduled task ในเครื่อง)
+// หลักการ (ปรับ 2026-06-12 ตามผู้ใช้ — เปิด domain ต้องเจอ dashboard เลย):
+// - หน้าเว็บทุกหน้า + API ตัวเลขรวม (aggregate) → เปิด public
+// - API ที่คืนข้อมูลส่วนตัวลูกค้า (ชื่อ-เบอร์เต็ม / ไฟล์บัตร ปชช. / ค้นหาลูกค้า)
+//   → ต้องมี ADMIN_KEY (header `x-admin-key` หรือ cookie จากการเปิด ?key= ครั้งแรก)
+// - ไม่ตั้ง ADMIN_KEY = เปิดหมด (dev ในเครื่องเหมือนเดิม)
 import { NextRequest, NextResponse } from 'next/server'
 
-// public ที่ลูกค้าต้องเข้าได้โดยไม่มี key
-const PUBLIC_PREFIXES = [
-  '/winners',
-  '/claim',
-  '/api/winners/public',
-  '/api/claim/verify',
-  '/api/claim/submit', // ตอบ 410 Gone อยู่แล้ว
-  '/_next',
-  '/favicon',
-  '/fonts',
-  '/images',
+// API ที่แตะ PII — ล็อกเสมอเมื่อตั้ง ADMIN_KEY
+const PROTECTED_PREFIXES = [
+  '/api/print-slips',      // ชื่อเต็ม + เบอร์เต็ม ทุกคน (รวม -pdf)
+  '/api/claim/file',       // ไฟล์บัตรประชาชน/เอกสาร
+  '/api/draw/claims',      // เอกสารรับรางวัล (PII)
+  '/api/draw/winners',     // ผู้ชนะแบบ raw (ชื่อ+เบอร์ไม่ mask) — หน้า /winners ใช้ /api/winners/public ที่ mask แล้ว
+  '/api/customers/search', // ค้นหาลูกค้า (ชื่อ/เบอร์)
 ]
 
 export function middleware(req: NextRequest) {
   const key = process.env.ADMIN_KEY
-  if (!key) return NextResponse.next() // local dev — ไม่ตั้ง = เปิดหมด
+  if (!key) return NextResponse.next() // local dev — เปิดหมด
 
   const { pathname, searchParams, hostname } = req.nextUrl
 
-  if (PUBLIC_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + '/'))) {
-    return NextResponse.next()
-  }
-
-  // refresh token: ให้เฉพาะ localhost (scheduled task ในเครื่อง) — ไม่เปิดผ่าน tunnel
-  if (pathname === '/api/auth/refresh') {
-    if (hostname === 'localhost' || hostname === '127.0.0.1') return NextResponse.next()
-    return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
-  }
-
-  // ทางผ่าน 3 แบบ: header (client fetch) / cookie (ตั้งจาก ?key=) / query ?key=
-  if (req.headers.get('x-admin-key') === key) return NextResponse.next()
-  if (req.cookies.get('adminKey')?.value === key) return NextResponse.next()
-
+  // ?key= ใช้ได้จากทุกหน้า → set cookie 30 วัน (สำหรับแอดมินปลดล็อก API PII)
   const qk = searchParams.get('key')
   if (qk === key) {
-    // ผ่านด้วย ?key= ครั้งแรก → set cookie + ตัด key ออกจาก URL
     const clean = req.nextUrl.clone()
     clean.searchParams.delete('key')
     const res = NextResponse.redirect(clean)
@@ -53,23 +33,27 @@ export function middleware(req: NextRequest) {
       httpOnly: true,
       sameSite: 'lax',
       secure: req.nextUrl.protocol === 'https:',
-      maxAge: 60 * 60 * 24 * 30, // 30 วัน
+      maxAge: 60 * 60 * 24 * 30,
       path: '/',
     })
     return res
   }
 
-  // API → 401 JSON · หน้าเว็บที่ไม่มี key → เด้งไปหน้าประกาศผล (UX: คนทั่วไปเปิด domain แล้วเจอของที่ใช้ได้เลย)
-  if (pathname.startsWith('/api/')) {
+  // refresh token: เฉพาะ localhost (scheduled task ในเครื่อง)
+  if (pathname === '/api/auth/refresh') {
+    if (hostname === 'localhost' || hostname === '127.0.0.1') return NextResponse.next()
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
   }
-  const toWinners = req.nextUrl.clone()
-  toWinners.pathname = '/winners'
-  toWinners.search = ''
-  return NextResponse.redirect(toWinners)
+
+  // ล็อกเฉพาะ API PII — ที่เหลือผ่านหมด
+  if (!PROTECTED_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + '/') || pathname.startsWith(p + '-'))) {
+    return NextResponse.next()
+  }
+  if (req.headers.get('x-admin-key') === key) return NextResponse.next()
+  if (req.cookies.get('adminKey')?.value === key) return NextResponse.next()
+  return NextResponse.json({ error: 'unauthorized — ข้อมูลส่วนนี้ต้องใช้สิทธิ์แอดมิน' }, { status: 401 })
 }
 
 export const config = {
-  // ครอบทุก path ยกเว้น static assets ที่ Next เสิร์ฟเอง
   matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
 }
