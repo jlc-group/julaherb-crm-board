@@ -51,23 +51,52 @@ import { scansToSpecRights } from '@/lib/rights-multiplier'
 import { matchExcluded } from '@/config/employee-exclude'
 import { stripProductSuffix } from '@/lib/utils'
 
+import fs from 'fs'
+import path from 'path'
+
 // ─── Config (server-only env — ปลอดภัย ไม่หลุดไป client) ────────────
 const BASE = process.env.SAVERSURE_API_BASE_URL ?? 'http://localhost:30400/api/v1'
-const TOKEN = process.env.SAVERSURE_API_TOKEN ?? ''
 const CAMPAIGN_ID_ENV = process.env.SAVERSURE_CAMPAIGN_ID ?? ''
 const CAMPAIGN_NAME = process.env.SAVERSURE_CAMPAIGN_NAME ?? 'สแกนลุ้นรวย สวยลุ้นล้าน'
 const TIMEOUT_MS = 8_000
+const ENV_PATH = path.join(process.cwd(), '.env.local')
+
+// ─── Token cache — อ่านจาก .env.local ตอน runtime (ไม่ต้อง pm2 restart หลัง refresh) ─
+let _cachedToken = process.env.SAVERSURE_API_TOKEN ?? ''
+let _cachedExp = 0  // Unix epoch seconds
+
+function jwtExp(token: string): number {
+  try { return JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString()).exp ?? 0 }
+  catch { return 0 }
+}
+
+function getToken(): string {
+  const now = Math.floor(Date.now() / 1000)
+  // token cache ยังใช้ได้ (มีเวลาเหลือ > 60 วินาที) → คืนเลย
+  if (_cachedToken && _cachedExp > now + 60) return _cachedToken
+  // หมดหรือใกล้หมด → อ่านจาก .env.local ใหม่
+  try {
+    const raw = fs.readFileSync(ENV_PATH, 'utf-8')
+    const m = raw.match(/^SAVERSURE_API_TOKEN=(.+)$/m)
+    if (m?.[1]) {
+      _cachedToken = m[1].trim()
+      _cachedExp = jwtExp(_cachedToken)
+    }
+  } catch { /* ใช้ค่าเดิม */ }
+  return _cachedToken
+}
 
 // ─── typed fetch helper — timeout + auth + error เป็นข้อความ ─────────
 async function sv<T>(path: string, params: Record<string, string | number | undefined> = {}): Promise<T> {
   const url = new URL(BASE.replace(/\/$/, '') + path)
   for (const [k, v] of Object.entries(params)) if (v !== undefined && v !== '') url.searchParams.set(k, String(v))
 
+  const token = getToken()
   const ctrl = new AbortController()
   const timer = setTimeout(() => ctrl.abort(), TIMEOUT_MS)
   try {
     const res = await fetch(url.toString(), {
-      headers: TOKEN ? { Authorization: `Bearer ${TOKEN}` } : {},
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
       signal: ctrl.signal,
       cache: 'no-store',
     })
