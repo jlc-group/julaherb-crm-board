@@ -16,3 +16,13 @@ prompt edit/
 # OS
 .DS_Store
 Thumbs.db
+
+# Report/export artifacts + scratch (ไม่ใช่ source)
+.report_tmp/
+*.pptx
+*.pdf
+*.xlsx
+campaign-repo/
+
+# ⚠️ PII exports — ห้าม commit (ชื่อลูกค้า/พนักงานจริง)
+รายชื่อ*

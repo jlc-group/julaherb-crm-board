@@ -6,6 +6,7 @@ import KpiCard from '@/components/ui/KpiCard'
 import ChartCard from '@/components/ui/ChartCard'
 import InsightInline from '@/components/ui/InsightInline'
 import InsightCard from '@/components/ui/InsightCard'
+import DemoBanner from '@/components/ui/DemoBanner'
 import { numFmt } from '@/lib/utils'
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, LineElement, PointElement, ArcElement, Tooltip, Legend, Filler)
@@ -57,6 +58,7 @@ export default function ChannelsTab() {
 
   return (
     <div>
+      <DemoBanner reason="ChannelsTab ยังไม่มี API endpoint (ต้องการ /api/channels?from=&to= สำหรับ channel summary + trend + heatmap) — รอ backend ทำ endpoint เพิ่ม" />
       {/* ── KPI Cards ── */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-4">
         {CHANNEL_DATA.map(ch => (

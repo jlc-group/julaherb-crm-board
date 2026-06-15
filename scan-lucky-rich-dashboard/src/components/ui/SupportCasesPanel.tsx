@@ -9,7 +9,7 @@ export default function SupportCasesPanel() {
       topicMap.set(c.topic, (topicMap.get(c.topic) || 0) + c.count)
     }
   }
-  const topics = [...topicMap.entries()].sort((a, b) => b[1] - a[1])
+  const topics = Array.from(topicMap.entries()).sort((a, b) => b[1] - a[1])
   const totalCases = TOTALS_4_DAY.totalSupport
   // Total users across 5 days (approximate)
   const totalUsers = DAILY_ENTRIES.reduce((s, d) => s + d.uniqueUsers, 0)

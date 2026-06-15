@@ -63,7 +63,7 @@ export default function TvAirtimeChart() {
       legend: { display: false },
       tooltip: {
         callbacks: {
-          title: items => minToHHMM(items[0].parsed.x),
+          title: items => minToHHMM(items[0].parsed.x ?? 0),
           label: c => `${c.parsed.y} สแกน`,
         },
       },

@@ -40,7 +40,7 @@ export default function ParetoChart() {
                 order: 1,
               },
             ],
-          }}
+          } as any}
           options={{
             responsive: true,
             maintainAspectRatio: false,

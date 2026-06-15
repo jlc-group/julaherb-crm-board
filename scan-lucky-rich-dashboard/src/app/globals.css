@@ -440,7 +440,8 @@ body {
     position: absolute;
     left: 0;
     top: 0;
-    width: 100%;
+    width: auto;              /* หดเท่าเนื้อหา (grid ~244mm) — กัน width:100% ยื่นเลย @page margin → ตกขอบ */
+    page: slipPage;            /* การ์ด 8ซม. × 3 ใบ/แถว = 24ซม. → ต้อง A4 แนวนอน */
   }
   .print\:hidden { display: none !important; }
 
@@ -449,4 +450,35 @@ body {
     page-break-inside: avoid;
     break-inside: avoid;
   }
+
+  /* ReportTab uses landscape — re-show its area (body * hidden above) */
+  .report-area, .report-area * { visibility: visible; }
+  .report-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    page: reportPage;
+  }
+  /* carousel: บนจอโชว์ทีละสไลด์ (deck-page display:none) — ตอนพิมพ์โชว์ทุกหน้า */
+  .deck-page { display: block !important; }
+  .report-slide {
+    page-break-after: always;
+    break-inside: avoid;
+    box-shadow: none !important;
+    border: none !important;
+  }
+  .report-slide:last-child { page-break-after: auto; }
+}
+
+/* Named landscape page for the report deck (ไม่ชน @page portrait ของ PrintList) */
+@page reportPage {
+  size: A4 landscape;
+  margin: 7mm;
+}
+
+/* Print List — A4 แนวนอน (การ์ด 8ซม. × 3 คอลัมน์ ไม่พอดีแนวตั้ง) */
+@page slipPage {
+  size: A4 landscape;
+  margin: 5mm;              /* จาก 8mm → 5mm: ชิดขอบกระดาษขึ้น + ได้พื้นที่พิมพ์เพิ่ม */
 }

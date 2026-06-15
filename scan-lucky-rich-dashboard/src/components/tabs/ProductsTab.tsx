@@ -21,7 +21,9 @@ import { buildSkuTable, getTierBuckets } from '@/lib/sku-redemption'
 import { RANK_MOVEMENT } from '@/lib/daily-sku-data'
 import { DAILY_ENTRIES } from '@/lib/daily-update-data'
 import type { DayKey } from '@/lib/per-sku-daily'
-import { numFmt } from '@/lib/utils'
+import { numFmt, getCampaignToday } from '@/lib/utils'
+import { useApi } from '@/lib/hooks/useApi'
+import type { SkuPerDayResponse, SkuListResponse } from '@/lib/api/types'
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, LineElement, PointElement, ArcElement, Tooltip, Legend, Filler)
 ChartJS.defaults.font.family = "'Noto Sans Thai', sans-serif"
@@ -42,7 +44,7 @@ const TREND_ICON: Record<string, { icon: string; color: string }> = {
 }
 
 export default function ProductsTab() {
-  const [range, setRange] = useState<DateRangeV2>(() => defaultRange({ preset: 'campaign', today: new Date('2026-05-24') }))
+  const [range, setRange] = useState<DateRangeV2>(() => defaultRange({ preset: 'campaign', today: getCampaignToday() }))
   const selectedDays = useMemo(
     () => DAILY_ENTRIES.filter(d => d.date >= range.from && d.date <= range.to),
     [range.from, range.to]
@@ -73,14 +75,26 @@ export default function ProductsTab() {
   const tiers = useMemo(() => getTierBuckets(allRows), [allRows])
   const sortedByRights = useMemo(() => [...allRows].sort((a, b) => b.rightsRedeemed - a.rightsRedeemed), [allRows])
 
-  const totalSku = allRows.length
-  const deadCount = allRows.filter(r => r.rightsRedeemed === 0).length
-  const activeCount = totalSku - deadCount
+  // ─── API calls (Layer 1 internal /api/*) ───
+  const apiSkuList = useApi<SkuListResponse>(`/api/sku/list`)
+  const apiSkuPerDay = useApi<SkuPerDayResponse>(`/api/sku/per-day?from=${range.from}&to=${range.to}`)
+
+  // KPI — API-first with static fallback
+  const totalSku = apiSkuPerDay.data?.total.activeSkus != null && apiSkuPerDay.data?.total.deadSkus != null
+    ? apiSkuPerDay.data.total.activeSkus + apiSkuPerDay.data.total.deadSkus
+    : allRows.length
+  const deadCount = apiSkuPerDay.data?.total.deadSkus ?? allRows.filter(r => r.rightsRedeemed === 0).length
+  const activeCount = apiSkuPerDay.data?.total.activeSkus ?? (totalSku - deadCount)
   const top1 = sortedByRights[0]
-  const totalRights = allRows.reduce((s, r) => s + r.rightsRedeemed, 0)
+  const totalRights = apiSkuPerDay.data?.total.specTickets ?? allRows.reduce((s, r) => s + r.rightsRedeemed, 0)
   const top1Pct = totalRights > 0 ? (top1.rightsRedeemed / totalRights) * 100 : 0
   const top10 = sortedByRights.slice(0, 10).reduce((s, r) => s + r.rightsRedeemed, 0)
   const top10Pct = (top10 / totalRights) * 100
+  const apiBadge = (loading: boolean, error: string | null, hasData: boolean) =>
+    hasData ? <span className="inline-block ml-1 px-1.5 py-0.5 rounded text-[8px] font-bold bg-green-100 text-green-800 align-middle">🟢 API</span>
+    : loading ? <span className="inline-block ml-1 px-1.5 py-0.5 rounded text-[8px] font-bold bg-yellow-100 text-yellow-800 align-middle">⏳</span>
+    : error ? <span className="inline-block ml-1 px-1.5 py-0.5 rounded text-[8px] font-bold bg-red-100 text-red-800 align-middle" title={error}>⚠️</span>
+    : null
 
   return (
     <div className="space-y-4">
@@ -92,7 +106,17 @@ export default function ProductsTab() {
           title="Products"
           subtitle="SKU analytics — 97 SKUs • Hero / Tier / Cross-size / Master table"
         />
-        <UnifiedDateRange value={range} onChange={setRange} today={new Date('2026-05-24')} />
+        <UnifiedDateRange value={range} onChange={setRange} today={getCampaignToday()} />
+      </div>
+
+      {/* ⚠️ SKU detail snapshot indicator */}
+      <div className="card p-2.5 text-[11px] flex items-start gap-2"
+           style={{ background: '#fef3c7', borderColor: '#f59e0b', borderWidth: 1, borderRadius: 8 }}>
+        <span className="text-base flex-shrink-0">⚠️</span>
+        <div className="flex-1">
+          <b className="text-yellow-800">SKU breakdown ใช้ snapshot ถึง 24 พ.ค.</b>
+          <span className="text-[var(--text)]"> — saversureV2 <code className="bg-white/60 px-1 rounded">/dashboard/campaign-report</code> ยังไม่ส่ง <code className="bg-white/60 px-1 rounded">section_16_sku_daily_matrix</code> (per-day SKU rollup) → Hero / Top5 / Cross-size / Master table ยังอ่านจาก <code className="bg-white/60 px-1 rounded">PRODUCTS_MASTER</code> + <code className="bg-white/60 px-1 rounded">DAILY_ENTRIES</code> ที่ค้างวันที่ 24 พ.ค. KPI ด้านบนเป็น live count จาก <code className="bg-white/60 px-1 rounded">/products</code></span>
+        </div>
       </div>
 
       {/* ════════════════════════════════════════════════════
@@ -102,28 +126,28 @@ export default function ProductsTab() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <div className="kpi-accent kpi-pink" title="จำนวน SKU ในแคมเปญทั้งหมด">
           <div className="text-[11px] text-[var(--text-secondary)] font-semibold uppercase tracking-wider mb-1">
-            SKU ทั้งหมด <ApiSourceBadge endpoint="/api/sku/list" />
+            SKU ทั้งหมด {apiBadge(apiSkuList.loading, apiSkuList.error, !!apiSkuList.data)}
           </div>
           <div className="text-[26px] font-bold leading-tight">{totalSku}</div>
           <div className="text-[11px] text-[var(--text-muted)] mt-1">Active {activeCount} • Dead {deadCount}</div>
         </div>
         <div className="kpi-accent kpi-coral" title={`Top 1 SKU: ${top1?.sku}`}>
           <div className="text-[11px] text-[var(--text-secondary)] font-semibold uppercase tracking-wider mb-1">
-            Top 1 share <ApiSourceBadge endpoint="/api/sku/per-day" params="from&to" />
+            Top 1 share {apiBadge(apiSkuPerDay.loading, apiSkuPerDay.error, !!apiSkuPerDay.data)}
           </div>
           <div className="text-[26px] font-bold leading-tight">{top1Pct.toFixed(1)}%</div>
           <div className="text-[11px] text-[var(--text-muted)] mt-1">{top1?.sku} ({numFmt(top1?.rightsRedeemed || 0)})</div>
         </div>
         <div className="kpi-accent kpi-lavender" title="สัดส่วน Top 10 SKU ของยอดรวม">
           <div className="text-[11px] text-[var(--text-secondary)] font-semibold uppercase tracking-wider mb-1">
-            Top 10 share <ApiSourceBadge endpoint="/api/sku/per-day" params="from&to" />
+            Top 10 share {apiBadge(apiSkuPerDay.loading, apiSkuPerDay.error, !!apiSkuPerDay.data)}
           </div>
           <div className="text-[26px] font-bold leading-tight">{top10Pct.toFixed(1)}%</div>
           <div className="text-[11px] text-[var(--text-muted)] mt-1">Pareto concentration</div>
         </div>
         <div className="kpi-accent kpi-mint" title="สิทธิ์ที่ใช้แลกรวมทั้งแคมเปญ">
           <div className="text-[11px] text-[var(--text-secondary)] font-semibold uppercase tracking-wider mb-1">
-            สิทธิ์ที่แลก <ApiSourceBadge endpoint="/api/sku/per-day" params="from&to → total" />
+            สิทธิ์ที่แลก {apiBadge(apiSkuPerDay.loading, apiSkuPerDay.error, !!apiSkuPerDay.data)}
           </div>
           <div className="text-[26px] font-bold leading-tight">{numFmt(totalRights)}</div>
           <div className="text-[11px] text-[var(--text-muted)] mt-1">{tiers.length} tiers</div>

@@ -1,13 +1,35 @@
 'use client'
-import type { DailyEntry } from '@/lib/daily-update-data'
+import { useApi } from '@/lib/hooks/useApi'
+import type { HeavyUsersResponse } from '@/lib/api/types'
 
-export default function HeavyUsersCard({ day }: { day: DailyEntry }) {
-  const users = day.heavyUsers
+interface Props {
+  /** Date เลือก (YYYY-MM-DD) — Heavy users ของวันนั้น */
+  date: string
+  limit?: number
+}
+
+export default function HeavyUsersCard({ date, limit = 10 }: Props) {
+  const { data, loading, error } = useApi<HeavyUsersResponse>(
+    `/api/customers/heavy-users?date=${date}&limit=${limit}`
+  )
+
+  const users = data?.users ?? []
+  const dayLabel = date.split('-')[2]
+
   return (
     <div className="card p-4">
-      <h3 className="text-[14px] font-bold text-[var(--dark)] mb-1">🚩 Top {users.length} Heavy Users — {day.date.split('-')[2]} พ.ค.</h3>
+      <h3 className="text-[14px] font-bold text-[var(--dark)] mb-1">
+        🚩 Top {users.length} Heavy Users — {dayLabel}{' '}
+        {!loading && !error && data && <span className="inline-block ml-1 px-1.5 py-0.5 rounded text-[8px] font-bold bg-green-100 text-green-800 align-middle">🟢 API</span>}
+        {loading && <span className="inline-block ml-1 px-1.5 py-0.5 rounded text-[8px] font-bold bg-yellow-100 text-yellow-800 align-middle">⏳</span>}
+        {error && <span className="inline-block ml-1 px-1.5 py-0.5 rounded text-[8px] font-bold bg-red-100 text-red-800 align-middle" title={error}>⚠️</span>}
+      </h3>
       <p className="text-[11.5px] text-[var(--text-muted)] mb-3">สแกนหลายครั้ง / SKU น้อย = สงสัยผู้ค้าปลีกหรือ fraud</p>
-      {users.length === 0 ? (
+      {loading ? (
+        <div className="text-[11px] text-[var(--text-muted)] py-4 text-center">⏳ กำลังโหลด...</div>
+      ) : error ? (
+        <div className="text-[11px] text-red-600 py-4 text-center">⚠️ {error}</div>
+      ) : users.length === 0 ? (
         <div className="text-[11px] text-[var(--text-muted)] py-4 text-center">ไม่มีข้อมูล Heavy Users สำหรับวันนี้</div>
       ) : (
         <div className="overflow-x-auto">
@@ -25,7 +47,7 @@ export default function HeavyUsersCard({ day }: { day: DailyEntry }) {
             </thead>
             <tbody>
               {users.map(u => {
-                const suspect = u.skuDiversity <= 2
+                const suspect = u.skuDiversity <= 2 && u.skuDiversity > 0
                 return (
                   <tr key={u.userHash} className={`border-t border-[var(--border-soft)] ${suspect ? 'bg-red-50/40' : ''}`}>
                     <td className="text-center py-1.5 px-2">
@@ -36,7 +58,7 @@ export default function HeavyUsersCard({ day }: { day: DailyEntry }) {
                     <td className="py-1.5 px-2 font-mono text-[10px] text-[var(--brand-700)]">{u.userHash}</td>
                     <td className="py-1.5 px-2 text-[var(--text)]">{u.province}</td>
                     <td className="text-right py-1.5 px-2 num font-bold text-[var(--red)]">{u.scans}</td>
-                    <td className="text-right py-1.5 px-2 num">{u.skuDiversity}</td>
+                    <td className="text-right py-1.5 px-2 num">{u.skuDiversity > 0 ? u.skuDiversity : '—'}</td>
                     <td className="text-right py-1.5 px-2 num text-[var(--text-muted)]">{u.age ?? '—'}</td>
                     <td className="text-center py-1.5 px-2">
                       {suspect ? <span className="chip chip-red text-[9px]">⚠️ SUSPECT</span>

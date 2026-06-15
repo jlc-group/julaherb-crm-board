@@ -73,7 +73,7 @@ export default function TimeOfDayChart({ days, rangeLabel }: Props) {
     return { agg, totalScans: total, peakSlot: peak, aggPeakHours, anyOutage: outage }
   }, [days])
 
-  const hasData = agg.length > 0 && peakSlot
+  const hasData = agg.length > 0 && peakSlot && peakSlot.scans > 0
 
   if (!hasData) {
     return (
@@ -81,9 +81,13 @@ export default function TimeOfDayChart({ days, rangeLabel }: Props) {
         <div className="text-[10.5px] text-[var(--text-muted)] mb-2">
           {rangeLabel ? `📅 ${rangeLabel}` : '—'}
         </div>
-        <div className="flex items-center justify-center py-12 text-[12px] text-[var(--text-muted)]">
-          <i className="ti ti-clock-pause text-2xl mr-2" />
-          ยังไม่มีข้อมูล time-of-day ในช่วงที่เลือก
+        <div className="flex flex-col items-center justify-center py-10 text-[12px] text-[var(--text-muted)] gap-2">
+          <i className="ti ti-clock-pause text-3xl" />
+          <div className="font-semibold text-[var(--text-secondary)]">⚠️ saversureV2 ยังไม่ส่ง hour-level breakdown</div>
+          <div className="text-[11px] max-w-md text-center">
+            endpoint <code className="bg-[var(--bg-soft)] px-1 rounded">/api/scans/time-of-day</code> มี แต่ backend ยังไม่ aggregate ตามชั่วโมง
+            <br/>→ รอ saversureV2 เพิ่ม endpoint <code className="bg-[var(--bg-soft)] px-1 rounded">/dashboard/hourly</code> หรือเทียบเท่า
+          </div>
         </div>
       </ChartCard>
     )

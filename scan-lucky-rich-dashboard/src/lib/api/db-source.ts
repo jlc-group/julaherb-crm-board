@@ -48,8 +48,39 @@ import type {
   UptimeResponse,
 } from './types'
 
-// import { Pool } from 'pg'
-// const pool = new Pool({ connectionString: process.env.DATABASE_URL })
+// ════════════════════════════════════════════════════════════════
+// 🛡️  CONNECTION SAFETY — กัน dashboard ทำ production (การสแกน QR จริง) ล่ม
+// ════════════════════════════════════════════════════════════════
+//
+// หลักการ: read ของ dashboard ต้องห้ามไปแย่ง resource กับ write-path ของการสแกนจริง
+//
+// เปิดใช้ตอนต่อ DB จริง (หลัง `npm i pg`) — ปัจจุบันเป็น scaffolding รอ backend:
+//
+//   import { Pool } from 'pg'
+//
+//   // ⚠️ Pool แยกสำหรับ "อ่านเพื่อ dashboard" โดยเฉพาะ — เล็ก + มีเพดาน
+//   //    ห้ามใช้ pool เดียวกับฝั่งที่เขียน scan_history
+//   export const readPool = new Pool({
+//     connectionString: process.env.DASHBOARD_DATABASE_URL,  // ⭐ ชี้ไป read-replica ไม่ใช่ primary
+//     max: 3,                                  // เพดาน connection ต่ำ — dashboard ดูด conn จนสแกนจริงไม่มีเหลือไม่ได้
+//     idleTimeoutMillis: 10_000,               // ปล่อย conn ที่ว่างเร็ว
+//     connectionTimeoutMillis: 5_000,          // ขอ conn ไม่ได้ใน 5 วิ → fail เร็ว ไม่ค้าง
+//     statement_timeout: 5_000,                // ⭐ query เกิน 5 วิ → ถูกตัดทิ้ง กัน query หนักล็อกตาราง
+//     idle_in_transaction_session_timeout: 10_000,
+//   })
+//
+//   // wrapper เดียวที่ทุกฟังก์ชันด้านล่างเรียกใช้ — รวมจุดคุม timeout/log ไว้ที่เดียว
+//   async function q<T = any>(sql: string, params: any[] = []): Promise<T[]> {
+//     const res = await readPool.query(sql, params)
+//     return res.rows as T[]
+//   }
+//
+// 📌 หมายเหตุสำคัญสำหรับ backend:
+//   - query ด้านล่างถูกปรับให้อ่านจาก rollup table (`daily_rollup` / `analytics_scan_rollups`)
+//     แทน `scan_history` ดิบ → เปลี่ยนการนับ 10 ล้านแถว เป็นอ่าน ~217 แถว
+//   - ตั้ง batch job รีเฟรช rollup ทุก X นาที (ฝั่ง DB) — dashboard อ่านของที่ pre-aggregate แล้ว
+//   - ส่วนที่ยังต้องแตะ scan_history ดิบ (heavy users / engagement รายคน) ให้ยิงเฉพาะช่วงวันเดียว
+//     และพึ่ง statement_timeout + read-replica เป็นเบรกสุดท้าย
 
 // ─── HELPER: convert DB row to DailyRow shape ──────────────────────
 // function rowToDaily(r: any): DailyRow { ... }
@@ -58,18 +89,21 @@ import type {
 // Daily
 // ════════════════════════════════════════════════════════════════
 export async function getDailyRows(from: DateString, to: DateString): Promise<DailyRow[]> {
-  /* TODO:
+  /* TODO — อ่านจาก rollup (เบา) ไม่ใช่ scan_history ดิบ:
   SELECT
-    DATE(sh.scanned_at AT TIME ZONE 'Asia/Bangkok')   AS date,
-    SUM(CASE WHEN sh.scan_type = 'success'         THEN 1 ELSE 0 END) AS success,
-    SUM(CASE WHEN sh.scan_type = 'duplicate_self'  THEN 1 ELSE 0 END) AS dup_self,
-    SUM(CASE WHEN sh.scan_type = 'duplicate_other' THEN 1 ELSE 0 END) AS dup_other,
-    SUM(CASE WHEN sh.scan_type = 'not_found'       THEN 1 ELSE 0 END) AS not_found,
-    COUNT(DISTINCT sh.user_id)                       AS unique_users
-  FROM scan_history sh
-  WHERE sh.scanned_at >= $1 AND sh.scanned_at < $2 + INTERVAL '1 day'
-  GROUP BY DATE(sh.scanned_at AT TIME ZONE 'Asia/Bangkok')
+    date,
+    total_scans      AS success,       -- rollup เก็บ scan สำเร็จไว้แล้ว
+    total_rights     AS expected_tickets,
+    unique_users,
+    new_users        AS member_new,
+    returning_users  AS member_old
+  FROM daily_rollup                     -- = analytics_scan_rollups (pre-aggregated, ~217 แถว)
+  WHERE date BETWEEN $1 AND $2
   ORDER BY date;
+
+  -- หมายเหตุ: dupSelf/dupOther/notFound ถ้า rollup ยังไม่เก็บ ให้เพิ่มคอลัมน์ใน batch job
+  -- (อย่า fallback ไป COUNT scan_history ดิบ — นั่นคือจุดที่ทำ DB ล่ม)
+  -- ใช้ผ่าน wrapper: return (await q<DailyRow>(sql, [from, to])).map(rowToDaily)
   */
   throw new Error('NOT_IMPLEMENTED: getDailyRows')
 }
@@ -83,31 +117,31 @@ export async function getDailyByDate(date: DateString): Promise<DailyRow | null>
 // Scans
 // ════════════════════════════════════════════════════════════════
 export async function getScansTotals(from: DateString, to: DateString): Promise<ScansTotalsResponse> {
-  /* TODO:
+  /* TODO — aggregate จาก rollup (อ่าน ~217 แถว) ไม่ใช่ COUNT ทั้ง scan_history:
   SELECT
-    SUM(CASE WHEN scan_type = 'success' THEN 1 ELSE 0 END) AS success,
-    SUM(CASE WHEN scan_type = 'duplicate_self' THEN 1 ELSE 0 END) AS dup_self,
-    SUM(CASE WHEN scan_type = 'duplicate_other' THEN 1 ELSE 0 END) AS dup_other,
-    SUM(CASE WHEN scan_type = 'not_found' THEN 1 ELSE 0 END) AS not_found,
-    COUNT(DISTINCT user_id) AS distinct_users
-  FROM scan_history
-  WHERE scanned_at BETWEEN $1 AND $2;
+    SUM(total_scans)   AS success,
+    SUM(total_rights)  AS expected_tickets,
+    SUM(unique_users)  AS unique_users_sum,   -- ⚠️ sum-of-daily (ดู note ใน types.ts)
+    COUNT(*)           AS days
+  FROM daily_rollup
+  WHERE date BETWEEN $1 AND $2;
 
-  -- For expected_tickets:
-  SELECT SUM(sh_count.scans * ldc.rights_per_scan) AS expected_tickets
-  FROM (
-    SELECT sku, COUNT(*) AS scans
-    FROM scan_history
-    WHERE scan_type = 'success' AND scanned_at BETWEEN $1 AND $2
-    GROUP BY sku
-  ) sh_count
-  JOIN lucky_draw_campaigns ldc USING (sku);
+  -- ถ้าต้อง distinctUsers จริง (ทั้งช่วง) — เป็น query เดียวที่ยังต้องแตะ scan_history:
+  --   SELECT COUNT(DISTINCT user_id) FROM scan_history
+  --   WHERE scan_type='success' AND scanned_at BETWEEN $1 AND $2;
+  -- ⚠️ ยิงได้แต่ต้องผ่าน read-replica + statement_timeout เท่านั้น และ cache ผลให้นาน
+  --    (หรือให้ batch job เก็บ distinct รายช่วงไว้ใน rollup แยก เพื่อเลี่ยงโดนตารางร้อน)
   */
   throw new Error('NOT_IMPLEMENTED: getScansTotals')
 }
 
 export async function getScansTimeseries(from: DateString, to: DateString): Promise<ScansTimeseriesResponse> {
-  /* TODO: similar to getDailyRows but include expected_tickets via JOIN */
+  /* TODO — จาก rollup ตรงๆ (total_rights มี expected_tickets อยู่แล้ว ไม่ต้อง JOIN scan_history):
+  SELECT date, total_scans AS success, total_rights AS expected_tickets, unique_users
+  FROM daily_rollup
+  WHERE date BETWEEN $1 AND $2
+  ORDER BY date;
+  */
   throw new Error('NOT_IMPLEMENTED: getScansTimeseries')
 }
 
@@ -129,35 +163,14 @@ export async function getTimeOfDay(from: DateString, to: DateString): Promise<Ti
 // Members
 // ════════════════════════════════════════════════════════════════
 export async function getMembersDaily(from: DateString, to: DateString): Promise<MembersDailyResponse> {
-  /* TODO:
-  WITH scans_by_day AS (
-    SELECT
-      DATE(sh.scanned_at AT TIME ZONE 'Asia/Bangkok') AS day,
-      sh.user_id,
-      u.created_at::date AS signup_date
-    FROM scan_history sh
-    JOIN users u ON u.id = sh.user_id
-    WHERE sh.scan_type = 'success' AND sh.scanned_at BETWEEN $1 AND $2
-  )
-  SELECT
-    day,
-    COUNT(DISTINCT CASE WHEN signup_date = day THEN user_id END) AS member_new,
-    COUNT(DISTINCT CASE WHEN signup_date < day THEN user_id END) AS member_old
-  FROM scans_by_day
-  GROUP BY day
-  ORDER BY day;
+  /* TODO — rollup มี new_users/returning_users คำนวณไว้แล้ว ใช้ได้เลย:
+  SELECT date, new_users AS member_new, returning_users AS member_old
+  FROM daily_rollup
+  WHERE date BETWEEN $1 AND $2
+  ORDER BY date;
 
-  -- For signedNotScanned (registered today but didn't scan):
-  SELECT u.created_at::date AS day, COUNT(*) AS signed_not_scanned
-  FROM users u
-  WHERE u.created_at BETWEEN $1 AND $2
-    AND NOT EXISTS (
-      SELECT 1 FROM scan_history sh
-      WHERE sh.user_id = u.id
-        AND DATE(sh.scanned_at AT TIME ZONE 'Asia/Bangkok') = u.created_at::date
-        AND sh.scan_type = 'success'
-    )
-  GROUP BY day;
+  -- signedNotScanned (สมัครวันนี้แต่ไม่สแกน): ถ้าต้องการ ให้เพิ่มเป็นคอลัมน์ใน batch job ของ rollup
+  -- (อย่าทำ NOT EXISTS บน scan_history สดทุก request — หนักและล็อกตารางร้อน)
   */
   throw new Error('NOT_IMPLEMENTED: getMembersDaily')
 }
