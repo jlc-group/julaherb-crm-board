@@ -122,11 +122,12 @@ export default function OverviewTab() {
         const successRateVal = apiTotals.data?.successRate ?? agg.successRate
         const apiMemberNew = apiMembers.data?.totals.memberNew ?? agg.memberNew
         const apiMemberOld = apiMembers.data?.totals.memberOld ?? agg.memberOld
-        const apiOutage = apiUptime.data?.outages?.[0] ?? agg.outageDay?.outage
+        const apiOutage = apiUptime.data?.outages?.find(o => o.isOngoing) ?? null
 
         const attempts = successVal + dupSelfVal + dupOtherVal + notFoundVal
         const dbGap = expectedVal - ticketsVal
         const outageInfo = apiOutage
+        const lastResolvedOutage = apiUptime.data?.outages?.find(o => !o.isOngoing)
 
         const apiLoaded = !apiTotals.loading && !apiTotals.error && apiTotals.data
         const apiBadge = apiLoaded
@@ -184,7 +185,7 @@ export default function OverviewTab() {
                 {outageInfo ? `ล่ม ${outageInfo.durationHours.toFixed(1)}ชม.` : 'ปกติ'}
               </div>
               <div className="text-[12px] text-[var(--text-muted)] mt-1">
-                {outageInfo ? outageInfo.cause.split('—')[0].slice(0, 30) : `${selectedDays.length} วัน ใน range`}
+                {outageInfo ? outageInfo.cause.split('—')[0].slice(0, 30) : lastResolvedOutage ? `last ${lastResolvedOutage.durationHours.toFixed(1)}h resolved` : `${selectedDays.length} วัน ใน range`}
               </div>
             </div>
           </div>

@@ -21,6 +21,9 @@ Last updated: 2026-06-12 (ย้ายเข้า we-platform — auto-deploy +
 
 ## Active Documents
 
+0. `28-Developer-Handoff-Plan-2026-06-15.md` ⭐ **LATEST — developer handoff / planning guide**
+   - entry point for the next team: current branch/runtime, port 3101, production path, deploy workflow, ADMIN_KEY/PII rules, token refresh, campaign date clamp, uptime status fix, smoke tests, and next-work priorities
+
 1. `27-WePlatform-Migration-2026-06-12.md` ⭐ **NEWEST — production มาตรฐาน we-platform + ADMIN_KEY**
    - auto-deploy webhook · middleware gate · DATA_DIR นอก folder · ขั้น admin ที่เหลือ (DNS + restart cloudflared)
 

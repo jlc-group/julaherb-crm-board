@@ -60,6 +60,7 @@ const CAMPAIGN_ID_ENV = process.env.SAVERSURE_CAMPAIGN_ID ?? ''
 const CAMPAIGN_NAME = process.env.SAVERSURE_CAMPAIGN_NAME ?? 'สแกนลุ้นรวย สวยลุ้นล้าน'
 const TIMEOUT_MS = 8_000
 const ENV_PATH = path.join(process.cwd(), '.env.local')
+const CAMPAIGN_START: DateString = '2026-05-16'
 
 // ─── Token cache — อ่านจาก .env.local ตอน runtime (ไม่ต้อง pm2 restart หลัง refresh) ─
 let _cachedToken = process.env.SAVERSURE_API_TOKEN ?? ''
@@ -68,6 +69,24 @@ let _cachedExp = 0  // Unix epoch seconds
 function jwtExp(token: string): number {
   try { return JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString()).exp ?? 0 }
   catch { return 0 }
+}
+
+function parseEnv(txt: string): Record<string, string> {
+  const out: Record<string, string> = {}
+  for (const line of txt.split(/\r?\n/)) {
+    const m = line.match(/^([A-Z0-9_]+)=(.*)$/)
+    if (m) out[m[1]] = m[2]
+  }
+  return out
+}
+
+function persistToken(rawEnv: string, token: string) {
+  const next = /^SAVERSURE_API_TOKEN=.*$/m.test(rawEnv)
+    ? rawEnv.replace(/^SAVERSURE_API_TOKEN=.*$/m, `SAVERSURE_API_TOKEN=${token}`)
+    : `${rawEnv.trimEnd()}\nSAVERSURE_API_TOKEN=${token}\n`
+  fs.writeFileSync(ENV_PATH, next, 'utf-8')
+  _cachedToken = token
+  _cachedExp = jwtExp(token)
 }
 
 function getToken(): string {
@@ -87,31 +106,65 @@ function getToken(): string {
 }
 
 // ─── typed fetch helper — timeout + auth + error เป็นข้อความ ─────────
+async function refreshToken(): Promise<string> {
+  const raw = fs.readFileSync(ENV_PATH, 'utf-8')
+  const env = parseEnv(raw)
+  const base = (env.SAVERSURE_API_BASE_URL || BASE).replace(/\/$/, '')
+  const email = env.SAVERSURE_LOGIN_EMAIL
+  const password = env.SAVERSURE_LOGIN_PASSWORD
+  const tenant = env.SAVERSURE_TENANT_ID || '00000000-0000-0000-0000-000000000001'
+  if (!email || !password) return ''
+
+  const res = await fetch(`${base}/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password, tenant_id: tenant }),
+    cache: 'no-store',
+  })
+  if (!res.ok) return ''
+
+  const body: any = await res.json().catch(() => ({}))
+  const token =
+    body?.token ?? body?.access_token ?? body?.accessToken ??
+    body?.data?.token ?? body?.data?.access_token ?? body?.data?.accessToken
+  if (typeof token !== 'string' || !token) return ''
+
+  persistToken(raw, token)
+  return token
+}
+
 async function sv<T>(path: string, params: Record<string, string | number | undefined> = {}): Promise<T> {
   const url = new URL(BASE.replace(/\/$/, '') + path)
   for (const [k, v] of Object.entries(params)) if (v !== undefined && v !== '') url.searchParams.set(k, String(v))
 
-  const token = getToken()
   const ctrl = new AbortController()
   const timer = setTimeout(() => ctrl.abort(), TIMEOUT_MS)
   try {
-    const res = await fetch(url.toString(), {
+    const request = async (token: string) => fetch(url.toString(), {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
       signal: ctrl.signal,
       cache: 'no-store',
     })
-    if (!res.ok) throw new Error(`saversureV2 ${path} → HTTP ${res.status}`)
+
+    const res = await request(getToken())
+    if (res.status === 401) {
+      const freshToken = await refreshToken()
+      if (freshToken) {
+        const retry = await request(freshToken)
+        if (retry.ok) return (await retry.json()) as T
+        throw new Error(`saversureV2 ${path} -> HTTP ${retry.status}`)
+      }
+    }
+    if (!res.ok) throw new Error(`saversureV2 ${path} -> HTTP ${res.status}`)
     return (await res.json()) as T
   } catch (e: any) {
-    if (e?.name === 'AbortError') throw new Error(`saversureV2 ${path} → timeout ${TIMEOUT_MS}ms`)
-    throw new Error(`saversureV2 ${path} → ${e?.message ?? 'fetch failed'}`)
+    if (e?.name === 'AbortError') throw new Error(`saversureV2 ${path} -> timeout ${TIMEOUT_MS}ms`)
+    throw new Error(`saversureV2 ${path} -> ${e?.message ?? 'fetch failed'}`)
   } finally {
     clearTimeout(timer)
   }
 }
 
-// ─── เลือกแคมเปญ: campaign-report รับ campaign_id หรือ campaign_name (ILIKE) ได้ตรงๆ
-//     ไม่ต้อง lookup /public/lucky-draw (ซึ่งต้องการ tenant param เพิ่ม)
 function campaignParams(): Record<string, string | undefined> {
   return CAMPAIGN_ID_ENV
     ? { campaign_id: CAMPAIGN_ID_ENV }
@@ -148,6 +201,11 @@ interface MonitorIncidents { data: { check_name: string; check_target: string; s
 function daysBetween(from: DateString, to: DateString): number {
   return Math.round((new Date(to).getTime() - new Date(from).getTime()) / 86_400_000) + 1
 }
+
+function campaignDataRange(from: DateString, to: DateString): { from: DateString; to: DateString } | null {
+  if (to < CAMPAIGN_START) return null
+  return { from: (from < CAMPAIGN_START ? CAMPAIGN_START : from) as DateString, to }
+}
 // scan-chart label เป็น "MM/DD" → เติมปีจาก `from` ให้เป็น YYYY-MM-DD
 function labelToDate(label: string, yearRef: DateString): DateString {
   const [mm, dd] = label.split('/')
@@ -162,7 +220,9 @@ function weekdayTH(date: DateString): string {
 }
 
 async function getCampaignDaily(from: DateString, to: DateString): Promise<DailyRow[]> {
-  const res = await sv<CampaignDailyApiResponse>('/dashboard/campaign-daily', { from, to, ...campaignParams() })
+  const range = campaignDataRange(from, to)
+  if (!range) return []
+  const res = await sv<CampaignDailyApiResponse>('/dashboard/campaign-daily', { ...range, ...campaignParams() })
   return (res.data ?? []).map(mapCampaignDailyRow)
 }
 
@@ -199,7 +259,8 @@ export async function getScansTotals(from: DateString, to: DateString): Promise<
     // best-effort — ถ้า campaign-report ล่ม ก็ยังคืน totals ได้ (distinctUsers = undefined)
     sv<CampaignReport>('/dashboard/campaign-report', { date: to, ...campaignParams() }).catch(() => null),
   ])
-  const days = daysBetween(from, to)
+  const range = campaignDataRange(from, to)
+  const days = range ? daysBetween(range.from, range.to) : 0
   const success = rows.reduce((sum, r) => sum + r.success, 0)
   const dupSelf = rows.reduce((sum, r) => sum + r.dupSelf, 0)
   const dupOther = rows.reduce((sum, r) => sum + r.dupOther, 0)
@@ -279,6 +340,7 @@ export async function getUptime(from: DateString, to: DateString): Promise<Uptim
       end: i.resolved_at ?? i.started_at,
       durationHours: i.duration_seconds ? +(i.duration_seconds / 3600).toFixed(2) : 0,
       cause: i.initial_error || i.check_name,
+      isOngoing: !i.resolved_at,
     }))
   const totalHours = daysBetween(from, to) * 24
   const outageHours = outages.reduce((s, o) => s + o.durationHours, 0)

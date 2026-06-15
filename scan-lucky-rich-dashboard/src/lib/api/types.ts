@@ -44,6 +44,7 @@ export interface OutageInfo {
   end: string
   durationHours: number
   cause: string
+  isOngoing?: boolean
 }
 
 // ─── Aggregated KPI (range) ─────────────────────────────────────────
