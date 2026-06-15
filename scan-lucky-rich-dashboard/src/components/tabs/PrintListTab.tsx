@@ -80,6 +80,20 @@ export default function PrintListTab() {
   const slips = allSlips.length > MAX_RENDER ? allSlips.slice(0, MAX_RENDER) : allSlips
   const truncated = allSlips.length > MAX_RENDER
   const isMock = (slipsApi.data?.meta?.source ?? 'mock') !== 'api'
+  // แยกสาเหตุที่ตกเป็น mock ให้สื่อสารตรงกับความจริง:
+  //   auth/timeout = หลุดชั่วคราว (refresh แล้วหาย ไม่ใช่ปัญหา backend) · missing = endpoint หายจริง (งานของ saversureV2)
+  const mockNote = slipsApi.data?.meta?.note ?? ''
+  const mockReason: 'auth' | 'missing' | 'timeout' | 'other' =
+    /401|403|unauthor|forbidden|token/i.test(mockNote) ? 'auth'
+    : /404|not found/i.test(mockNote) ? 'missing'
+    : /timeout/i.test(mockNote) ? 'timeout'
+    : 'other'
+  const mockBanner = {
+    auth:    { tone: 'amber' as const, icon: '🟠', title: 'เชื่อมต่อ backend หลุดชั่วคราว (token หมดอายุ)', body: <>ระบบกำลังต่อ token ใหม่ให้อัตโนมัติ — <b>กด refresh หน้านี้อีกครั้งสักครู่</b> ข้อมูลจริงจะกลับมา (ไม่ใช่ปัญหาฝั่ง backend)</> },
+    timeout: { tone: 'amber' as const, icon: '🟠', title: 'backend ตอบช้า (timeout)', body: <>ลองแคบช่วงวันที่ลง (เช่น รายวัน) แล้วลองใหม่</> },
+    missing: { tone: 'red'   as const, icon: '🔴', title: 'ยังไม่มี endpoint จริงจาก backend', body: <>ต้องรอ saversureV2 ทำ endpoint <code className="font-mono">/dashboard/print-slips</code> (อ่านจาก rollup ปลอดภัย · กฎห้าม dashboard ดึง scan_history ดิบ)</> },
+    other:   { tone: 'amber' as const, icon: '🟠', title: 'ดึงข้อมูลจริงไม่สำเร็จชั่วคราว', body: <>ลอง refresh หน้านี้อีกครั้ง — ถ้ายังไม่หาย แจ้งทีมดูแลระบบ</> },
+  }[mockReason]
   const realData = !isMock && slips.length > 0
   // โชว์การ์ดเมื่อ: เป็นข้อมูลจริง — หรือ mock ที่ผู้ใช้กดเปิดดู layout เอง
   const renderCards = realData || (isMock && showMockPreview)
@@ -168,9 +182,15 @@ export default function PrintListTab() {
         {slipsApi.loading && slips.length === 0 ? (
           <div className="mt-2 text-[11px] text-[var(--text-muted)]">⏳ กำลังโหลดสลิป…</div>
         ) : isMock ? (
-          <div className="mt-2 px-3 py-2 rounded-md bg-red-50 border border-red-200 text-[11px] text-red-800 leading-relaxed">
-            🔴 <b>ยังไม่มีข้อมูลจริง</b> — สลิปรายคนจริง (ชื่อ/เบอร์/รหัสสแกน) ต้องรอ backend ทำ endpoint{' '}
-            <code className="font-mono">/dashboard/print-slips</code> (อ่านจาก rollup ปลอดภัย · กฎห้าม dashboard ดึง scan_history ดิบ)
+          <div
+            className={
+              'mt-2 px-3 py-2 rounded-md border text-[11px] leading-relaxed ' +
+              (mockBanner.tone === 'red'
+                ? 'bg-red-50 border-red-200 text-red-800'
+                : 'bg-amber-50 border-amber-200 text-amber-800')
+            }
+          >
+            {mockBanner.icon} <b>{mockBanner.title}</b> — {mockBanner.body}
             <br />สิทธิ์ที่ต้องพิมพ์จริง = <b>{numFmt(summary.rights)} ใบ</b> (เลขนี้จริงจาก live API)
             <button
               onClick={() => setShowMockPreview(v => !v)}
@@ -178,6 +198,9 @@ export default function PrintListTab() {
             >
               {showMockPreview ? 'ซ่อนตัวอย่าง layout' : 'ดูตัวอย่าง layout (mock · ไม่ใช่ข้อมูลจริง)'}
             </button>
+            {mockNote && (
+              <div className="mt-1 opacity-60 font-mono text-[10px] break-all">debug: {mockNote}</div>
+            )}
           </div>
         ) : (
           <div className="mt-2 text-[11px] text-emerald-700 font-semibold">
