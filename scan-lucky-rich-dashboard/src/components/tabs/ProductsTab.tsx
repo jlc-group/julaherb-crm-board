@@ -7,6 +7,7 @@ import {
 } from 'chart.js'
 import HeroSkuCard from '@/components/ui/HeroSkuCard'
 import CrossSizeMatrix from '@/components/ui/CrossSizeMatrix'
+import CrossScanPairsCard from '@/components/ui/CrossScanPairsCard'
 import FirstScanCard from '@/components/ui/FirstScanCard'
 import ProductMasterTable from '@/components/ui/ProductMasterTable'
 import InsightInline from '@/components/ui/InsightInline'
@@ -222,6 +223,9 @@ export default function ProductsTab() {
           <InsightInline html={`<b>${tiers[0]?.label}</b> (ซองเล็ก) ครอง <b>${tiers[0]?.sharePct.toFixed(0)}%</b> — โอกาส push premium tier ผ่าน bundling`} />
         </div>
         <CrossSizeMatrix />
+      </div>
+      <div className="mt-4">
+        <CrossScanPairsCard />
       </div>
 
       {/* ════════════════════════════════════════════════════
