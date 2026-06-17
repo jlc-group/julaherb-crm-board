@@ -11,7 +11,7 @@
  * การ์ด: 8 × 3 ซม. · 4 บรรทัด (ชื่อ / เบอร์ / รหัสสแกน / ชื่อสินค้า) · ชิดกัน (gap 0) · ข้อความ center เผื่อระยะตัด
  * Phone: mask 4 ตัวท้าย — "081-123-xxxx"
  */
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { DAILY_ENTRIES } from '@/lib/daily-update-data'
 import { numFmt, getCampaignToday, maskPhone6 } from '@/lib/utils'
 import { useApi } from '@/lib/hooks/useApi'
@@ -29,6 +29,18 @@ export default function PrintListTab() {
   const [showExcluded, setShowExcluded] = useState(false)
   const [pdfLoading, setPdfLoading] = useState(false)
   const [pdfMsg, setPdfMsg] = useState('')
+  const [printing, setPrinting] = useState(false)
+
+  // render cards ก่อน แล้วค่อย print — ใช้ useEffect กัน race condition
+  useEffect(() => {
+    if (!printing) return
+    const t = setTimeout(() => {
+      window.print()
+      const done = () => setPrinting(false)
+      window.addEventListener('afterprint', done, { once: true })
+    }, 80)
+    return () => clearTimeout(t)
+  }, [printing])
 
   // ดาวน์โหลด PDF ครบทั้งช่วง (สร้างฝั่ง server · ตัดพนักงานแล้ว · ไม่ติด cap 5,000)
   // วันที่สลิปเยอะ server จะแบ่งเป็นหลายไฟล์ (part) — โหลดทีละส่วนเรียงกัน
@@ -146,14 +158,14 @@ export default function PrintListTab() {
             {pdfLoading ? (pdfMsg || 'กำลังสร้าง PDF…') : 'ดาวน์โหลด PDF (ตัดพนักงานแล้ว)'}
           </button>
           <button
-            onClick={() => window.print()}
-            disabled={isMock || slips.length === 0}
-            title={isMock ? 'พิมพ์ไม่ได้ — ยังเป็น mock ไม่ใช่สิทธิ์จริงของลูกค้า' : 'พิมพ์จากหน้าจอ (จำกัด ~5,000 ใบ) — แนะนำใช้ปุ่มดาวน์โหลด PDF สำหรับครบทั้งวัน'}
+            onClick={() => setPrinting(true)}
+            disabled={isMock || slips.length === 0 || printing}
+            title={isMock ? 'พิมพ์ไม่ได้ — ยังเป็น mock ไม่ใช่สิทธิ์จริงของลูกค้า' : 'พิมพ์จากหน้าจอ (จำกัด ~8,000 ใบ) — แนะนำใช้ปุ่มดาวน์โหลด PDF สำหรับครบทั้งวัน'}
             className="px-3 py-2 rounded-md font-semibold text-[13px] hover:opacity-90 transition whitespace-nowrap disabled:opacity-40 disabled:cursor-not-allowed border"
             style={{ borderColor: 'var(--brand-700, #14532d)', color: 'var(--brand-700, #14532d)' }}
           >
             <i className="ti ti-printer mr-1.5" />
-            {isMock ? 'พิมพ์ไม่ได้ (mock)' : `พิมพ์จอ (${numFmt(slips.length)})`}
+            {printing ? 'กำลังเตรียม…' : isMock ? 'พิมพ์ไม่ได้ (mock)' : `พิมพ์จอ (${numFmt(slips.length)})`}
           </button>
         </div>
       </div>
@@ -257,11 +269,11 @@ export default function PrintListTab() {
         </div>
       </div>
 
-      {/* ─── Print area (visible on screen + paper) ─── */}
-      <div className="print-area">
-        {!renderCards ? (
+      {/* ─── Print area — ซ่อนบนจอ แสดงเฉพาะตอน printing state หรือ @media print ─── */}
+      <div className={printing ? 'print-area' : 'print-area hidden print:block'}>
+        {!renderCards && !printing ? (
           !slipsApi.loading && (
-            <div className="text-center py-20 text-[var(--text-muted)] text-[13px] print:hidden">
+            <div className=”text-center py-20 text-[var(--text-muted)] text-[13px] print:hidden”>
               {isMock
                 ? '🔒 ซ่อนข้อมูล mock อยู่ (ตามที่สั่ง) — กด “ดูตัวอย่าง layout” ด้านบนเพื่อเช็คหน้าตา · ข้อมูลจริงจะแสดงเมื่อ backend พร้อม'
                 : 'ไม่มีข้อมูลในช่วงวันที่เลือก'}

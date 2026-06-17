@@ -97,20 +97,23 @@ body{margin:0;font-family:'Sarabun',sans-serif;color:#000}
   })
   try {
     const page = await browser.newPage()
-    // networkidle0 = รอ stylesheet + ไฟล์ฟอนต์ Sarabun (Google Fonts) โหลดครบ
-    await page.setContent(html, { waitUntil: 'networkidle0' as any, timeout: 180000 })
-    // บังคับโหลดฟอนต์จริงก่อนพิมพ์ (display=swap กัน render fallback) — ต้อง await จริง ไม่ใช่ evaluateHandle
-    await page.evaluate(async () => {
-      const d: any = document
-      try {
-        await Promise.all([
-          d.fonts.load('400 15px Sarabun'),
-          d.fonts.load('500 12px Sarabun'),
-          d.fonts.load('700 15px Sarabun'),
-        ])
-      } catch {}
-      await d.fonts.ready
-    })
+    // domcontentloaded = รวดเร็ว ไม่บล็อกรอ Google Fonts (networkidle0 ช้า 30+ วิ → 524)
+    await page.setContent(html, { waitUntil: 'domcontentloaded' as any, timeout: 30000 })
+    // รอฟอนต์โหลด แต่กำหนด cap 8 วิ — ถ้า Google Fonts ช้าให้ fallback font แทน (ไทยยังอ่านได้)
+    await Promise.race([
+      page.evaluate(async () => {
+        const d: any = document
+        try {
+          await Promise.all([
+            d.fonts.load('400 15px Sarabun'),
+            d.fonts.load('500 12px Sarabun'),
+            d.fonts.load('700 15px Sarabun'),
+          ])
+        } catch {}
+        await d.fonts.ready
+      }),
+      new Promise(r => setTimeout(r, 8000)),
+    ])
     const pdf = await page.pdf({ printBackground: false, preferCSSPageSize: true, timeout: 0 }) // bg ขาวไม่ต้องวาด · timeout 0 (หน้าเยอะ)
     await browser.close()
     return new NextResponse(Buffer.from(pdf), {
