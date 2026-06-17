@@ -19,12 +19,14 @@ import SkuTrendLineChart from '@/components/ui/SkuTrendLineChart'
 import ApiSourceBadge from '@/components/ui/ApiSourceBadge'
 
 import { buildSkuTable, getTierBuckets } from '@/lib/sku-redemption'
+import type { SkuRow, SkuStatus } from '@/lib/sku-redemption'
 import { RANK_MOVEMENT } from '@/lib/daily-sku-data'
 import { DAILY_ENTRIES } from '@/lib/daily-update-data'
 import type { DayKey } from '@/lib/per-sku-daily'
 import { numFmt, getCampaignToday } from '@/lib/utils'
 import { useApi } from '@/lib/hooks/useApi'
 import type { SkuPerDayResponse, SkuListResponse } from '@/lib/api/types'
+import { PRODUCTS_MASTER } from '@/config/products-real'
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, LineElement, PointElement, ArcElement, Tooltip, Legend, Filler)
 ChartJS.defaults.font.family = "'Noto Sans Thai', sans-serif"
@@ -73,24 +75,53 @@ export default function ProductsTab() {
     () => selectedDayKeys.length > 0 ? buildSkuTable(selectedDayKeys) : buildSkuTable('all'),
     [selectedDayKeys]
   )
-  const tiers = useMemo(() => getTierBuckets(allRows), [allRows])
-  const sortedByRights = useMemo(() => [...allRows].sort((a, b) => b.rightsRedeemed - a.rightsRedeemed), [allRows])
-
   // ─── API calls (Layer 1 internal /api/*) ───
   const apiSkuList = useApi<SkuListResponse>(`/api/sku/list`)
   const apiSkuPerDay = useApi<SkuPerDayResponse>(`/api/sku/per-day?from=${range.from}&to=${range.to}`)
+
+  // ─── Lookup map สำหรับ fill ProductMaster fields จาก API rows ───
+  const masterMap = useMemo(() => new Map(PRODUCTS_MASTER.map(p => [p.sku, p])), [])
+
+  // ─── Adapt API rows → SkuRow shape (sku-redemption) เพื่อให้ component ใช้ได้ ───
+  const apiDisplayRows = useMemo<SkuRow[] | null>(() => {
+    if (!apiSkuPerDay.data?.rows?.length) return null
+    return apiSkuPerDay.data.rows.map(r => {
+      const master = masterMap.get(r.sku)
+      const users = r.uniqueUsers ?? 0
+      return {
+        seq: master?.seq ?? 0,
+        sku: r.sku,
+        priceCategory: master?.priceCategory ?? '',
+        fullName: master?.fullName ?? r.displayName,
+        displayName: r.displayName,
+        price: master?.price ?? 0,
+        pointsPerScan: master?.pointsPerScan ?? r.perScan,
+        rightsPerScan: r.perScan,
+        rightsRedeemed: r.specTickets,
+        users,
+        rightsPerUser: users > 0 ? r.specTickets / users : 0,
+        sharePct: r.sharePct,
+        status: (r.scans > 0 ? (r.sharePct > 5 ? 'hero' : 'active') : 'dead') as SkuStatus,
+      }
+    })
+  }, [apiSkuPerDay.data, masterMap])
+
+  // API data มี → ใช้ API; ยังไม่มี → fallback static
+  const displayRows = apiDisplayRows ?? allRows
+  const tiers = useMemo(() => getTierBuckets(displayRows), [displayRows])
+  const sortedDisplay = useMemo(() => [...displayRows].sort((a, b) => b.rightsRedeemed - a.rightsRedeemed), [displayRows])
 
   // KPI — API-first with static fallback
   const totalSku = apiSkuPerDay.data?.total.activeSkus != null && apiSkuPerDay.data?.total.deadSkus != null
     ? apiSkuPerDay.data.total.activeSkus + apiSkuPerDay.data.total.deadSkus
     : allRows.length
-  const deadCount = apiSkuPerDay.data?.total.deadSkus ?? allRows.filter(r => r.rightsRedeemed === 0).length
+  const deadCount = apiSkuPerDay.data?.total.deadSkus ?? displayRows.filter(r => r.rightsRedeemed === 0).length
   const activeCount = apiSkuPerDay.data?.total.activeSkus ?? (totalSku - deadCount)
-  const top1 = sortedByRights[0]
-  const totalRights = apiSkuPerDay.data?.total.specTickets ?? allRows.reduce((s, r) => s + r.rightsRedeemed, 0)
-  const top1Pct = totalRights > 0 ? (top1.rightsRedeemed / totalRights) * 100 : 0
-  const top10 = sortedByRights.slice(0, 10).reduce((s, r) => s + r.rightsRedeemed, 0)
-  const top10Pct = (top10 / totalRights) * 100
+  const top1 = sortedDisplay[0]
+  const totalRights = apiSkuPerDay.data?.total.specTickets ?? displayRows.reduce((s, r) => s + r.rightsRedeemed, 0)
+  const top1Pct = totalRights > 0 && top1 ? (top1.rightsRedeemed / totalRights) * 100 : 0
+  const top10 = sortedDisplay.slice(0, 10).reduce((s, r) => s + r.rightsRedeemed, 0)
+  const top10Pct = totalRights > 0 ? (top10 / totalRights) * 100 : 0
   const apiBadge = (loading: boolean, error: string | null, hasData: boolean) =>
     hasData ? <span className="inline-block ml-1 px-1.5 py-0.5 rounded text-[8px] font-bold bg-green-100 text-green-800 align-middle">🟢 API</span>
     : loading ? <span className="inline-block ml-1 px-1.5 py-0.5 rounded text-[8px] font-bold bg-yellow-100 text-yellow-800 align-middle">⏳</span>
@@ -110,15 +141,25 @@ export default function ProductsTab() {
         <UnifiedDateRange value={range} onChange={setRange} today={getCampaignToday()} />
       </div>
 
-      {/* ⚠️ SKU detail snapshot indicator */}
-      <div className="card p-2.5 text-[11px] flex items-start gap-2"
-           style={{ background: '#fef3c7', borderColor: '#f59e0b', borderWidth: 1, borderRadius: 8 }}>
-        <span className="text-base flex-shrink-0">⚠️</span>
-        <div className="flex-1">
-          <b className="text-yellow-800">SKU breakdown ใช้ snapshot ถึง 24 พ.ค.</b>
-          <span className="text-[var(--text)]"> — saversureV2 <code className="bg-white/60 px-1 rounded">/dashboard/campaign-report</code> ยังไม่ส่ง <code className="bg-white/60 px-1 rounded">section_16_sku_daily_matrix</code> (per-day SKU rollup) → Hero / Top5 / Cross-size / Master table ยังอ่านจาก <code className="bg-white/60 px-1 rounded">PRODUCTS_MASTER</code> + <code className="bg-white/60 px-1 rounded">DAILY_ENTRIES</code> ที่ค้างวันที่ 24 พ.ค. KPI ด้านบนเป็น live count จาก <code className="bg-white/60 px-1 rounded">/products</code></span>
-        </div>
-      </div>
+      {/* แสดง banner ตาม data source ที่ใช้จริง */}
+      {apiDisplayRows
+        ? <div className="card p-2.5 text-[11px] flex items-start gap-2"
+               style={{ background: '#f0fdf4', borderColor: '#16a34a', borderWidth: 1, borderRadius: 8 }}>
+            <span className="text-base flex-shrink-0">🟢</span>
+            <div className="flex-1 text-green-800">
+              <b>SKU ใช้ข้อมูลจริงจาก API</b>
+              <span className="text-green-700"> — Hero / Top5 / Tier Mix คำนวณตาม date range ที่เลือก ({dayTag}) · Master table และ Rank Movement ยังใช้ snapshot ถึง 24 พ.ค.</span>
+            </div>
+          </div>
+        : <div className="card p-2.5 text-[11px] flex items-start gap-2"
+               style={{ background: '#fef3c7', borderColor: '#f59e0b', borderWidth: 1, borderRadius: 8 }}>
+            <span className="text-base flex-shrink-0">⚠️</span>
+            <div className="flex-1">
+              <b className="text-yellow-800">SKU breakdown ใช้ snapshot ถึง 24 พ.ค.</b>
+              <span className="text-[var(--text)]"> — รอ backend ส่ง <code className="bg-white/60 px-1 rounded">/dashboard/sku-performance</code> ที่มีข้อมูลจริง</span>
+            </div>
+          </div>
+      }
 
       {/* ════════════════════════════════════════════════════
           A — ภาพรวม SKU (aggregate by date range)
@@ -162,11 +203,11 @@ export default function ProductsTab() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div>
           <div className="mb-1"><ApiSourceBadge endpoint="/api/sku/per-day" params="from&to → rows[0]" /></div>
-          <HeroSkuCard rows={allRows} rangeLabel={dayTag} dayCount={selectedDays.length} />
+          <HeroSkuCard rows={displayRows} rangeLabel={dayTag} dayCount={rangeDayCount} />
         </div>
         <div>
           <div className="mb-1"><ApiSourceBadge endpoint="/api/sku/per-day" params="from&to → rows.slice(0,5)" /></div>
-          <Top5SkuCard day={day} rows={allRows} rangeLabel={dayTag} />
+          <Top5SkuCard day={day} rows={displayRows} rangeLabel={dayTag} />
         </div>
       </div>
 
