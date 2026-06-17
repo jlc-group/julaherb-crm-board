@@ -1,13 +1,13 @@
 'use client'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Line } from 'react-chartjs-2'
 import {
   Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement,
   Tooltip, Legend, Filler,
 } from 'chart.js'
 import { PRODUCTS_MASTER } from '@/config/products-real'
-import { PER_SKU_DAILY, type DayKey } from '@/lib/per-sku-daily'
-import type { DailyEntry } from '@/lib/daily-update-data'
+import { PER_SKU_DAILY } from '@/lib/per-sku-daily'
+import type { SkuTimeseriesResponse } from '@/lib/api/types'
 import { numFmt } from '@/lib/utils'
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Legend, Filler)
@@ -31,6 +31,48 @@ export default function SkuTrendLineChart({ from, to, rangeLabel }: Props) {
   const [metric, setMetric] = useState<Metric>('tickets')
   const [search, setSearch] = useState('')
   const [showPicker, setShowPicker] = useState(false)
+  const [tsBySku, setTsBySku] = useState<Record<string, SkuTimeseriesResponse>>({})
+  const [loading, setLoading] = useState(false)
+
+  // ดึง timeseries ราย SKU จาก API ตามช่วงวันที่ที่เลือก
+  useEffect(() => {
+    if (!from || !to || selectedSkus.length === 0) {
+      setTsBySku({})
+      return
+    }
+    let cancelled = false
+    setLoading(true)
+    Promise.all(
+      selectedSkus.map(async sku => {
+        const url = `/api/sku/${encodeURIComponent(sku)}/timeseries?from=${from}&to=${to}`
+        const r = await fetch(url)
+        if (!r.ok) throw new Error(`${sku}: HTTP ${r.status}`)
+        return { sku, data: (await r.json()) as SkuTimeseriesResponse }
+      }),
+    )
+      .then(results => {
+        if (cancelled) return
+        const map: Record<string, SkuTimeseriesResponse> = {}
+        for (const { sku, data } of results) map[sku] = data
+        setTsBySku(map)
+      })
+      .catch(() => {
+        if (!cancelled) setTsBySku({})
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
+    return () => { cancelled = true }
+  }, [from, to, selectedSkus.join('|')])
+
+  // วันที่บนแกน X — ใช้ points จาก SKU แรกที่มีข้อมูล
+  const days = useMemo(() => {
+    for (const sku of selectedSkus) {
+      const pts = tsBySku[sku]?.points
+      if (pts?.length) return pts.map(p => ({ date: p.date }))
+    }
+    return []
+  }, [tsBySku, selectedSkus])
 
   // Build SKU lookup with name + perScan
   const skuLookup = useMemo(() => {
@@ -83,18 +125,19 @@ export default function SkuTrendLineChart({ from, to, rangeLabel }: Props) {
     const datasets = selectedSkus.map((sku, idx) => {
       const color = LINE_COLORS[idx % LINE_COLORS.length]
       const info = skuLookup.get(sku)
+      const ts = tsBySku[sku]
+      const perScan = ts?.perScan ?? info?.perScan ?? 1
+      const name = ts?.displayName?.replace(/\s*\([^)]+\)$/, '') ?? info?.name ?? sku
       const data = days.map(d => {
-        const dk = d.date.split('-')[2] as DayKey
-        const scans = PER_SKU_DAILY[sku]?.[dk]?.r ?? 0
-        const users = PER_SKU_DAILY[sku]?.[dk]?.u ?? 0
+        const pt = ts?.points.find(p => p.date === d.date)
         switch (metric) {
-          case 'scans':   return scans
-          case 'tickets': return scans * (info?.perScan ?? 1)
-          case 'users':   return users
+          case 'scans':   return pt?.scans ?? 0
+          case 'tickets': return pt?.specTickets ?? (pt?.scans ?? 0) * perScan
+          case 'users':   return pt?.uniqueUsers ?? 0
         }
       })
       return {
-        label: `${sku} ${info?.name?.slice(0, 14) || ''}${info && info.perScan > 1 ? ` (×${info.perScan})` : ''}`,
+        label: `${sku} ${name.slice(0, 14)}${perScan > 1 ? ` (×${perScan})` : ''}`,
         data,
         borderColor: color,
         backgroundColor: color + '15',
@@ -115,7 +158,7 @@ export default function SkuTrendLineChart({ from, to, rangeLabel }: Props) {
     })
 
     return { labels, datasets, totals }
-  }, [days, selectedSkus, metric, skuLookup])
+  }, [days, selectedSkus, metric, skuLookup, tsBySku])
 
   const metricLabel: Record<Metric, string> = {
     scans:   '📱 จำนวนสแกน',
@@ -129,7 +172,9 @@ export default function SkuTrendLineChart({ from, to, rangeLabel }: Props) {
         <div>
           <h3 className="text-[14px] font-bold text-[var(--dark)] mb-0.5">📈 SKU Trend — เลือก SKU เพื่อดูแนวโน้ม</h3>
           <p className="text-[11px] text-[var(--text-muted)]">
-            {rangeLabel ? `${rangeLabel} • ` : ''}{days.length} จุดข้อมูล • เลือกได้สูงสุด 8 SKU
+            {rangeLabel ? `${rangeLabel} • ` : ''}
+            {loading ? 'กำลังโหลด...' : `${days.length} จุดข้อมูล`}
+            {' • '}เลือกได้สูงสุด 8 SKU
           </p>
         </div>
 
