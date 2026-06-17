@@ -15,10 +15,11 @@ export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 export const maxDuration = 600 // เผื่อช่วงกว้าง (สลิปเยอะ) — render นาน
 
-// แบ่ง PDF เป็นไฟล์ละ PART_SIZE ใบ — แต่ละไฟล์ render < ~290s (< protocolTimeout 540s) ปลอดภัยทุกขนาด
-// วันปกติ (≤15k) = 1 ไฟล์เหมือนเดิม · วันพีค/หลายวัน = แบ่งหลายไฟล์อัตโนมัติ (client โหลดทีละส่วน)
-const PART_SIZE = 15000
-const MAX_PARTS = 6 // เกินนี้ (>90,000 ใบ) = ช่วงกว้างเกินไป → ให้เลือกช่วงแคบลง
+// แบ่ง PDF เป็นไฟล์ละ PART_SIZE ใบ — ต้องเล็กพอที่ Puppeteer render < Cloudflare timeout (~100s)
+// 500 ใบ = ~28 หน้า A4 landscape ≈ 15-20 วิ ต่อ request (ปลอดภัยสำหรับ Cloudflare)
+// client loop download หลาย part อัตโนมัติ (logic อยู่ใน PrintListTab.downloadPdf)
+const PART_SIZE = 500
+const MAX_PARTS = 30 // รองรับสูงสุด 15,000 ใบ (500×30) — เกินนี้ช่วงกว้างเกินไป
 
 function esc(s: string): string {
   return (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
@@ -54,7 +55,7 @@ export async function GET(req: NextRequest) {
   if (total >= PART_SIZE * MAX_PARTS) {
     return NextResponse.json(
       {
-        error: `ช่วงวันที่นี้สลิปเยอะเกิน ${(PART_SIZE * MAX_PARTS).toLocaleString('en-US')} ใบ — กว้างเกินไป กรุณาเลือกช่วงแคบลง (ราว ${MAX_PARTS} วัน หรือดาวน์โหลดทีละวัน)`,
+        error: `ช่วงวันที่นี้สลิปเยอะเกิน ${(PART_SIZE * MAX_PARTS).toLocaleString('en-US')} ใบ — กว้างเกินไป กรุณาเลือกช่วงแคบลง (ราว 3 วัน หรือดาวน์โหลดทีละวัน)`,
       },
       { status: 413 },
     )
