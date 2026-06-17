@@ -304,10 +304,10 @@ export default function PrintListTab() {
       </div>
 
       {/* ─── Print area ───
-           บนจอ: แสดง pageSlips (500/หน้า) เมื่อ renderCards · ซ่อนถ้าไม่ได้ preview
+           บนจอ: แสดง pageSlips (500/หน้า) เมื่อ renderCards
            ปริ้น: แสดง slips ทั้งหมด (printing=true หรือ @media print)             ─── */}
-      <div className={printing ? 'print-area' : 'print-area hidden print:block'}>
-        {!renderCards && !printing ? (
+      <div className="print-area">
+        {!renderCards ? (
           !slipsApi.loading && (
             <div className=”text-center py-20 text-[var(--text-muted)] text-[13px] print:hidden”>
               {isMock
