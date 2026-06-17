@@ -1,7 +1,7 @@
 // GET /api/sku/co-scan?limit=10  — SKU pairs scanned by same users
 import { NextRequest } from 'next/server'
 import { getCoScanPairs } from '@/lib/api/api-source'
-import { ok, fail } from '../../../_utils'
+import { ok, fail } from '../../_utils'
 
 export async function GET(req: NextRequest) {
   try {

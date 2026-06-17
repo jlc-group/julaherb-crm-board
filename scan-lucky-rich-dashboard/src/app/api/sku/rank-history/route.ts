@@ -1,7 +1,7 @@
 // GET /api/sku/rank-history?from=&to=&top=10  — daily rank per SKU
 import { NextRequest } from 'next/server'
 import { getSkuRankHistory } from '@/lib/api/api-source'
-import { DEFAULT_RANGE, getRange, ok, fail } from '../../../_utils'
+import { DEFAULT_RANGE, getRange, ok, fail } from '../../_utils'
 
 export async function GET(req: NextRequest) {
   try {

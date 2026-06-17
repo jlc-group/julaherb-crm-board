@@ -13,6 +13,7 @@ import RiskTab from '@/components/tabs/RiskTab'
 import PrintListTab from '@/components/tabs/PrintListTab'
 import ReportTab from '@/components/tabs/ReportTab'
 import CrmCenterTab from '@/components/tabs/CrmCenterTab'
+import FloatingExportButton from '@/components/ui/FloatingExportButton'
 import type { TabId } from '@/types'
 
 export default function DashboardPage() {
@@ -46,6 +47,7 @@ export default function DashboardPage() {
         {activeTab === 'print-list' && <PrintListTab />}
         {activeTab === 'report' && <ReportTab />}
       </main>
+      <FloatingExportButton />
     </div>
   )
 }

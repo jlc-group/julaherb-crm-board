@@ -309,7 +309,7 @@ export default function PrintListTab() {
       <div className="print-area">
         {!renderCards ? (
           !slipsApi.loading && (
-            <div className=”text-center py-20 text-[var(--text-muted)] text-[13px] print:hidden”>
+            <div className="text-center py-20 text-[var(--text-muted)] text-[13px] print:hidden">
               {isMock
                 ? '🔒 ซ่อนข้อมูล mock อยู่ (ตามที่สั่ง) — กด “ดูตัวอย่าง layout” ด้านบนเพื่อเช็คหน้าตา · ข้อมูลจริงจะแสดงเมื่อ backend พร้อม'
                 : 'ไม่มีข้อมูลในช่วงวันที่เลือก'}
@@ -317,7 +317,7 @@ export default function PrintListTab() {
           )
         ) : (
         <div
-          className=”grid”
+          className="grid"
           style={{ gridTemplateColumns: `repeat(${COLS}, 80mm)`, justifyContent: 'center', gap: '0' }}
         >
           {(printing ? slips : pageSlips).map((s, i) => (
