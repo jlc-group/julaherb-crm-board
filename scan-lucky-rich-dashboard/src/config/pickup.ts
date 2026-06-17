@@ -116,6 +116,20 @@ export function getPickupDays(year: number, month: number): string[] {
 // ── label helpers (ใช้ร่วมกันระหว่างปฏิทินกับหน้า claim) ──
 const TH_MONTH_FULL = ['', 'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม']
 const TH_WEEKDAY_FULL = ['วันอาทิตย์', 'วันจันทร์', 'วันอังคาร', 'วันพุธ', 'วันพฤหัสบดี', 'วันศุกร์', 'วันเสาร์']
+export const TH_WEEKDAY_SHORT = ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส']
+
+// "กรกฎาคม 2569" จาก 'YYYY-MM'
+export function pickupMonthLabel(ym: string): string {
+  const [y, m] = ym.split('-').map(Number)
+  return `${TH_MONTH_FULL[m]} ${y + 543}`
+}
+
+// วัน + ชื่อวันสั้น ของวันรับรางวัล (สำหรับชิปในตาราง)
+export function pickupChip(iso: string): { day: number; wd: string; shifted: boolean } {
+  const [y, m, d] = iso.split('-').map(Number)
+  const dow = new Date(y, m - 1, d).getDay()
+  return { day: d, wd: TH_WEEKDAY_SHORT[dow], shifted: dow !== 2 && dow !== 3 } // เลื่อน = ไม่ใช่ อังคาร(2)/พุธ(3)
+}
 
 // "วันอังคารที่ 14 กรกฎาคม 2569"
 export function pickupDateLabel(iso: string): string {

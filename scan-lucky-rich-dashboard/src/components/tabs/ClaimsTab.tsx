@@ -7,6 +7,7 @@ import { phoneLast9 } from '@/components/operations/draw-utils'
 import { maskPhone, numFmt } from '@/lib/utils'
 import TabHeader from '@/components/ui/TabHeader'
 import KpiCard from '@/components/ui/KpiCard'
+import PickupScheduleAdmin from '@/components/claim/PickupScheduleAdmin'
 
 // header admin key (ถ้า deploy แล้วตั้ง ADMIN_KEY) — local ปล่อยว่างได้
 function adminHeaders(): Record<string, string> {
@@ -199,6 +200,9 @@ export default function ClaimsTab({ focusPhone = null }: { focusPhone?: string |
         <KpiCard label="เอกสารครบ" value={counts.approved} sub="พร้อมมอบ" />
         <KpiCard label="มอบของแล้ว" value={counts.handed_over} sub="เสร็จสิ้น" />
       </div>
+
+      {/* ตารางวันรับรางวัล — ให้แอดมินมอนิเตอร์ */}
+      <PickupScheduleAdmin />
 
       {/* filter */}
       <div className="flex flex-wrap gap-1.5">
