@@ -48,7 +48,8 @@ function buildCrossSizeFromApi(rows: SkuPerDayResponse['rows']): CrossSizeRow[] 
 }
 
 export default function CrossSizeMatrix() {
-  const api = useApi<SkuPerDayResponse>(`/api/sku/per-day?from=2026-05-16&to=${getCampaignToday()}`)
+  const today = getCampaignToday().toISOString().slice(0, 10)
+  const api = useApi<SkuPerDayResponse>(`/api/sku/per-day?from=2026-05-16&to=${today}`)
 
   const groups = useMemo(() => {
     if (api.data?.rows?.length) return buildCrossSizeFromApi(api.data.rows)
