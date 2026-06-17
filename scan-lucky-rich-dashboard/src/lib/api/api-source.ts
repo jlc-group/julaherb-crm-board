@@ -59,6 +59,10 @@ const BASE = process.env.SAVERSURE_API_BASE_URL ?? 'http://localhost:30400/api/v
 const CAMPAIGN_ID_ENV = process.env.SAVERSURE_CAMPAIGN_ID ?? ''
 const CAMPAIGN_NAME = process.env.SAVERSURE_CAMPAIGN_NAME ?? 'สแกนลุ้นรวย สวยลุ้นล้าน'
 const TIMEOUT_MS = 8_000
+// heavy analytical endpoints (campaign-report/-daily) run 5-8s on a cold cache;
+// give them more headroom so a slow first call isn't canceled (would log 500
+// backend-side). Pre-aggregated endpoints stay on the fast 8s default.
+const HEAVY_TIMEOUT_MS = 20_000
 const ENV_PATH = path.join(process.cwd(), '.env.local')
 
 // ─── Token cache — อ่านจาก .env.local ตอน runtime (ไม่ต้อง pm2 restart หลัง refresh) ─
@@ -87,13 +91,13 @@ function getToken(): string {
 }
 
 // ─── typed fetch helper — timeout + auth + error เป็นข้อความ ─────────
-async function sv<T>(path: string, params: Record<string, string | number | undefined> = {}): Promise<T> {
+async function sv<T>(path: string, params: Record<string, string | number | undefined> = {}, timeoutMs: number = TIMEOUT_MS): Promise<T> {
   const url = new URL(BASE.replace(/\/$/, '') + path)
   for (const [k, v] of Object.entries(params)) if (v !== undefined && v !== '') url.searchParams.set(k, String(v))
 
   const token = getToken()
   const ctrl = new AbortController()
-  const timer = setTimeout(() => ctrl.abort(), TIMEOUT_MS)
+  const timer = setTimeout(() => ctrl.abort(), timeoutMs)
   try {
     const res = await fetch(url.toString(), {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
@@ -162,7 +166,7 @@ function weekdayTH(date: DateString): string {
 }
 
 async function getCampaignDaily(from: DateString, to: DateString): Promise<DailyRow[]> {
-  const res = await sv<CampaignDailyApiResponse>('/dashboard/campaign-daily', { from, to, ...campaignParams() })
+  const res = await sv<CampaignDailyApiResponse>('/dashboard/campaign-daily', { from, to, ...campaignParams() }, HEAVY_TIMEOUT_MS)
   return (res.data ?? []).map(mapCampaignDailyRow)
 }
 
@@ -197,7 +201,7 @@ export async function getScansTotals(from: DateString, to: DateString): Promise<
   const [rows, report] = await Promise.all([
     getCampaignDaily(from, to),
     // best-effort — ถ้า campaign-report ล่ม ก็ยังคืน totals ได้ (distinctUsers = undefined)
-    sv<CampaignReport>('/dashboard/campaign-report', { date: to, ...campaignParams() }).catch(() => null),
+    sv<CampaignReport>('/dashboard/campaign-report', { date: to, ...campaignParams() }, HEAVY_TIMEOUT_MS).catch(() => null),
   ])
   const days = daysBetween(from, to)
   const success = rows.reduce((sum, r) => sum + r.success, 0)
@@ -242,7 +246,7 @@ export async function getScansTimeseries(from: DateString, to: DateString): Prom
 // Customers — provinces + heavy users จาก campaign-report
 // ════════════════════════════════════════════════════════════════
 export async function getProvinces(date: DateString, limit = 10): Promise<ProvincesResponse> {
-  const r = await sv<CampaignReport>('/dashboard/campaign-report', { date, ...campaignParams() })
+  const r = await sv<CampaignReport>('/dashboard/campaign-report', { date, ...campaignParams() }, HEAVY_TIMEOUT_MS)
   const provinces: ProvinceRow[] = r.section_19_top_provinces_full.slice(0, limit).map(p => ({
     rank: p.rank,
     name: p.province,
@@ -255,7 +259,7 @@ export async function getProvinces(date: DateString, limit = 10): Promise<Provin
 }
 
 export async function getHeavyUsers(date: DateString, limit = 10): Promise<HeavyUsersResponse> {
-  const r = await sv<CampaignReport>('/dashboard/campaign-report', { date, ...campaignParams() })
+  const r = await sv<CampaignReport>('/dashboard/campaign-report', { date, ...campaignParams() }, HEAVY_TIMEOUT_MS)
   const users: HeavyUser[] = r.section_20_top_scanners.slice(0, limit).map(u => ({
     rank: u.rank,
     userHash: u.user_hash,
