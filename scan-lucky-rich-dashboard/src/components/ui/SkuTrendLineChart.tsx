@@ -21,11 +21,12 @@ const LINE_COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#14
 type Metric = 'scans' | 'tickets' | 'users'
 
 interface Props {
-  days: DailyEntry[]      // selected days from top date range
+  from: string
+  to: string
   rangeLabel?: string
 }
 
-export default function SkuTrendLineChart({ days, rangeLabel }: Props) {
+export default function SkuTrendLineChart({ from, to, rangeLabel }: Props) {
   const [selectedSkus, setSelectedSkus] = useState<string[]>(DEFAULT_SKUS)
   const [metric, setMetric] = useState<Metric>('tickets')
   const [search, setSearch] = useState('')

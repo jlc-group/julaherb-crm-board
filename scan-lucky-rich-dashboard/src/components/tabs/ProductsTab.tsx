@@ -304,7 +304,7 @@ export default function ProductsTab() {
 
       {/* SKU Trend Line — เลือก SKU ดูกราฟเส้นรายวัน (scale ถึงสิ้นปี) */}
       <div className="mb-1"><ApiSourceBadge endpoint="/api/sku/[sku]/timeseries" params="from&to (per selected SKU)" /></div>
-      <SkuTrendLineChart days={selectedDays} rangeLabel={dayTag} />
+      <SkuTrendLineChart from={range.from} to={range.to} rangeLabel={dayTag} />
 
       {/* ════════════════════════════════════════════════════
           C — Mix Analysis (Tier + CrossSize)
