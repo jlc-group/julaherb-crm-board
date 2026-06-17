@@ -20,13 +20,16 @@ import ApiSourceBadge from '@/components/ui/ApiSourceBadge'
 
 import { buildSkuTable, getTierBuckets } from '@/lib/sku-redemption'
 import type { SkuRow, SkuStatus } from '@/lib/sku-redemption'
-import { RANK_MOVEMENT } from '@/lib/daily-sku-data'
+import { RANK_MOVEMENT, type RankMovement } from '@/lib/daily-sku-data'
 import { DAILY_ENTRIES } from '@/lib/daily-update-data'
 import type { DayKey } from '@/lib/per-sku-daily'
 import { numFmt, getCampaignToday } from '@/lib/utils'
 import { useApi } from '@/lib/hooks/useApi'
 import type { SkuPerDayResponse, SkuListResponse } from '@/lib/api/types'
 import { PRODUCTS_MASTER } from '@/config/products-real'
+
+interface SkuRankDay { date: string; rank: number; scans: number }
+interface SkuRankHistoryRow { sku: string; displayName: string; days: SkuRankDay[]; trend: 'up' | 'down' | 'flat' | 'mixed' }
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, LineElement, PointElement, ArcElement, Tooltip, Legend, Filler)
 ChartJS.defaults.font.family = "'Noto Sans Thai', sans-serif"
@@ -44,6 +47,93 @@ const TREND_ICON: Record<string, { icon: string; color: string }> = {
   down:  { icon: 'ti-trending-down', color: '#ef4444' },
   flat:  { icon: 'ti-minus',         color: '#9ca3af' },
   mixed: { icon: 'ti-arrows-shuffle', color: '#f59e0b' },
+}
+
+function RankMovementCard({ apiData, loading, range }: {
+  apiData: { rows: SkuRankHistoryRow[] } | null
+  loading: boolean
+  range: DateRangeV2
+}) {
+  const hasApi = !!apiData?.rows?.length
+  const dates = hasApi ? apiData!.rows[0].days.map(d => d.date) : []
+  const dayCount = hasApi ? dates.length : 5
+
+  return (
+    <div className="card p-4">
+      <div className="flex items-center gap-2 mb-3">
+        <i className="ti ti-arrows-vertical text-lg" style={{ color: 'var(--brand-500)' }} />
+        <h3 className="text-[13px] font-bold text-[var(--dark)]">Rank Movement (Top 10)</h3>
+        <ApiSourceBadge endpoint="/api/sku/rank-history" params="from&to → daily rank" />
+        <span className="ml-auto text-[10px] text-[var(--text-muted)] font-bold uppercase">
+          {hasApi ? `${dayCount} วัน` : '6 วัน'}
+        </span>
+      </div>
+      <div className="text-[10.5px] text-[var(--text-secondary)] mb-2">
+        {hasApi
+          ? `Top 10 SKU เคลื่อนตัวอย่างไร (${range.from} → ${range.to})`
+          : 'Top 10 SKU เคลื่อนตัวอย่างไรระหว่าง 16-21 พ.ค. (static)'}
+      </div>
+      {loading && !hasApi && (
+        <div className="text-[11px] text-[var(--text-muted)] py-4 text-center">กำลังโหลด...</div>
+      )}
+      <table className="w-full text-[11px]">
+        <thead>
+          <tr className="text-[var(--text-muted)] text-[9.5px] uppercase tracking-wider">
+            <th className="text-left py-1">SKU</th>
+            {hasApi
+              ? dates.map(d => <th key={d} className="text-center py-1 w-8">{d.split('-')[2]}</th>)
+              : <>
+                  <th className="text-center py-1 w-8">16</th>
+                  <th className="text-center py-1 w-8">17</th>
+                  <th className="text-center py-1 w-8">18</th>
+                  <th className="text-center py-1 w-8">19</th>
+                  <th className="text-center py-1 w-8">20</th>
+                </>
+            }
+            <th className="text-center py-1 w-10">Trend</th>
+          </tr>
+        </thead>
+        <tbody>
+          {hasApi
+            ? apiData!.rows.map(row => {
+                const t = TREND_ICON[row.trend] ?? TREND_ICON.flat
+                return (
+                  <tr key={row.sku} className="border-t border-[var(--border-soft)]">
+                    <td className="py-1.5 truncate max-w-[140px]" title={row.displayName}>
+                      <span className="font-mono text-[10px] text-[var(--brand-700)] mr-1 font-semibold">{row.sku}</span>
+                    </td>
+                    {row.days.map(d => (
+                      <td key={d.date} className="text-center num text-[var(--text)]">{d.rank}</td>
+                    ))}
+                    <td className="text-center">
+                      <i className={`ti ${t.icon} text-base`} style={{ color: t.color }} title={row.trend} />
+                    </td>
+                  </tr>
+                )
+              })
+            : RANK_MOVEMENT.map(m => {
+                const t = TREND_ICON[m.trend]
+                return (
+                  <tr key={m.sku} className="border-t border-[var(--border-soft)]">
+                    <td className="py-1.5 truncate max-w-[140px]" title={m.name}>
+                      <span className="font-mono text-[10px] text-[var(--brand-700)] mr-1 font-semibold">{m.sku}</span>
+                    </td>
+                    <td className="text-center num text-[var(--text)]">{m.rank16}</td>
+                    <td className="text-center num text-[var(--text)]">{m.rank17}</td>
+                    <td className="text-center num text-[var(--text)]">{m.rank18}</td>
+                    <td className="text-center num text-[var(--text)]">{m.rank19}</td>
+                    <td className="text-center num text-[var(--text)]">{m.rank20}</td>
+                    <td className="text-center">
+                      <i className={`ti ${t.icon} text-base`} style={{ color: t.color }} title={m.trend} />
+                    </td>
+                  </tr>
+                )
+              })
+          }
+        </tbody>
+      </table>
+    </div>
+  )
 }
 
 export default function ProductsTab() {
@@ -78,6 +168,7 @@ export default function ProductsTab() {
   // ─── API calls (Layer 1 internal /api/*) ───
   const apiSkuList = useApi<SkuListResponse>(`/api/sku/list`)
   const apiSkuPerDay = useApi<SkuPerDayResponse>(`/api/sku/per-day?from=${range.from}&to=${range.to}`)
+  const apiRankHistory = useApi<{ rows: SkuRankHistoryRow[] }>(`/api/sku/rank-history?from=${range.from}&to=${range.to}&top=10`)
 
   // ─── Lookup map สำหรับ fill ProductMaster fields จาก API rows ───
   const masterMap = useMemo(() => new Map(PRODUCTS_MASTER.map(p => [p.sku, p])), [])
@@ -278,50 +369,7 @@ export default function ProductsTab() {
           <div className="mb-1"><ApiSourceBadge endpoint="/api/sku/per-day" params="from=X&to=X (per day) → first appearance" /></div>
           <FirstScanCard />
         </div>
-        <div className="card p-4">
-          <div className="flex items-center gap-2 mb-3">
-            <i className="ti ti-arrows-vertical text-lg" style={{ color: 'var(--brand-500)' }} />
-            <h3 className="text-[13px] font-bold text-[var(--dark)]">Rank Movement (Top 10)</h3>
-            <ApiSourceBadge endpoint="/api/sku/per-day" params="from=X&to=X per day → rank by tickets" />
-            <span className="ml-auto text-[10px] text-[var(--text-muted)] font-bold uppercase">6 วัน</span>
-          </div>
-          <div className="text-[10.5px] text-[var(--text-secondary)] mb-2">
-            Top 10 SKU เคลื่อนตัวอย่างไรระหว่าง 16-21 พ.ค.
-          </div>
-          <table className="w-full text-[11px]">
-            <thead>
-              <tr className="text-[var(--text-muted)] text-[9.5px] uppercase tracking-wider">
-                <th className="text-left py-1">SKU</th>
-                <th className="text-center py-1 w-8">16</th>
-                <th className="text-center py-1 w-8">17</th>
-                <th className="text-center py-1 w-8">18</th>
-                <th className="text-center py-1 w-8">19</th>
-                <th className="text-center py-1 w-8">20</th>
-                <th className="text-center py-1 w-10">Trend</th>
-              </tr>
-            </thead>
-            <tbody>
-              {RANK_MOVEMENT.map(m => {
-                const t = TREND_ICON[m.trend]
-                return (
-                  <tr key={m.sku} className="border-t border-[var(--border-soft)]">
-                    <td className="py-1.5 truncate max-w-[140px]" title={m.name}>
-                      <span className="font-mono text-[10px] text-[var(--brand-700)] mr-1 font-semibold">{m.sku}</span>
-                    </td>
-                    <td className="text-center num text-[var(--text)]">{m.rank16}</td>
-                    <td className="text-center num text-[var(--text)]">{m.rank17}</td>
-                    <td className="text-center num text-[var(--text)]">{m.rank18}</td>
-                    <td className="text-center num text-[var(--text)]">{m.rank19}</td>
-                    <td className="text-center num text-[var(--text)]">{m.rank20}</td>
-                    <td className="text-center">
-                      <i className={`ti ${t.icon} text-base`} style={{ color: t.color }} title={m.trend} />
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
-        </div>
+        <RankMovementCard apiData={apiRankHistory.data} loading={apiRankHistory.loading} range={range} />
       </div>
 
       {/* ════════════════════════════════════════════════════

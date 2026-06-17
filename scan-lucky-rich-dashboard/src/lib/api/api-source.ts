@@ -685,3 +685,99 @@ export async function searchCustomers(q: string): Promise<CustomerSearchResponse
     .filter((c) => c.name || c.phone)
   return { q: query, results }
 }
+
+// ════════════════════════════════════════════════════════════════
+// SKU Co-Scan Pairs — saversureV2 `/dashboard/sku-co-scan`
+// Source: analytics_product_affinities (pre-computed, no scan_history)
+// ════════════════════════════════════════════════════════════════
+export interface CoScanPair {
+  rank: number
+  productA: string
+  productB: string
+  skuA: string
+  skuB: string
+  bothScanned: number
+}
+
+export async function getCoScanPairs(limit = 10): Promise<{ pairs: CoScanPair[] }> {
+  const r = await sv<{ pairs: Array<{ sku_a: string; name_a: string; sku_b: string; name_b: string; both_users: number }> }>(
+    '/dashboard/sku-co-scan', { limit })
+  const pairs: CoScanPair[] = (r.pairs ?? []).map((p, i) => ({
+    rank: i + 1,
+    productA: stripProductSuffix(p.name_a || p.sku_a),
+    productB: stripProductSuffix(p.name_b || p.sku_b),
+    skuA: p.sku_a,
+    skuB: p.sku_b,
+    bothScanned: p.both_users,
+  }))
+  return { pairs }
+}
+
+// ════════════════════════════════════════════════════════════════
+// SKU Rank History — compute daily rank from sku-performance per day
+// Calls `/dashboard/sku-timeseries` for each top SKU within the range
+// to get per-day scans, then rank per day.
+// ════════════════════════════════════════════════════════════════
+export interface SkuRankDay {
+  date: DateString
+  rank: number
+  scans: number
+}
+
+export interface SkuRankHistoryRow {
+  sku: string
+  displayName: string
+  days: SkuRankDay[]
+  trend: 'up' | 'down' | 'flat' | 'mixed'
+}
+
+export async function getSkuRankHistory(from: DateString, to: DateString, top = 10): Promise<{ rows: SkuRankHistoryRow[] }> {
+  const perf = await getSkuPerDay(from, to)
+  const topSkus = perf.rows.slice(0, top)
+  if (topSkus.length === 0) return { rows: [] }
+
+  const tsResults = await Promise.all(
+    topSkus.map(s => sv<{ data: Array<{ date: string; scans: number }> }>(
+      '/dashboard/sku-timeseries', { sku: s.sku, from, to }
+    ).then(r => ({ sku: s.sku, displayName: s.displayName, points: r.data ?? [] })))
+  )
+
+  const allDates = new Set<string>()
+  for (const ts of tsResults) for (const p of ts.points) allDates.add(p.date)
+  const sortedDates = Array.from(allDates).sort()
+
+  const skuDayScans = new Map<string, Map<string, number>>()
+  for (const ts of tsResults) {
+    const dayMap = new Map<string, number>()
+    for (const p of ts.points) dayMap.set(p.date, p.scans)
+    skuDayScans.set(ts.sku, dayMap)
+  }
+
+  const rows: SkuRankHistoryRow[] = tsResults.map(ts => {
+    const days: SkuRankDay[] = sortedDates.map(date => {
+      const entries = topSkus.map(s => ({
+        sku: s.sku,
+        scans: skuDayScans.get(s.sku)?.get(date) ?? 0,
+      }))
+      entries.sort((a, b) => b.scans - a.scans)
+      const rank = entries.findIndex(e => e.sku === ts.sku) + 1
+      return { date, rank: rank || topSkus.length, scans: skuDayScans.get(ts.sku)?.get(date) ?? 0 }
+    })
+
+    const ranks = days.map(d => d.rank)
+    let trend: 'up' | 'down' | 'flat' | 'mixed' = 'flat'
+    if (ranks.length >= 2) {
+      const first = ranks[0], last = ranks[ranks.length - 1]
+      if (last < first) trend = 'up'
+      else if (last > first) trend = 'down'
+      else {
+        const allSame = ranks.every(r => r === first)
+        trend = allSame ? 'flat' : 'mixed'
+      }
+    }
+
+    return { sku: ts.sku, displayName: ts.displayName, days, trend }
+  })
+
+  return { rows }
+}
