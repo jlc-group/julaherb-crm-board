@@ -30,6 +30,8 @@ export default function PrintListTab() {
   const [pdfLoading, setPdfLoading] = useState(false)
   const [pdfMsg, setPdfMsg] = useState('')
   const [printing, setPrinting] = useState(false)
+  const [page, setPage] = useState(0)
+  const PAGE_SIZE = 500
 
   // render cards ก่อน แล้วค่อย print — ใช้ useEffect กัน race condition
   useEffect(() => {
@@ -84,13 +86,19 @@ export default function PrintListTab() {
   const slipsApi = useApi<PrintSlipsResponse>(`/api/print-slips?from=${from}&to=${to}`)
   const totalsApi = useApi<ScansTotalsResponse>(`/api/scans/totals?from=${from}&to=${to}`)
 
-  // ⚠️ กัน browser ค้าง: เมื่อ backend คืนสลิปจริง (อาจ 255k+ ใบ) การ render DOM ทั้งหมด
-  //    รอบเดียวจะหนัก/ค้าง + print path พัง. react-window ใช้ไม่ได้ (window.print ต้องมีทุก node
-  //    ใน DOM พร้อมกัน) → soft cap + แนะนำให้ narrow ช่วงวันที่ / ใช้ PDF export ฝั่ง backend
+  // reset กลับหน้า 1 เมื่อเปลี่ยนช่วงวันที่
+  useEffect(() => { setPage(0) }, [from, to])
+
+  // ⚠️ กัน browser ค้าง: cap ที่ 8,000 — ตอน print ใช้ slips ทั้งหมด (printing=true)
   const MAX_RENDER = 8000
   const allSlips = slipsApi.data?.slips ?? []
   const slips = allSlips.length > MAX_RENDER ? allSlips.slice(0, MAX_RENDER) : allSlips
   const truncated = allSlips.length > MAX_RENDER
+
+  // pagination บนจอ (ไม่กระทบ print ที่ใช้ slips ทั้งหมด)
+  const totalPages = Math.max(1, Math.ceil(slips.length / PAGE_SIZE))
+  const safePage = Math.min(page, totalPages - 1)
+  const pageSlips = slips.slice(safePage * PAGE_SIZE, (safePage + 1) * PAGE_SIZE)
   const isMock = (slipsApi.data?.meta?.source ?? 'mock') !== 'api'
   // แยกสาเหตุที่ตกเป็น mock ให้สื่อสารตรงกับความจริง:
   //   auth/timeout = หลุดชั่วคราว (refresh แล้วหาย ไม่ใช่ปัญหา backend) · missing = endpoint หายจริง (งานของ saversureV2)
@@ -267,9 +275,37 @@ export default function PrintListTab() {
         <div className="mt-1 text-[11px] text-[var(--text-muted)] italic">
           💡 กดปริ้นเพื่อดู A4 จริง (แนวนอน · 3 คอลัมน์ · การ์ด 8×3 ซม.) · เบอร์โทรแสดง mask <code className="font-mono">081-123-xxxx</code>
         </div>
+
+        {/* ── Pagination bar (บนจอ) — ซ่อนตอนปริ้น ── */}
+        {renderCards && slips.length > PAGE_SIZE && (
+          <div className="mt-3 flex items-center justify-between gap-2">
+            <button
+              onClick={() => setPage(p => Math.max(0, p - 1))}
+              disabled={safePage === 0}
+              className="px-3 py-1.5 rounded-md text-[12px] font-semibold border border-slate-300 disabled:opacity-30 hover:bg-slate-100 transition"
+            >
+              ← ก่อนหน้า
+            </button>
+            <span className="text-[12px] text-slate-600 font-semibold">
+              หน้า {safePage + 1} / {totalPages}
+              <span className="font-normal opacity-60 ml-1.5">
+                (แสดง {numFmt(safePage * PAGE_SIZE + 1)}–{numFmt(Math.min((safePage + 1) * PAGE_SIZE, slips.length))} จาก {numFmt(slips.length)} ใบ)
+              </span>
+            </span>
+            <button
+              onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
+              disabled={safePage >= totalPages - 1}
+              className="px-3 py-1.5 rounded-md text-[12px] font-semibold border border-slate-300 disabled:opacity-30 hover:bg-slate-100 transition"
+            >
+              ถัดไป →
+            </button>
+          </div>
+        )}
       </div>
 
-      {/* ─── Print area — ซ่อนบนจอ แสดงเฉพาะตอน printing state หรือ @media print ─── */}
+      {/* ─── Print area ───
+           บนจอ: แสดง pageSlips (500/หน้า) เมื่อ renderCards · ซ่อนถ้าไม่ได้ preview
+           ปริ้น: แสดง slips ทั้งหมด (printing=true หรือ @media print)             ─── */}
       <div className={printing ? 'print-area' : 'print-area hidden print:block'}>
         {!renderCards && !printing ? (
           !slipsApi.loading && (
@@ -281,10 +317,10 @@ export default function PrintListTab() {
           )
         ) : (
         <div
-          className="grid"
+          className=”grid”
           style={{ gridTemplateColumns: `repeat(${COLS}, 80mm)`, justifyContent: 'center', gap: '0' }}
         >
-          {slips.map((s, i) => (
+          {(printing ? slips : pageSlips).map((s, i) => (
             <div
               key={i}
               className="slip-card"
