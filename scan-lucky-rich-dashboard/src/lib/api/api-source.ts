@@ -59,6 +59,10 @@ const BASE = process.env.SAVERSURE_API_BASE_URL ?? 'http://localhost:30400/api/v
 const CAMPAIGN_ID_ENV = process.env.SAVERSURE_CAMPAIGN_ID ?? ''
 const CAMPAIGN_NAME = process.env.SAVERSURE_CAMPAIGN_NAME ?? 'สแกนลุ้นรวย สวยลุ้นล้าน'
 const TIMEOUT_MS = 8_000
+// heavy analytical endpoints (campaign-report/-daily) run 5-8s on a cold cache;
+// give them more headroom so a slow first call isn't canceled (would log 500
+// backend-side). Pre-aggregated endpoints stay on the fast 8s default.
+const HEAVY_TIMEOUT_MS = 20_000
 const ENV_PATH = path.join(process.cwd(), '.env.local')
 const CAMPAIGN_START: DateString = '2026-05-16'
 
@@ -133,12 +137,12 @@ async function refreshToken(): Promise<string> {
   return token
 }
 
-async function sv<T>(path: string, params: Record<string, string | number | undefined> = {}): Promise<T> {
+async function sv<T>(path: string, params: Record<string, string | number | undefined> = {}, timeoutMs: number = TIMEOUT_MS): Promise<T> {
   const url = new URL(BASE.replace(/\/$/, '') + path)
   for (const [k, v] of Object.entries(params)) if (v !== undefined && v !== '') url.searchParams.set(k, String(v))
 
   const ctrl = new AbortController()
-  const timer = setTimeout(() => ctrl.abort(), TIMEOUT_MS)
+  const timer = setTimeout(() => ctrl.abort(), timeoutMs)
   try {
     const request = async (token: string) => fetch(url.toString(), {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
@@ -222,7 +226,7 @@ function weekdayTH(date: DateString): string {
 async function getCampaignDaily(from: DateString, to: DateString): Promise<DailyRow[]> {
   const range = campaignDataRange(from, to)
   if (!range) return []
-  const res = await sv<CampaignDailyApiResponse>('/dashboard/campaign-daily', { ...range, ...campaignParams() })
+  const res = await sv<CampaignDailyApiResponse>('/dashboard/campaign-daily', { ...range, ...campaignParams() }, HEAVY_TIMEOUT_MS)
   return (res.data ?? []).map(mapCampaignDailyRow)
 }
 
@@ -257,7 +261,7 @@ export async function getScansTotals(from: DateString, to: DateString): Promise<
   const [rows, report] = await Promise.all([
     getCampaignDaily(from, to),
     // best-effort — ถ้า campaign-report ล่ม ก็ยังคืน totals ได้ (distinctUsers = undefined)
-    sv<CampaignReport>('/dashboard/campaign-report', { date: to, ...campaignParams() }).catch(() => null),
+    sv<CampaignReport>('/dashboard/campaign-report', { date: to, ...campaignParams() }, HEAVY_TIMEOUT_MS).catch(() => null),
   ])
   const range = campaignDataRange(from, to)
   const days = range ? daysBetween(range.from, range.to) : 0
@@ -303,7 +307,7 @@ export async function getScansTimeseries(from: DateString, to: DateString): Prom
 // Customers — provinces + heavy users จาก campaign-report
 // ════════════════════════════════════════════════════════════════
 export async function getProvinces(date: DateString, limit = 10): Promise<ProvincesResponse> {
-  const r = await sv<CampaignReport>('/dashboard/campaign-report', { date, ...campaignParams() })
+  const r = await sv<CampaignReport>('/dashboard/campaign-report', { date, ...campaignParams() }, HEAVY_TIMEOUT_MS)
   const provinces: ProvinceRow[] = r.section_19_top_provinces_full.slice(0, limit).map(p => ({
     rank: p.rank,
     name: p.province,
@@ -316,7 +320,7 @@ export async function getProvinces(date: DateString, limit = 10): Promise<Provin
 }
 
 export async function getHeavyUsers(date: DateString, limit = 10): Promise<HeavyUsersResponse> {
-  const r = await sv<CampaignReport>('/dashboard/campaign-report', { date, ...campaignParams() })
+  const r = await sv<CampaignReport>('/dashboard/campaign-report', { date, ...campaignParams() }, HEAVY_TIMEOUT_MS)
   const users: HeavyUser[] = r.section_20_top_scanners.slice(0, limit).map(u => ({
     rank: u.rank,
     userHash: u.user_hash,
@@ -361,23 +365,37 @@ export async function getDailyByDate(d: DateString): Promise<DailyRow | null> {
   return rows[0] ?? null
 }
 
-// ─── Time of day — saversureV2 ยังไม่มี hour-level breakdown
-//     คืน 7 buckets ว่าง พร้อม note ให้ component ตัดสินใจ render
-//     (ไม่ throw error — ดีกว่า fake distribution)
+// ─── Time of day — saversureV2 `/dashboard/scans-by-hour` (24 ชม. 0-23, Bangkok,
+//     อ่านจาก daily_scan_hour_summary — ไม่แตะ scan_history). รวมเป็น 7 buckets.
+interface SvHourRow { hour: number; scans: number; success: number }
 export async function getTimeOfDay(from: DateString, to: DateString): Promise<TimeOfDayResponse> {
-  return {
-    from, to,
-    buckets: [
-      { range: '00-06', scans: 0, pct: 0 },
-      { range: '06-09', scans: 0, pct: 0 },
-      { range: '09-12', scans: 0, pct: 0 },
-      { range: '12-15', scans: 0, pct: 0 },
-      { range: '15-18', scans: 0, pct: 0 },
-      { range: '18-21', scans: 0, pct: 0 },
-      { range: '21-24', scans: 0, pct: 0 },
-    ],
-    peakHours: [],
-  }
+  const res = await sv<{ data: SvHourRow[] }>('/dashboard/scans-by-hour', { from, to })
+  const byHour = new Map((res.data ?? []).map(h => [h.hour, h.scans ?? 0]))
+  const hourScans = (h: number): number => byHour.get(h) ?? 0
+  const sumRange = (hours: number[]): number => hours.reduce((s, h) => s + hourScans(h), 0)
+
+  const ranges: { range: string; hours: number[] }[] = [
+    { range: '00-06', hours: [0, 1, 2, 3, 4, 5] },
+    { range: '06-09', hours: [6, 7, 8] },
+    { range: '09-12', hours: [9, 10, 11] },
+    { range: '12-15', hours: [12, 13, 14] },
+    { range: '15-18', hours: [15, 16, 17] },
+    { range: '18-21', hours: [18, 19, 20] },
+    { range: '21-24', hours: [21, 22, 23] },
+  ]
+  const allHours = Array.from({ length: 24 }, (_, h) => h)
+  const total = sumRange(allHours)
+  const buckets = ranges.map(r => {
+    const scans = sumRange(r.hours)
+    return { range: r.range, scans, pct: total > 0 ? +((scans / total) * 100).toFixed(1) : 0 }
+  })
+  const peakHours = allHours
+    .map(h => ({ hour: `${String(h).padStart(2, '0')}:00`, scans: hourScans(h) }))
+    .sort((a, b) => b.scans - a.scans)
+    .slice(0, 3)
+    .map((p, i) => ({ rank: (i + 1) as 1 | 2 | 3, hour: p.hour, scans: p.scans }))
+
+  return { from, to, buckets, peakHours }
 }
 
 export async function getMembersDaily(f: DateString, t: DateString): Promise<MembersDailyResponse> {
@@ -408,39 +426,32 @@ export async function getMembersDaily(f: DateString, t: DateString): Promise<Mem
   }
 }
 
-// ─── Engagement — derive จาก campaign-report (กำหนดจำนวน users + top scanners)
-//     bucket 4 ระดับ: 1 / 2-5 / 6-10 / 10+
-//     ใช้ section_01.users (total) + section_20 (top 20 scans/day) แล้ว approximate
+// ─── Engagement — saversureV2 `/dashboard/engagement-distribution` (histogram จริง
+//     จาก customer_rfm_snapshots: นับ user ต่อช่วงจำนวนสแกน lifetime + median/avg).
+//     max มาจาก `/dashboard/heavy-users` (top scanner lifetime). ทั้งคู่ tenant-wide
+//     (snapshot ปัจจุบัน) ไม่ผูก from/to — แต่เป็นเลขจริง ไม่ใช่ approximate.
+interface SvEngagement { buckets: { label: string; users: number }[]; median: number; avg: number }
+interface SvHeavyUser { user_id: string; scans: number; scans_30d: number; risk_level: string }
 export async function getEngagement(from: DateString, to: DateString): Promise<EngagementResponse> {
-  // ดึง report ของวันสุดท้าย (snapshot สะสม)
-  const r = await sv<CampaignReport>('/dashboard/campaign-report', { date: to, ...campaignParams() })
-  const totalUsers = r.section_01_kpi_strip?.users ?? 0
-  const tixPerUser = r.section_01_kpi_strip?.tix_per_user ?? 0
-  const topScanners = r.section_20_top_scanners ?? []
-
-  // Heavy = scans >= 10 → ใช้จำนวน user ใน top_scanners ที่ scans_today >= 10
-  const heavy = topScanners.filter(u => u.scans_today >= 10).length
-  // 6-10 = approximation from top scanners 6-9
-  const high = topScanners.filter(u => u.scans_today >= 6 && u.scans_today < 10).length
-  // ส่วนเหลือ split ระหว่าง 1 vs 2-5 ตาม tixPerUser
-  // ถ้า avg = ~3 → ส่วนใหญ่อยู่ใน 2-5
-  const remaining = Math.max(0, totalUsers - heavy - high)
-  const mid = Math.round(remaining * (tixPerUser >= 2 ? 0.65 : 0.35))
-  const low = remaining - mid
-
-  const buckets = [
-    { label: '1 scan', users: low, pct: totalUsers > 0 ? +((low / totalUsers) * 100).toFixed(1) : 0 },
-    { label: '2-5 scans', users: mid, pct: totalUsers > 0 ? +((mid / totalUsers) * 100).toFixed(1) : 0 },
-    { label: '6-10 scans', users: high, pct: totalUsers > 0 ? +((high / totalUsers) * 100).toFixed(1) : 0 },
-    { label: '10+ scans', users: heavy, pct: totalUsers > 0 ? +((heavy / totalUsers) * 100).toFixed(1) : 0 },
-  ]
-
+  const [eng, top] = await Promise.all([
+    sv<SvEngagement>('/dashboard/engagement-distribution'),
+    sv<{ data: SvHeavyUser[] }>('/dashboard/heavy-users', { limit: 1 }).catch(() => null),
+  ])
+  // map label "1"/"2-5"/"6-10"/"10+" → "1 scan"/"2-5 scans"/...
+  const labelMap: Record<string, string> = { '1': '1 scan', '2-5': '2-5 scans', '6-10': '6-10 scans', '10+': '10+ scans' }
+  const rawBuckets = eng.buckets ?? []
+  const totalUsers = rawBuckets.reduce((s, b) => s + (b.users ?? 0), 0)
+  const buckets = rawBuckets.map(b => ({
+    label: labelMap[b.label] ?? b.label,
+    users: b.users ?? 0,
+    pct: totalUsers > 0 ? +(((b.users ?? 0) / totalUsers) * 100).toFixed(1) : 0,
+  }))
   return {
     from, to,
     totalUsers,
-    avgScansPerUser: +tixPerUser.toFixed(2),
-    medianScansPerUser: Math.max(1, Math.round(tixPerUser * 0.7)), // approx — ไม่มี median จาก backend
-    maxScansPerUser: topScanners[0]?.scans_today ?? 0,
+    avgScansPerUser: +(eng.avg ?? 0).toFixed(2),
+    medianScansPerUser: Math.round(eng.median ?? 0),
+    maxScansPerUser: top?.data?.[0]?.scans ?? 0,
     buckets,
   }
 }
@@ -489,33 +500,29 @@ export async function getSkuList(): Promise<SkuListResponse> {
   return { skus }
 }
 
-// ─── SKU per-day — derive จาก campaign-report section_16_sku_daily_matrix (ของวันสุดท้าย)
-//     คืน rows ของ SKU ล่าสุด — ไม่ใช่ per-day breakdown จริงๆ แต่ใช้ได้สำหรับ Top SKU table
+// ─── SKU per-day — saversureV2 `/dashboard/sku-performance?from=&to=` (รวมราย SKU
+//     จาก daily_product_summary ทั้งช่วง — ไม่แตะ scan_history, ไม่ใช่ snapshot วันเดียว)
+interface SvSkuPerf { sku: string; name: string; scans: number }
 export async function getSkuPerDay(from: DateString, to: DateString): Promise<SkuPerDayResponse> {
-  // ดึง full SKU list ก่อน (สำหรับ displayName, perScan)
+  // ดึง full SKU list ก่อน (สำหรับ displayName, perScan/rights)
   const skuList = await getSkuList()
   const skuMap = new Map(skuList.skus.map(s => [s.sku, s]))
 
-  // ดึง section_16 ของวันสุดท้าย
-  const r = await sv<CampaignReport & { section_16_sku_daily_matrix?: any[] }>(
-    '/dashboard/campaign-report',
-    { date: to, ...campaignParams() }
-  )
-  const matrix = r.section_16_sku_daily_matrix ?? []
+  const r = await sv<{ data: SvSkuPerf[] }>('/dashboard/sku-performance', { from, to, limit: 300 })
+  const perf = r.data ?? []
 
-  // ถ้า saversureV2 ไม่คืน section_16 → fallback คืน SKU list พร้อม scans=0
-  const rows: SkuRow[] = matrix.length > 0
-    ? matrix.map((m: any) => {
+  // ถ้า backend ไม่มีข้อมูลในช่วงนี้ → fallback คืน SKU list พร้อม scans=0
+  const rows: SkuRow[] = perf.length > 0
+    ? perf.map((m) => {
         const master = skuMap.get(m.sku)
         const perScan = master?.rightsPerScan ?? 1
         const scans = m.scans ?? 0
         return {
           sku: m.sku,
-          displayName: master?.displayName ?? m.sku,
+          displayName: master?.displayName ?? stripProductSuffix(m.name ?? m.sku),
           perScan,
           scans,
           specTickets: scans * perScan,
-          uniqueUsers: m.users ?? undefined,
           sharePct: 0, // จะคำนวณข้างล่าง
         }
       })
@@ -547,32 +554,28 @@ export async function getSkuPerDay(from: DateString, to: DateString): Promise<Sk
   }
 }
 
-// ─── SKU timeseries — saversureV2 ยังไม่มี per-SKU daily endpoint
-//     คืน 1 จุด (วันสุดท้าย) จาก section_16 ที่มีอยู่
+// ─── SKU timeseries — saversureV2 `/dashboard/sku-timeseries?sku=&from=&to=`
+//     (รายวันจริงจาก daily_product_summary — ไม่ใช่จุดเดียว)
+interface SvSkuTsRow { date: DateString; scans: number }
 export async function getSkuTimeseries(sku: string, from: DateString, to: DateString): Promise<SkuTimeseriesResponse> {
-  const perDay = await getSkuPerDay(from, to)
-  const row = perDay.rows.find(r => r.sku === sku)
-  if (!row) {
-    return {
-      sku,
-      displayName: sku,
-      perScan: 1,
-      from, to,
-      points: [],
-    }
-  }
-  // 1 จุด ณ วันสุดท้าย — เมื่อ saversureV2 มี per-SKU timeseries จริงจะแก้ทีหลัง
+  // perScan + displayName จาก SKU master
+  const skuList = await getSkuList()
+  const master = skuList.skus.find(s => s.sku === sku)
+  const perScan = master?.rightsPerScan ?? 1
+
+  const r = await sv<{ data: SvSkuTsRow[] }>('/dashboard/sku-timeseries', { sku, from, to })
+  const points = (r.data ?? []).map(p => ({
+    date: p.date,
+    scans: p.scans ?? 0,
+    specTickets: (p.scans ?? 0) * perScan,
+    uniqueUsers: 0, // sku-timeseries ไม่คืน unique users ราย SKU ราย วัน
+  }))
   return {
-    sku: row.sku,
-    displayName: row.displayName,
-    perScan: row.perScan,
+    sku,
+    displayName: master?.displayName ?? sku,
+    perScan,
     from, to,
-    points: [{
-      date: to,
-      scans: row.scans,
-      specTickets: row.specTickets,
-      uniqueUsers: row.uniqueUsers ?? 0,
-    }],
+    points,
   }
 }
 
