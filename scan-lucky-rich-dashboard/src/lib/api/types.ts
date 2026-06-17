@@ -292,6 +292,51 @@ export interface PrintSlipsResponse {
 }
 
 // ─── Customer search (หน้า Operation: ค้นผู้ได้รางวัลมาบันทึก) ───────────
+// ─── Scan heatmap day × hour ────────────────────────────────────
+export interface DayHourPoint {
+  date: DateString                 // YYYY-MM-DD
+  hour: number                     // 0–23
+  scans: number
+}
+export interface DayHourResponse {
+  from: DateString
+  to: DateString
+  data: DayHourPoint[]
+}
+
+// ─── SKU daily matrix (per-SKU per-day) ─────────────────────────
+export interface SkuDailyMatrixRow {
+  date: DateString
+  sku: string
+  name: string
+  scans: number
+}
+export interface SkuDailyMatrixResponse {
+  from: DateString
+  to: DateString
+  data: SkuDailyMatrixRow[]
+}
+
+// ─── RFM distribution snapshot ──────────────────────────────────
+export interface RfmPoint {
+  riskLevel: string                // champion | loyal | at_risk | lost | normal
+  count: number
+}
+export interface RfmDistributionResponse {
+  data: RfmPoint[]
+}
+
+// ─── Verification / scan outcome breakdown ───────────────────────
+export interface VerificationStatsResponse {
+  from: DateString
+  to: DateString
+  success: number
+  dupSelf: number
+  dupOther: number
+  notFound: number
+  byReason: { reason: string; count: number }[]
+}
+
 // Backend: GET /api/v1/customers/search?q= (ILIKE ชื่อ/เบอร์/email · read-only · เบา)
 export interface CustomerSearchResult {
   id: string

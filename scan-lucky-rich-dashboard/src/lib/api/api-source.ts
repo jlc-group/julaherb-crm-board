@@ -46,6 +46,10 @@ import type {
   OutageInfo,
   PrintSlipsResponse,
   CustomerSearchResponse,
+  DayHourResponse,
+  SkuDailyMatrixResponse,
+  RfmDistributionResponse,
+  VerificationStatsResponse,
 } from './types'
 import { scansToSpecRights } from '@/lib/rights-multiplier'
 import { matchExcluded } from '@/config/employee-exclude'
@@ -780,4 +784,52 @@ export async function getSkuRankHistory(from: DateString, to: DateString, top = 
   })
 
   return { rows }
+}
+
+// ════════════════════════════════════════════════════════════════
+// NEW — deploy 2026-06-18
+// ════════════════════════════════════════════════════════════════
+
+// ─── Scan heatmap วัน × ชั่วโมง ─────────────────────────────────
+// Source: daily_scan_hour_summary (pre-aggregated)
+export async function getScansByDayHour(from: DateString, to: DateString): Promise<DayHourResponse> {
+  const r = await sv<{ data: Array<{ date: string; hour: number; scans: number }> }>(
+    '/dashboard/scans-by-day-hour', { from, to }
+  )
+  return { from, to, data: (r.data ?? []).map(p => ({ date: p.date, hour: p.hour, scans: p.scans })) }
+}
+
+// ─── SKU daily matrix (per-SKU per-day) ─────────────────────────
+// Source: daily_product_summary
+export async function getSkuDailyMatrix(from: DateString, to: DateString): Promise<SkuDailyMatrixResponse> {
+  const r = await sv<{ data: Array<{ date: string; sku: string; name: string; scans: number }> }>(
+    '/dashboard/sku-daily-matrix', { from, to }
+  )
+  return { from, to, data: (r.data ?? []).map(p => ({ date: p.date, sku: p.sku, name: p.name, scans: p.scans })) }
+}
+
+// ─── RFM distribution (tenant snapshot — ไม่มี date range) ──────
+// Source: customer_rfm_snapshots
+export async function getRfmDistribution(): Promise<RfmDistributionResponse> {
+  const r = await sv<{ data: Array<{ risk_level: string; count: number }> }>(
+    '/dashboard/crm/rfm-distribution'
+  )
+  return { data: (r.data ?? []).map(p => ({ riskLevel: p.risk_level, count: p.count })) }
+}
+
+// ─── Verification / scan outcome breakdown ───────────────────────
+// Source: daily_scan_status_summary
+export async function getVerificationStats(from: DateString, to: DateString): Promise<VerificationStatsResponse> {
+  const r = await sv<{
+    success: number; dup_self: number; dup_other: number; not_found: number
+    by_reason?: Array<{ reason: string; count: number }>
+  }>('/dashboard/verification-stats', { from, to })
+  return {
+    from, to,
+    success:  r.success  ?? 0,
+    dupSelf:  r.dup_self  ?? 0,
+    dupOther: r.dup_other ?? 0,
+    notFound: r.not_found ?? 0,
+    byReason: (r.by_reason ?? []).map(x => ({ reason: x.reason, count: x.count })),
+  }
 }

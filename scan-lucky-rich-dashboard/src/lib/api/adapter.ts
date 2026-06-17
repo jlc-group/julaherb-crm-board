@@ -29,6 +29,10 @@ import type {
   UptimeResponse,
   PrintSlipsResponse,
   CustomerSearchResponse,
+  DayHourResponse,
+  SkuDailyMatrixResponse,
+  RfmDistributionResponse,
+  VerificationStatsResponse,
 } from './types'
 
 import * as mock from './mock-source'
@@ -71,6 +75,12 @@ export interface DataSource {
 
   // ค้นหาลูกค้า (หน้า Operation: หาผู้ได้รางวัลมาบันทึก)
   searchCustomers(q: string): Promise<CustomerSearchResponse>
+
+  // NEW — deploy 2026-06-18
+  getScansByDayHour(from: DateString, to: DateString): Promise<DayHourResponse>
+  getSkuDailyMatrix(from: DateString, to: DateString): Promise<SkuDailyMatrixResponse>
+  getRfmDistribution(): Promise<RfmDistributionResponse>
+  getVerificationStats(from: DateString, to: DateString): Promise<VerificationStatsResponse>
 }
 
 const SOURCE = process.env.DATA_SOURCE ?? 'mock'
