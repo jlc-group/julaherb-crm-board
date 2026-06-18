@@ -8,18 +8,36 @@ interface SidebarProps {
   onTabChange: (tab: TabId) => void
 }
 
-const TABS: { id: TabId; label: string; icon: string }[] = [
-  { id: 'crm-center', label: 'CRM Center',    icon: 'ti-heart-handshake' },
-  { id: 'overview',   label: 'Scan Overview', icon: 'ti-chart-pie' },
-  { id: 'customers',  label: 'Customers',     icon: 'ti-users' },
-  { id: 'products',   label: 'Products',      icon: 'ti-package' },
-  // Channel & Attribution — ปิดไว้ก่อนเพราะยังไม่มี data จริงในระบบ
-  // { id: 'channels', label: 'Channel & Attribution', icon: 'ti-building-store' },
-  { id: 'operations', label: 'Operations',    icon: 'ti-trophy' },
-  { id: 'claims',     label: 'รับรางวัล',      icon: 'ti-medal' },
-  { id: 'risk',       label: 'Risk Watch',    icon: 'ti-shield-check' },
-  { id: 'print-list', label: 'Print List',    icon: 'ti-printer' },
-  { id: 'report',     label: 'Report',        icon: 'ti-file-text' },
+const NAV_GROUPS: { label: string; items: { id: TabId; label: string; icon: string }[] }[] = [
+  {
+    label: 'Overview',
+    items: [
+      { id: 'crm-center', label: 'CRM Center',    icon: 'ti-heart-handshake' },
+      { id: 'overview',   label: 'Scan Overview', icon: 'ti-chart-pie' },
+    ],
+  },
+  {
+    label: 'Analytics',
+    items: [
+      { id: 'customers',  label: 'Customers', icon: 'ti-users' },
+      { id: 'products',   label: 'Products',  icon: 'ti-package' },
+    ],
+  },
+  {
+    label: 'Rewards',
+    items: [
+      { id: 'operations', label: 'Operations', icon: 'ti-trophy' },
+      { id: 'claims',     label: 'Claim',      icon: 'ti-medal' },
+      { id: 'print-list', label: 'Print List', icon: 'ti-printer' },
+    ],
+  },
+  {
+    label: 'System & Reports',
+    items: [
+      { id: 'risk',   label: 'Risk Watch', icon: 'ti-shield-check' },
+      { id: 'report', label: 'Report',     icon: 'ti-file-text' },
+    ],
+  },
 ]
 
 export default function Sidebar({ activeTab, onTabChange }: SidebarProps) {
@@ -64,21 +82,32 @@ export default function Sidebar({ activeTab, onTabChange }: SidebarProps) {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 py-3">
-        {TABS.map((tab) => {
-          const active = activeTab === tab.id
-          return (
-            <button
-              key={tab.id}
-              onClick={() => onTabChange(tab.id)}
-              className={`nav-tab w-full text-left ${active ? 'nav-tab-active' : ''}`}
-            >
-              <i className={`ti ${tab.icon} text-base ${active ? 'text-[var(--accent)]' : ''}`} />
-              <span className="flex-1">{tab.label}</span>
-              {active && <i className="ti ti-chevron-right text-xs opacity-70" />}
-            </button>
-          )
-        })}
+      <nav className="flex-1 py-2">
+        {NAV_GROUPS.map((group, gi) => (
+          <div key={group.label} className={gi > 0 ? 'mt-1' : ''}>
+            {/* Group label */}
+            <div className="px-4 pt-3 pb-1">
+              <span className="text-[9.5px] uppercase tracking-widest font-bold text-white/35">
+                {group.label}
+              </span>
+            </div>
+            {/* Items */}
+            {group.items.map((tab) => {
+              const active = activeTab === tab.id
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => onTabChange(tab.id)}
+                  className={`nav-tab w-full text-left ${active ? 'nav-tab-active' : ''}`}
+                >
+                  <i className={`ti ${tab.icon} text-base ${active ? 'text-[var(--accent)]' : ''}`} />
+                  <span className="flex-1">{tab.label}</span>
+                  {active && <i className="ti ti-chevron-right text-xs opacity-70" />}
+                </button>
+              )
+            })}
+          </div>
+        ))}
       </nav>
 
       {/* Live footer */}

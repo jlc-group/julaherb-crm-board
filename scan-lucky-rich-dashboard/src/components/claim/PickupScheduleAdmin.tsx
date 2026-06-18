@@ -1,96 +1,233 @@
 'use client'
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import {
   PICKUP_MONTHS, getPickupDays, pickupChip, pickupMonthLabel,
-  PICKUP_SLOTS, ALL_PICKUP_DATES, OFFICE_HOLIDAYS, DRAW_WEDNESDAYS, PICKUP_WINDOW_START,
+  PICKUP_SLOTS, ALL_PICKUP_DATES, classifyDay, pickupDateLabel,
+  TH_WEEKDAY_SHORT,
 } from '@/config/pickup'
 
-// แผงมอนิเตอร์ตารางวันรับรางวัล (admin) — read-only อ้างอิงกฎใน config/pickup.ts
-export default function PickupScheduleAdmin() {
-  const [open, setOpen] = useState(true)
+function buildMonthGrid(year: number, month: number): (string | null)[][] {
+  const pad = (n: number) => String(n).padStart(2, '0')
+  const firstDow = new Date(year, month - 1, 1).getDay()
+  const totalDays = new Date(year, month, 0).getDate()
+  const cells: (string | null)[] = Array(firstDow).fill(null)
+  for (let d = 1; d <= totalDays; d++) cells.push(`${year}-${pad(month)}-${pad(d)}`)
+  while (cells.length % 7 !== 0) cells.push(null)
+  const weeks: (string | null)[][] = []
+  for (let i = 0; i < cells.length; i += 7) weeks.push(cells.slice(i, i + 7))
+  return weeks
+}
 
-  const capPerDay = PICKUP_SLOTS.reduce((s, x) => s + x.capacity, 0) // 5 + 10 = 15
+export default function PickupScheduleAdmin() {
+  const [open, setOpen]         = useState(true)
+  const [monthIdx, setMonthIdx] = useState(0)
+  const [selected, setSelected] = useState<string | null>(null)
+
   const totalDays = ALL_PICKUP_DATES.length
-  const totalCap = totalDays * capPerDay
-  const shiftedCount = ALL_PICKUP_DATES.filter((iso) => pickupChip(iso).shifted).length
-  // วันที่งด (อยู่ในช่วงรับรางวัล)
-  const holidaysInWindow = Object.keys(OFFICE_HOLIDAYS).filter((d) => d >= PICKUP_WINDOW_START)
-  const drawsInWindow = Array.from(DRAW_WEDNESDAYS).filter((d) => d >= PICKUP_WINDOW_START)
+  const capPerDay = PICKUP_SLOTS.reduce((s, x) => s + x.capacity, 0)
+  const totalCap  = totalDays * capPerDay
+
+  const ym = PICKUP_MONTHS[monthIdx]
+  const [y, m] = ym.split('-').map(Number)
+  const weeks = useMemo(() => buildMonthGrid(y, m), [y, m])
+  const openDaysThisMonth = getPickupDays(y, m).length
+
 
   return (
     <div className="card p-4">
-      <button onClick={() => setOpen((v) => !v)} className="w-full flex items-center gap-2 text-left">
+      {/* ── Header ── */}
+      <button onClick={() => setOpen(v => !v)} className="w-full flex items-center gap-2 text-left">
         <span className="text-[18px]">📅</span>
         <div className="flex-1">
-          <div className="text-[13.5px] font-bold text-[var(--dark)]">ตารางวันรับรางวัล — มอนิเตอร์</div>
-          <div className="text-[11px] text-[var(--text-secondary)]">วันที่/ช่วงเวลาที่เปิดให้ลูกค้าเข้ามารับ (อ้างอิงอัตโนมัติจากกฎ)</div>
+          <div className="text-[13.5px] font-bold text-[var(--dark)]">ตารางวันรับรางวัล</div>
+          <div className="text-[11px] text-[var(--text-secondary)]">คลิกวันที่เปิดเพื่อดูรายละเอียด เช้า / บ่าย</div>
         </div>
         <span className="text-[var(--text-secondary)] text-[13px]">{open ? '▲ ย่อ' : '▾ กาง'}</span>
       </button>
 
       {open && (
         <div className="mt-3 space-y-3">
-          {/* summary */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+
+          {/* ── KPI 2 cards ── */}
+          <div className="grid grid-cols-2 gap-2">
             {[
-              ['วันเปิดรับรวม', `${totalDays} วัน`, 'ก.ค.–ธ.ค.'],
-              ['ช่วงเวลา/วัน', '2 ช่วง', 'เช้า + บ่าย'],
-              ['รับได้/วัน', `${capPerDay} คน`, '5 + 10'],
-              ['รับได้รวม (เพดาน)', `${totalCap.toLocaleString('th-TH')} คน`, `${totalDays}×${capPerDay}`],
+              ['วันเปิดรับรวม', `${totalDays} วัน`, 'ก.ค. – ธ.ค.'],
+              ['รับได้รวม (เพดาน)', `${totalCap.toLocaleString('th-TH')} คน`, `${totalDays} วัน × ${capPerDay} คน/วัน`],
             ].map(([label, val, sub]) => (
               <div key={label} className="rounded-lg bg-[var(--bg-soft)] border border-[var(--border)] px-3 py-2">
                 <div className="text-[10.5px] text-[var(--text-secondary)]">{label}</div>
-                <div className="text-[16px] font-bold text-[var(--dark)] leading-tight">{val}</div>
+                <div className="text-[18px] font-bold text-[var(--dark)] leading-tight">{val}</div>
                 <div className="text-[10px] text-[var(--text-muted)]">{sub}</div>
               </div>
             ))}
           </div>
 
-          {/* legend */}
-          <div className="flex flex-wrap items-center gap-3 text-[10.5px] text-[var(--text-secondary)]">
-            <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full border border-[#86efac] bg-[#f0fdf4]" /> วันปกติ (อังคาร/พุธ)</span>
-            <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full border border-[#fde68a] bg-[#fffbeb]" /> วันเลื่อน (เลี่ยงวันจับ/วันหยุด)</span>
+          {/* ── Month navigator ── */}
+          <div className="flex items-center justify-between">
+            <button
+              disabled={monthIdx === 0}
+              onClick={() => { setMonthIdx(i => i - 1); setSelected(null) }}
+              className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-[var(--bg-soft)] disabled:opacity-25 text-[var(--dark)] text-[18px]"
+            >‹</button>
+            <div className="text-[13px] font-bold text-[var(--dark)]">
+              {pickupMonthLabel(ym)}
+              <span className="ml-2 text-[11px] font-normal text-[var(--text-muted)]">({openDaysThisMonth} วันเปิด)</span>
+            </div>
+            <button
+              disabled={monthIdx === PICKUP_MONTHS.length - 1}
+              onClick={() => { setMonthIdx(i => i + 1); setSelected(null) }}
+              className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-[var(--bg-soft)] disabled:opacity-25 text-[var(--dark)] text-[18px]"
+            >›</button>
           </div>
 
-          {/* month-by-month chips */}
-          <div className="space-y-2">
-            {PICKUP_MONTHS.map((ym) => {
-              const [y, m] = ym.split('-').map(Number)
-              const days = getPickupDays(y, m)
-              return (
-                <div key={ym} className="flex gap-2.5 items-start">
-                  <div className="w-[112px] flex-shrink-0 pt-1">
-                    <div className="text-[12.5px] font-bold text-[var(--dark)]">{pickupMonthLabel(ym)}</div>
-                    <div className="text-[10px] text-[var(--text-muted)]">{days.length} วัน</div>
-                  </div>
-                  <div className="flex flex-wrap gap-1.5 flex-1">
-                    {days.map((iso) => {
-                      const c = pickupChip(iso)
-                      return (
-                        <span
-                          key={iso}
-                          title={iso}
-                          className={`inline-flex items-center gap-0.5 rounded-lg px-2 py-1 text-[11.5px] font-semibold border ${
-                            c.shifted ? 'bg-[#fffbeb] border-[#fde68a] text-[#b45309]' : 'bg-[#f0fdf4] border-[#bbf7d0] text-[#15803d]'
-                          }`}
-                        >
-                          {c.day}<span className="text-[9px] font-normal opacity-70 ml-0.5">{c.wd}.</span>
-                        </span>
-                      )
-                    })}
-                  </div>
+          {/* ── Calendar grid ── */}
+          <div className="rounded-xl border border-[var(--border)] overflow-hidden">
+            {/* Weekday headers */}
+            <div className="grid grid-cols-7 bg-[var(--bg-soft)] border-b border-[var(--border)]">
+              {TH_WEEKDAY_SHORT.map(wd => (
+                <div key={wd} className="py-2 text-center text-[11px] font-semibold text-[var(--text-secondary)]">{wd}</div>
+              ))}
+            </div>
+
+            {/* Weeks */}
+            {weeks.map((week, wi) => (
+              <div key={wi} className="grid grid-cols-7 border-t border-[var(--border)]">
+                {week.map((iso, di) => {
+                  if (!iso) {
+                    return (
+                      <div
+                        key={`empty-${wi}-${di}`}
+                        className="h-14 border-r border-[var(--border)] last:border-r-0 bg-[var(--bg-soft)] opacity-40"
+                      />
+                    )
+                  }
+
+                  const cls   = classifyDay(iso)
+                  const chip  = cls.type === 'pickup' ? pickupChip(iso) : null
+                  const [,, dayStr] = iso.split('-')
+                  const dayNum = Number(dayStr)
+                  const isSelected = selected === iso
+                  const isPickup   = cls.type === 'pickup'
+
+                  const styles: Record<string, string> = {
+                    pickup:  chip?.shifted
+                      ? 'bg-[#fffbeb] hover:bg-[#fef9c3] text-[#b45309]'
+                      : 'bg-[#f0fdf4] hover:bg-[#dcfce7] text-[#15803d]',
+                    holiday: 'bg-[#fef2f2] text-[#dc2626]',
+                    draw:    'bg-[#eff6ff] text-[#2563eb]',
+                    closed:  'text-[var(--text-muted)]',
+                  }
+
+                  const badges: Record<string, string> = {
+                    holiday: 'หยุด',
+                    draw:    'จับ',
+                  }
+                  const badge = chip?.shifted ? 'เลื่อน' : (badges[cls.type] ?? '')
+
+                  return (
+                    <div
+                      key={iso}
+                      onClick={() => isPickup && setSelected(isSelected ? null : iso)}
+                      className={[
+                        'relative h-14 border-r border-[var(--border)] last:border-r-0 p-1.5 flex flex-col transition-colors',
+                        styles[cls.type] ?? '',
+                        isPickup ? 'cursor-pointer' : 'cursor-default',
+                        isSelected ? 'ring-2 ring-inset ring-[var(--primary)]' : '',
+                      ].join(' ')}
+                    >
+                      <span className="text-[12.5px] font-bold leading-none">{dayNum}</span>
+                      {badge && (
+                        <span className="mt-auto text-[8.5px] font-semibold leading-none opacity-75">{badge}</span>
+                      )}
+                      {isPickup && !badge && (
+                        <span className="mt-auto text-[7.5px] leading-none opacity-50 text-[var(--text-muted)]">เช้า·บ่าย</span>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            ))}
+          </div>
+
+          {/* ── Legend ── */}
+          <div className="flex flex-wrap gap-3 text-[10.5px] text-[var(--text-secondary)]">
+            {[
+              ['#f0fdf4', '#86efac', 'เปิดรับ (ปกติ)'],
+              ['#fffbeb', '#fde68a', 'เปิดรับ (เลื่อน)'],
+              ['#eff6ff', '#bfdbfe', 'วันจับรางวัล'],
+              ['#fef2f2', '#fca5a5', 'วันหยุด'],
+            ].map(([bg, border, label]) => (
+              <span key={label} className="flex items-center gap-1">
+                <span className="w-2.5 h-2.5 rounded" style={{ background: bg, border: `1px solid ${border}` }} />
+                {label}
+              </span>
+            ))}
+          </div>
+
+          {/* ── Detail panel ── */}
+          {selected && (
+            <div className="rounded-xl border border-[var(--border)] overflow-hidden">
+
+              {/* Panel header */}
+              <div className="flex items-center justify-between px-4 py-2.5 bg-[var(--bg-soft)] border-b border-[var(--border)]">
+                <div>
+                  <div className="text-[13px] font-bold text-[var(--dark)]">{pickupDateLabel(selected)}</div>
+                  {pickupChip(selected).shifted && (
+                    <span className="text-[10.5px] text-[#b45309] font-medium">⚠ วันเลื่อน (ไม่ตรงอังคาร/พุธ)</span>
+                  )}
                 </div>
-              )
-            })}
-          </div>
+                <button
+                  onClick={() => setSelected(null)}
+                  className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-[var(--border)] text-[var(--text-secondary)] text-[18px] leading-none"
+                >×</button>
+              </div>
 
-          {/* slot + rule note */}
-          <div className="rounded-lg bg-[var(--bg-soft)] border border-[var(--border)] px-3 py-2.5 text-[11px] text-[var(--text-secondary)] space-y-1">
-            <div><b className="text-[var(--dark)]">ช่วงเวลา:</b> {PICKUP_SLOTS.map((s) => `${s.period} ${s.time} (${s.capacity} คน)`).join(' · ')}</div>
-            <div><b className="text-[var(--dark)]">กฎ:</b> เปิด อังคาร+พุธ · พุธที่ทีมไปจับรางวัล → เลื่อนเป็นพฤหัส · ตรงวันหยุดออฟฟิศ → เลื่อนวันถัดไปในสัปดาห์</div>
-            <div><b className="text-[var(--dark)]">งด {holidaysInWindow.length} วันหยุด + {drawsInWindow.length} วันจับรางวัล</b> · เลื่อนรวม {shiftedCount} วัน</div>
-            <div className="text-[10px] text-[var(--text-muted)]">* "รับได้รวม" = เพดานสูงสุดตามจำนวนช่อง · ยอดจองจริงจะแสดงเมื่อต่อระบบจองแล้ว</div>
-          </div>
+              {/* Both slots side by side */}
+              <div className="grid grid-cols-2 divide-x divide-[var(--border)]">
+                {PICKUP_SLOTS.map(slot => (
+                  <div key={slot.id} className="p-3 space-y-2">
+                    {/* Slot header */}
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <span className="text-[12.5px] font-bold text-[var(--dark)]">{slot.period}</span>
+                        <span className="ml-1.5 text-[10.5px] text-[var(--text-muted)]">{slot.time}</span>
+                      </div>
+                      <div className="text-[10.5px] text-[var(--text-muted)] bg-[var(--bg-soft)] border border-[var(--border)] rounded-full px-2 py-0.5">
+                        0 / {slot.capacity}
+                      </div>
+                    </div>
+
+                    {/* Capacity bar */}
+                    <div className="h-1.5 rounded-full bg-[var(--border)]">
+                      <div className="h-full w-0 rounded-full bg-[var(--primary)]" />
+                    </div>
+
+                    {/* Table */}
+                    <div className="rounded-lg border border-[var(--border)] overflow-hidden">
+                      <table className="w-full text-[11px]">
+                        <thead className="bg-[var(--bg-soft)]">
+                          <tr>
+                            {['#', 'ชื่อลูกค้า', 'เบอร์โทร', 'รางวัล', 'สถานะ'].map(h => (
+                              <th key={h} className="px-2 py-1.5 text-left font-semibold text-[var(--text-secondary)]">{h}</th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr>
+                            <td colSpan={5} className="px-2 py-5 text-center text-[var(--text-muted)] text-[11px]">
+                              ยังไม่มีข้อมูลการจอง
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+            </div>
+          )}
+
         </div>
       )}
     </div>
