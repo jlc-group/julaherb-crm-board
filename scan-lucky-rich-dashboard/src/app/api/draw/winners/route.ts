@@ -71,6 +71,10 @@ export async function POST(req: NextRequest) {
     name: String(name).trim(),
     phone: String(phone).trim(),
     scanCode: body.scanCode ? String(body.scanCode).trim() : undefined,
+    productSku: body.productSku ? String(body.productSku).trim() : undefined,
+    productName: body.productName ? String(body.productName).trim() : undefined,
+    address: body.address ? String(body.address).trim() : undefined,
+    rightsCount: typeof body.rightsCount === 'number' ? body.rightsCount : undefined,
     userId: body.userId ? String(body.userId) : undefined,
     assignedAt: body.assignedAt ?? new Date().toISOString(),
   }

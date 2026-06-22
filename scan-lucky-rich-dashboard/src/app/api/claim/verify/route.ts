@@ -29,6 +29,9 @@ export async function POST(req: NextRequest) {
     prizeLabel: p.prizeLabel,
     announce: prizeAnnounceBySlot(p.round, p.slotId),
     drawDate: getRound(p.round)?.drawDateLabel ?? '',
+    productName: p.productName ?? '',
+    productSku: p.productSku ?? '',
+    scanCode: p.scanCode ?? '',
   }))
   return json({
     isWinner: true,

@@ -5,6 +5,8 @@ export interface PoolCustomer {
   name: string
   phone: string // raw
   codes: string[] // รหัสสแกนของคนนี้ (สำหรับค้นด้วยรหัส)
+  rights?: number // จำนวนสิทธิ์ที่ส่งเข้าลุ้น (= จำนวน slip ของเบอร์นี้ในรอบ)
+  products?: Record<string, { name: string; sku: string }> // รหัสสแกน → สินค้า (ให้ WinnerPicker จับสินค้าของใบที่จับได้)
 }
 
 // เบอร์ 9 หลักท้าย — ใช้เป็นคีย์เทียบคน (กัน 0 นำหาย / ชื่อซ้ำ)

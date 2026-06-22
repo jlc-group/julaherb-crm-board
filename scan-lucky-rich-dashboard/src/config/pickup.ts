@@ -4,7 +4,8 @@
 //   • ฐาน = ทุก "อังคาร + พุธ" เริ่มสัปดาห์ของ 14–15 ก.ค. 2569
 //   • พุธที่เป็น "วันจับรางวัลจริง" (ทีมออกไปไทยรัฐ) → เลื่อนเป็น "พฤหัส"
 //   • วันที่ตรง "วันหยุดออฟฟิศ" → เลื่อนไปวันถัดไปที่ว่างในสัปดาห์นั้น (จ.–ศ. ข้ามวันหยุด/วันจับ/วันที่จองแล้ว)
-//   • ช่วงเวลา: เช้า 10–12 (สูงสุด 5) · บ่าย 13–17 (สูงสุด 10) — ยังไม่บังคับโควต้า (UI เลือกอย่างเดียว)
+//   • ช่วงเวลา: เช้า 10–12 (สูงสุด 3) · บ่าย 13–17 (สูงสุด 5) — เพดานจอง/วัน = 8 คน
+//   • จำกัด 6 วัน/เดือน (เก็บวันแรก ๆ ของเดือน) — พอกับผู้โชคดี 198 คน (พีค 35/เดือน vs 48 ช่อง/เดือน)
 // ───────────────────────────────────────────────────────────────
 import { DRAW_ROUNDS } from './draw-rounds'
 
@@ -16,9 +17,12 @@ export interface PickupSlot {
 }
 
 export const PICKUP_SLOTS: PickupSlot[] = [
-  { id: 'morning', period: 'ช่วงเช้า', time: '10:00 – 12:00 น.', capacity: 5 },
-  { id: 'afternoon', period: 'ช่วงบ่าย', time: '13:00 – 17:00 น.', capacity: 10 },
+  { id: 'morning', period: 'ช่วงเช้า', time: '10:00 – 12:00 น.', capacity: 3 },
+  { id: 'afternoon', period: 'ช่วงบ่าย', time: '13:00 – 17:00 น.', capacity: 5 },
 ]
+
+// จำกัดจำนวนวันเปิดรับต่อเดือน (เก็บวันแรก ๆ ของแต่ละเดือน)
+export const PICKUP_DAYS_PER_MONTH = 6
 
 export const PICKUP_WINDOW_START = '2026-07-14'
 export const PICKUP_WINDOW_END = '2026-12-31'
@@ -89,7 +93,14 @@ export const ALL_PICKUP_DATES: string[] = (() => {
     out.push(...resolveWeek(monday))
     monday = addDays(monday, 7)
   }
-  return Array.from(new Set(out)).sort()
+  const sorted = Array.from(new Set(out)).sort()
+  // จำกัด PICKUP_DAYS_PER_MONTH วัน/เดือน — เก็บวันแรก ๆ ของแต่ละเดือน
+  const perMonth: Record<string, number> = {}
+  return sorted.filter((d) => {
+    const ym = d.slice(0, 7)
+    perMonth[ym] = (perMonth[ym] ?? 0) + 1
+    return perMonth[ym] <= PICKUP_DAYS_PER_MONTH
+  })
 })()
 
 const PICKUP_SET = new Set(ALL_PICKUP_DATES)

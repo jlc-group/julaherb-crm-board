@@ -1,9 +1,20 @@
 'use client'
 
+import { Fragment } from 'react'
 import type { DrawRound, DrawWinner, PrizeSlot } from '@/config/draw-rounds'
-import { roundSlots, GOLD } from '@/config/draw-rounds'
-import { maskPhone, numFmt } from '@/lib/utils'
+import { roundSlots, GOLD, getRound, winnerAnnounceISOBySlot } from '@/config/draw-rounds'
+import { numFmt } from '@/lib/utils'
 import { findPrevWins, phoneLast9 } from './draw-utils'
+
+const TH_MO_SHORT = ['', 'ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.']
+
+// ป้ายประวัติรางวัล: ใช้วันที่ประกาศจริงเสมอ (10K = วันรายวัน · 100K = สิ้นเดือนที่ประกาศ · 1M = วันจับ)
+function prevWinLabel(w: DrawWinner): string {
+  const iso = winnerAnnounceISOBySlot(w.round, w.slotId)
+  if (!iso) return getRound(w.round)?.prizeMonthShort ?? `รอบ ${w.round}`
+  const [y, m, d] = iso.split('-').map(Number)
+  return `${d} ${TH_MO_SHORT[m]} ${y + 543}`
+}
 import KpiCard from '@/components/ui/KpiCard'
 import ProgressBar from '@/components/ui/ProgressBar'
 
@@ -53,60 +64,122 @@ export default function DrawSlotList({ round, winners, onPick, onRemove, onExpor
         </div>
       </div>
 
-      {/* รายการรางวัล เรียงตามวัน (รางวัลประจำวันก่อน → รางวัลใหญ่ท้ายสุด) */}
-      <div className="card p-3 sm:p-4 space-y-1.5">
-        {ordered.map((slot, i) => {
-          const w = bySlot.get(slot.slotId)
-          const { kicker, main, sub, big } = slotLabel(slot, round)
-          const pw = w ? findPrevWins(winners, w.phone, round.round) : []
-          return (
-            <div key={slot.slotId}>
-              {i === firstBigIdx && firstBigIdx > 0 && (
-                <div className="flex items-center gap-2 pt-3 pb-1 text-[11px] font-bold uppercase tracking-wider text-[#854d0e]">
-                  <span className="h-px flex-1 bg-[var(--yellow)] opacity-40" /> รางวัลใหญ่รายเดือน <span className="h-px flex-1 bg-[var(--yellow)] opacity-40" />
-                </div>
-              )}
-              <div
-                className={`rounded-md border px-3 py-2 flex flex-wrap items-center gap-x-3 gap-y-1 ${
-                  big ? 'border-[var(--yellow)] bg-[var(--yellow-soft)]' : w ? 'border-[var(--primary)] bg-[var(--positive-soft)]' : 'border-[var(--border)]'
-                }`}
-              >
-                <div className="w-36 flex-shrink-0">
-                  <div className="text-[10px] text-[var(--text-secondary)] leading-tight">{kicker}</div>
-                  <div className={`text-[13px] font-bold leading-tight ${big ? 'text-[#854d0e]' : 'text-[var(--dark)]'}`}>{main}</div>
-                  {sub && <div className="text-[10.5px] text-[var(--text-secondary)]">{sub}</div>}
-                </div>
-                {w ? (
-                  <>
-                    <div className="min-w-0 grow shrink basis-[180px]">
-                      <div className="font-semibold text-sm truncate">{w.name}</div>
-                      <div className="text-[12px] text-[var(--text-secondary)]">
-                        {maskPhone(w.phone)}
-                        {w.scanCode ? ` · ${w.scanCode}` : ''}
-                        {pw.length > 0 && <span className="text-amber-700"> · ⚠️ เคยได้ {pw.map((x) => `รอบ ${x.round}`).join(', ')}</span>}
-                      </div>
-                    </div>
-                    {onOpenClaim && (
-                      <button
-                        onClick={() => onOpenClaim(phoneLast9(w.phone))}
-                        className="text-[11px] font-semibold text-[#15803d] bg-[#dcfce7] rounded px-2 py-1 flex-shrink-0 hover:bg-[#bbf7d0]"
-                        title="ไปหน้ารับรางวัล — เช็คว่าคนนี้ส่งเอกสารหรือยัง"
-                      >
-                        🏅 รับรางวัล →
-                      </button>
+      {/* ตารางรางวัล เรียงตามวัน (รางวัลประจำวันก่อน → รางวัลใหญ่ท้ายสุด)
+          · เบอร์โทร "เต็ม" เฉพาะหน้านี้ เพื่อให้ทีมโทร + ส่งที่อยู่ไปรับรางวัล (หน้าอื่นยัง mask) */}
+      <div className="card p-0 overflow-x-auto">
+        <table className="w-full text-left border-collapse min-w-[1120px]">
+          <thead>
+            <tr className="text-[11px] uppercase tracking-wider text-[var(--text-secondary)] bg-[var(--bg-soft)] border-b border-[var(--border)]">
+              <th className="font-semibold px-3 py-2.5 w-40">รางวัล</th>
+              <th className="font-semibold px-3 py-2.5 w-48">ผู้ได้รางวัล</th>
+              <th className="font-semibold px-3 py-2.5 w-32 text-center">เบอร์โทร</th>
+              <th className="font-semibold px-3 py-2.5 w-20 text-center">สิทธิ์ที่ส่ง</th>
+              <th className="font-semibold px-3 py-2.5 w-28 text-center">ประวัติรางวัล</th>
+              <th className="font-semibold px-3 py-2.5">ที่อยู่ (ติดต่อ/ส่งรางวัล)</th>
+              <th className="font-semibold px-3 py-2.5 w-24 text-center">รหัสสแกน</th>
+              <th className="font-semibold px-3 py-2.5 w-56 text-right">จัดการ</th>
+            </tr>
+          </thead>
+          <tbody>
+            {ordered.map((slot, i) => {
+              const w = bySlot.get(slot.slotId)
+              const { kicker, main, sub, big } = slotLabel(slot, round)
+              const pw = w ? findPrevWins(winners, w.phone, round.round) : []
+              return (
+                <Fragment key={slot.slotId}>
+                  {i === firstBigIdx && firstBigIdx > 0 && (
+                    <tr>
+                      <td colSpan={8} className="px-3 pt-3 pb-1">
+                        <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-[#854d0e]">
+                          <span className="h-px flex-1 bg-[var(--yellow)] opacity-40" /> รางวัลใหญ่รายเดือน <span className="h-px flex-1 bg-[var(--yellow)] opacity-40" />
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                  <tr
+                    className={`border-b border-[var(--border)] align-middle ${
+                      big ? 'bg-[var(--yellow-soft)]' : w ? 'bg-[var(--positive-soft)]' : 'hover:bg-[var(--bg-soft)]'
+                    }`}
+                  >
+                    {/* รางวัล */}
+                    <td className="px-3 py-2.5">
+                      <div className="text-[10px] text-[var(--text-secondary)] leading-tight">{kicker}</div>
+                      <div className={`text-[13px] font-bold leading-tight whitespace-nowrap ${big ? 'text-[#854d0e]' : 'text-[var(--dark)]'}`}>{main}</div>
+                      {sub && <div className="text-[10.5px] text-[var(--text-secondary)]">{sub}</div>}
+                    </td>
+
+                    {w ? (
+                      <>
+                        {/* ผู้ได้รางวัล — ชื่อบรรทัดเดียว */}
+                        <td className="px-3 py-2.5">
+                          <div className="font-semibold text-[13.5px] whitespace-nowrap truncate max-w-[180px]" title={w.name}>{w.name}</div>
+                        </td>
+                        {/* เบอร์โทร (เต็ม) */}
+                        <td className="px-3 py-2.5 text-[13px] num text-center whitespace-nowrap">{w.phone || '—'}</td>
+                        {/* สิทธิ์ที่ส่ง */}
+                        <td className="px-3 py-2.5 text-center whitespace-nowrap">
+                          {typeof w.rightsCount === 'number' ? (
+                            <span className="text-[13px] font-bold text-[var(--dark)] num">{w.rightsCount.toLocaleString()}</span>
+                          ) : (
+                            <span className="text-[12px] text-[var(--text-muted)]">—</span>
+                          )}
+                        </td>
+                        {/* ประวัติรางวัล (เคยได้รอบ/เดือนไหน) */}
+                        <td className="px-3 py-2.5 text-center whitespace-nowrap">
+                          {pw.length > 0 ? (
+                            <div className="flex flex-wrap gap-1 justify-center" title={pw.map((x) => `รอบ ${x.round} · ${x.prizeLabel}`).join(', ')}>
+                              {pw.map((x) => (
+                                <span key={x.slotId} className="text-[10.5px] font-semibold text-amber-800 bg-amber-100 border border-amber-200 rounded px-1.5 py-0.5">
+                                  {prevWinLabel(x)}
+                                </span>
+                              ))}
+                            </div>
+                          ) : (
+                            <span className="text-[11px] text-[#15803d]">ครั้งแรก</span>
+                          )}
+                        </td>
+                        {/* ที่อยู่ */}
+                        <td className="px-3 py-2.5 text-[12.5px]">
+                          {w.address ? (
+                            <span className="text-[var(--text)] whitespace-pre-wrap">{w.address}</span>
+                          ) : (
+                            <button onClick={() => onPick(slot, w)} className="text-[12px] text-[var(--text-muted)] italic hover:text-[var(--primary)]">
+                              — เพิ่มที่อยู่
+                            </button>
+                          )}
+                        </td>
+                        {/* รหัสสแกน */}
+                        <td className="px-3 py-2.5 text-[12px] text-[var(--text-secondary)] text-center whitespace-nowrap">{w.scanCode || '—'}</td>
+                        {/* จัดการ */}
+                        <td className="px-3 py-2.5">
+                          <div className="flex items-center justify-end gap-2 whitespace-nowrap">
+                            {onOpenClaim && (
+                              <button
+                                onClick={() => onOpenClaim(phoneLast9(w.phone))}
+                                className="flex-shrink-0 text-[11px] font-semibold text-[#15803d] bg-[#dcfce7] rounded px-2 py-1 hover:bg-[#bbf7d0]"
+                                title="ไปหน้ารับรางวัล — เช็คว่าคนนี้ส่งเอกสารหรือยัง"
+                              >
+                                🏅 รับรางวัล →
+                              </button>
+                            )}
+                            <button onClick={() => onPick(slot, w)} className="flex-shrink-0 text-[12px] text-[var(--primary)] font-semibold">แก้</button>
+                            <button onClick={() => onRemove(slot)} className="flex-shrink-0 text-[12px] text-red-500 font-semibold">ลบ</button>
+                          </div>
+                        </td>
+                      </>
+                    ) : (
+                      <td colSpan={7} className="px-3 py-2.5">
+                        <button onClick={() => onPick(slot)} className="text-[13px] text-[var(--primary)] font-semibold">
+                          ＋ ระบุผู้ได้รางวัล
+                        </button>
+                      </td>
                     )}
-                    <button onClick={() => onPick(slot, w)} className="text-[12px] text-[var(--primary)] font-semibold flex-shrink-0">แก้</button>
-                    <button onClick={() => onRemove(slot)} className="text-[12px] text-red-500 font-semibold flex-shrink-0">ลบ</button>
-                  </>
-                ) : (
-                  <button onClick={() => onPick(slot)} className="flex-1 text-left text-[13px] text-[var(--primary)] font-semibold">
-                    ＋ ระบุผู้ได้รางวัล
-                  </button>
-                )}
-              </div>
-            </div>
-          )
-        })}
+                  </tr>
+                </Fragment>
+              )
+            })}
+          </tbody>
+        </table>
       </div>
     </div>
   )

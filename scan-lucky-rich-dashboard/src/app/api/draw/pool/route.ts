@@ -22,12 +22,12 @@ export async function GET(req: NextRequest) {
   if (!round) return fail('round ไม่ถูกต้อง', 400)
 
   let total = 0
-  let slips: { name: string; phone: string; scanCode: string }[] = []
+  let slips: { name: string; phone: string; scanCode: string; productName: string; productSku: string }[] = []
   let lastErr = ''
   for (let a = 0; a < 2; a++) {
     try {
       const d = await ds.getPrintSlips(round.windowFrom, round.windowTo, LIMIT)
-      slips = (d.slips ?? []).map((s) => ({ name: s.name, phone: s.phone, scanCode: s.scanCode }))
+      slips = (d.slips ?? []).map((s) => ({ name: s.name, phone: s.phone, scanCode: s.scanCode, productName: s.productName, productSku: s.productSku }))
       total = d.total ?? slips.length
       lastErr = ''
       break
@@ -37,16 +37,20 @@ export async function GET(req: NextRequest) {
   }
   if (lastErr) return fail('ดึงพูลไม่สำเร็จ (ช่วงกว้างอาจ timeout) — ใช้ "กรอกเอง" ได้: ' + lastErr, 502)
 
-  // dedup เป็นลูกค้า (key = เบอร์ 9 หลักท้าย, fallback ชื่อ) · เก็บรหัสสแกนของแต่ละคน (cap 40)
-  const map = new Map<string, { name: string; phone: string; codes: string[] }>()
+  // dedup เป็นลูกค้า (key = เบอร์ 9 หลักท้าย, fallback ชื่อ) · เก็บรหัสสแกน (cap 40) + นับสิทธิ์ + map รหัส→สินค้า
+  const map = new Map<string, { name: string; phone: string; codes: string[]; rights: number; products: Record<string, { name: string; sku: string }> }>()
   for (const s of slips) {
     const k = last9(s.phone) || 'n:' + (s.name || '')
     let c = map.get(k)
     if (!c) {
-      c = { name: s.name || '', phone: s.phone || '', codes: [] }
+      c = { name: s.name || '', phone: s.phone || '', codes: [], rights: 0, products: {} }
       map.set(k, c)
     }
-    if (s.scanCode && c.codes.length < 40 && !c.codes.includes(s.scanCode)) c.codes.push(s.scanCode)
+    c.rights += 1 // ทุก slip = 1 สิทธิ์ในการลุ้น
+    if (s.scanCode && c.codes.length < 40 && !c.codes.includes(s.scanCode)) {
+      c.codes.push(s.scanCode)
+      c.products[s.scanCode] = { name: s.productName || '', sku: s.productSku || '' }
+    }
   }
 
   return ok({

@@ -14,9 +14,9 @@ function monthLabel(ym: string) {
   return `${TH_MONTH[m]} ${beYear(Number(y))}`
 }
 
-export default function ClaimPickupCalendar({ initial, onConfirm }: {
+export default function ClaimPickupCalendar({ initial, onChange }: {
   initial?: { date: string; slotId: string } | null
-  onConfirm: (date: string, slotId: string) => void
+  onChange: (date: string | null, slotId: string | null) => void
 }) {
   const initIdx = initial ? PICKUP_MONTHS.indexOf(initial.date.slice(0, 7)) : -1
   const [mIdx, setMIdx] = useState(initIdx >= 0 ? initIdx : 0)
@@ -39,10 +39,16 @@ export default function ClaimPickupCalendar({ initial, onConfirm }: {
     setMIdx(next)
     setSelected(null)
     setSlot(null)
+    onChange(null, null)
   }
   function pickDay(iso: string) {
     setSelected(iso)
     setSlot(null)
+    onChange(iso, null) // เปลี่ยนวัน → รอเลือกรอบใหม่
+  }
+  function pickSlot(id: string) {
+    setSlot(id)
+    onChange(selected, id)
   }
 
   return (
@@ -121,7 +127,7 @@ export default function ClaimPickupCalendar({ initial, onConfirm }: {
               return (
                 <button
                   key={s.id}
-                  onClick={() => setSlot(s.id)}
+                  onClick={() => pickSlot(s.id)}
                   className={`rounded-xl border px-3 py-2.5 text-left transition active:scale-[0.98] ${
                     on ? 'border-[#16a34a] bg-[#f0fdf4]' : 'border-[var(--border)] bg-white'
                   }`}
@@ -133,21 +139,8 @@ export default function ClaimPickupCalendar({ initial, onConfirm }: {
               )
             })}
           </div>
-
-          <button
-            onClick={() => { if (slot) onConfirm(selected, slot) }}
-            disabled={!slot}
-            className="w-full mt-3 py-3.5 rounded-2xl text-white font-bold text-[14px] disabled:opacity-40 transition active:scale-[0.98] shadow-[0_4px_14px_rgba(22,163,74,0.3)]"
-            style={{ background: 'linear-gradient(135deg,#16a34a,#15803d)' }}
-          >
-            {initial ? 'เปลี่ยน/ยืนยันนัดหมาย' : 'ยืนยันนัดหมาย'}
-          </button>
         </div>
       )}
-
-      <div className="text-center text-[10.5px] text-[var(--text-muted)] mt-3">
-        เปิดรับ จันทร์–ศุกร์ · งดวันหยุดและวันที่ทีมไปจับรางวัล
-      </div>
     </div>
   )
 }

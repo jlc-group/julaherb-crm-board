@@ -183,8 +183,12 @@ export interface DrawWinner {
   tier: string
   prizeLabel: string
   name: string
-  phone: string // raw — mask ตอนแสดง
+  phone: string // raw — mask ตอนแสดง (ยกเว้นหน้า Operations โชว์เต็มเพื่อทีมโทร/ส่งรางวัล)
   scanCode?: string
+  productSku?: string // SKU ของสินค้าที่สแกนใบที่จับได้ (เก็บตอนเลือกจากพูล)
+  productName?: string // ชื่อสินค้าที่สแกนใบที่จับได้ — ให้ลูกค้าเตรียมเอามาแสดง
+  address?: string // ที่อยู่ลูกค้า — กรอกเอง/auto-fill เมื่อ backend เปิด endpoint
+  rightsCount?: number // จำนวนสิทธิ์ที่ส่งเข้าลุ้น (เก็บตอนเลือกจากพูล)
   userId?: string
   assignedAt: string
 }
@@ -203,4 +207,21 @@ export interface DrawClaim {
   status: ClaimStatus
   reviewedAt?: string
   reviewNote?: string
+}
+
+// ── นัดหมายเข้ารับรางวัลหน้างาน (key = เบอร์ 9 หลักท้าย) เก็บใน data/draw-appointments.json ──
+//   booked = จองแล้วรอเข้ารับ · done = ส่งเอกสาร+รับของเรียบร้อย · no_show = ไม่มาตามนัด
+export type AppointmentStatus = 'booked' | 'done' | 'no_show'
+export interface DrawAppointment {
+  phoneLast9: string
+  phone: string
+  name: string
+  date: string // วันนัด YYYY-MM-DD (อ้างอิงวันเปิดรับใน config/pickup)
+  slotId: 'morning' | 'afternoon'
+  pickupMode?: 'self' | 'proxy' // วิธีรับ — รับด้วยตนเอง / มอบอำนาจ
+  prizes: string[] // ป้ายรางวัลที่ได้
+  rounds: number[]
+  status: AppointmentStatus
+  bookedAt?: string
+  updatedAt?: string
 }

@@ -3,7 +3,6 @@
 import { useMemo, useState } from 'react'
 import { prizeAnnounce } from '@/config/draw-rounds'
 import type { PrizeSlot, DrawWinner } from '@/config/draw-rounds'
-import { maskPhone } from '@/lib/utils'
 import { findPrevWins, type PoolCustomer } from './draw-utils'
 
 interface Props {
@@ -22,7 +21,12 @@ interface Picked {
   name: string
   phone: string
   scanCode: string
+  productName?: string // สินค้าของรหัสที่เลือก (ใบที่จับได้)
+  productSku?: string
+  address: string // ที่อยู่ลูกค้า — กรอก/วางเองได้ (auto-fill เมื่อ backend เปิด endpoint)
+  rights?: number // จำนวนสิทธิ์ที่ส่งเข้าลุ้น (จากพูล) — undefined ถ้ากรอกเอง
   codes: string[] // รหัสทั้งหมดของคนนี้ (ให้เลือก) — ว่างถ้ากรอกเอง
+  products?: Record<string, { name: string; sku: string }> // map รหัส→สินค้า (จากพูล)
 }
 
 export default function WinnerPicker({
@@ -38,12 +42,13 @@ export default function WinnerPicker({
 }: Props) {
   const [q, setQ] = useState('')
   const [picked, setPicked] = useState<Picked | null>(
-    existing ? { name: existing.name, phone: existing.phone, scanCode: existing.scanCode ?? '', codes: [] } : null,
+    existing ? { name: existing.name, phone: existing.phone, scanCode: existing.scanCode ?? '', productName: existing.productName, productSku: existing.productSku, address: existing.address ?? '', rights: existing.rightsCount, codes: [] } : null,
   )
   const [manual, setManual] = useState(false)
   const [mName, setMName] = useState('')
   const [mPhone, setMPhone] = useState('')
   const [mCode, setMCode] = useState('')
+  const [mAddress, setMAddress] = useState('')
   const [saving, setSaving] = useState(false)
   const [err, setErr] = useState('')
 
@@ -87,6 +92,10 @@ export default function WinnerPicker({
           name: data.name.trim(),
           phone: data.phone.trim(),
           scanCode: data.scanCode.trim() || undefined,
+          productName: data.productName || undefined,
+          productSku: data.productSku || undefined,
+          address: data.address.trim() || undefined,
+          rightsCount: data.rights,
         }),
       })
       const b = await r.json().catch(() => ({}))
@@ -124,7 +133,10 @@ export default function WinnerPicker({
                 <div className="min-w-0">
                   <div className="text-[11px] text-[var(--text-secondary)]">ผู้ได้รางวัล</div>
                   <div className="font-bold text-[16px] text-[var(--dark)] truncate">{picked.name || '(ไม่มีชื่อ)'}</div>
-                  <div className="text-[13px] text-[var(--text-secondary)]">{maskPhone(picked.phone)}</div>
+                  <div className="text-[13px] text-[var(--text-secondary)] num">{picked.phone || '(ไม่มีเบอร์)'}</div>
+                  {typeof picked.rights === 'number' && (
+                    <div className="text-[12px] text-[var(--primary)] font-semibold mt-0.5">🎟️ ส่งเข้าลุ้น {picked.rights.toLocaleString()} สิทธิ์</div>
+                  )}
                 </div>
                 <button
                   onClick={() => {
@@ -142,21 +154,40 @@ export default function WinnerPicker({
                 <div className="mt-2">
                   <div className="text-[11px] text-[var(--text-secondary)] mb-1">รหัสสแกน (เลือกใบที่จับได้ · ไม่บังคับ)</div>
                   <div className="flex flex-wrap gap-1">
-                    {picked.codes.map((cd) => (
-                      <button
-                        key={cd}
-                        onClick={() => setPicked({ ...picked, scanCode: picked.scanCode === cd ? '' : cd })}
-                        className={`text-[11px] px-2 py-0.5 rounded border ${picked.scanCode === cd ? 'bg-[var(--primary)] text-white border-[var(--primary)]' : 'border-[var(--border)]'}`}
-                      >
-                        {cd}
-                      </button>
-                    ))}
+                    {picked.codes.map((cd) => {
+                      const on = picked.scanCode === cd
+                      const prod = on ? undefined : picked.products?.[cd]
+                      return (
+                        <button
+                          key={cd}
+                          onClick={() => setPicked({ ...picked, scanCode: on ? '' : cd, productName: on ? undefined : prod?.name, productSku: on ? undefined : prod?.sku })}
+                          className={`text-[11px] px-2 py-0.5 rounded border ${on ? 'bg-[var(--primary)] text-white border-[var(--primary)]' : 'border-[var(--border)]'}`}
+                        >
+                          {cd}
+                        </button>
+                      )
+                    })}
                   </div>
                 </div>
               )}
               {picked.codes.length === 0 && picked.scanCode && (
                 <div className="mt-1 text-[12px] text-[var(--text-secondary)]">รหัส: {picked.scanCode}</div>
               )}
+              {picked.productName && (
+                <div className="mt-1 text-[12px] text-[var(--dark)]">📦 สินค้า: <span className="font-semibold">{picked.productName}</span>{picked.productSku ? <span className="text-[var(--text-secondary)]"> ({picked.productSku})</span> : null}</div>
+              )}
+
+              {/* ที่อยู่ลูกค้า — แก้/วางได้ (สำหรับทีมโทร + ส่งรางวัลถึงบ้าน) */}
+              <div className="mt-2">
+                <div className="text-[11px] text-[var(--text-secondary)] mb-1">ที่อยู่ลูกค้า (สำหรับติดต่อ/ส่งรางวัล · ไม่บังคับ)</div>
+                <textarea
+                  value={picked.address}
+                  onChange={(e) => setPicked({ ...picked, address: e.target.value })}
+                  placeholder="บ้านเลขที่ / ถนน / ตำบล / อำเภอ / จังหวัด / รหัสไปรษณีย์"
+                  rows={2}
+                  className="w-full px-3 py-2 rounded-md border border-[var(--border)] text-sm resize-y"
+                />
+              </div>
             </div>
 
             {prevWins.length > 0 && (
@@ -184,6 +215,7 @@ export default function WinnerPicker({
               <input value={mName} onChange={(e) => setMName(e.target.value)} placeholder="ชื่อ-นามสกุล *" className="w-full px-3 py-2 rounded-md border border-[var(--border)] text-sm" autoFocus />
               <input value={mPhone} onChange={(e) => setMPhone(e.target.value)} placeholder="เบอร์โทร *" className="w-full px-3 py-2 rounded-md border border-[var(--border)] text-sm" />
               <input value={mCode} onChange={(e) => setMCode(e.target.value)} placeholder="รหัสสแกน (ไม่บังคับ)" className="w-full px-3 py-2 rounded-md border border-[var(--border)] text-sm" />
+              <textarea value={mAddress} onChange={(e) => setMAddress(e.target.value)} placeholder="ที่อยู่ (ไม่บังคับ)" rows={2} className="w-full px-3 py-2 rounded-md border border-[var(--border)] text-sm resize-y" />
             </div>
             <button
               onClick={() => {
@@ -192,7 +224,7 @@ export default function WinnerPicker({
                   return
                 }
                 setErr('')
-                setPicked({ name: mName, phone: mPhone, scanCode: mCode, codes: [] })
+                setPicked({ name: mName, phone: mPhone, scanCode: mCode, address: mAddress, codes: [] })
                 setManual(false)
               }}
               className="w-full mt-3 px-4 py-2 rounded-md text-white font-semibold text-sm"
@@ -233,12 +265,17 @@ export default function WinnerPicker({
                 return (
                   <button
                     key={(c.phone || c.name) + idx}
-                    onClick={() => setPicked({ name: c.name, phone: c.phone, scanCode: matchedCode ?? (c.codes.length === 1 ? c.codes[0] : ''), codes: c.codes })}
+                    // TODO(address): เติม address: c.address ?? '' เมื่อ /draw/pool คืน address → auto-fill ทันที
+                    onClick={() => {
+                      const code = matchedCode ?? (c.codes.length === 1 ? c.codes[0] : '')
+                      const prod = c.products?.[code]
+                      setPicked({ name: c.name, phone: c.phone, scanCode: code, productName: prod?.name, productSku: prod?.sku, address: '', rights: c.rights, codes: c.codes, products: c.products })
+                    }}
                     className="w-full text-left px-3 py-2 hover:bg-[var(--bg-soft)] flex items-center justify-between gap-2"
                   >
                     <span className="min-w-0">
                       <span className="font-semibold text-sm">{c.name || '(ไม่มีชื่อ)'}</span>{' '}
-                      <span className="text-[12px] text-[var(--text-secondary)]">{maskPhone(c.phone)}</span>
+                      <span className="text-[12px] text-[var(--text-secondary)] num">{c.phone}</span>
                       {matchedCode && <span className="text-[11px] text-[var(--primary)]"> · {matchedCode}</span>}
                     </span>
                     {pw.length > 0 && <span className="chip chip-yellow flex-shrink-0">เคยได้รอบ {pw.map((w) => w.round).join(',')}</span>}

@@ -44,6 +44,9 @@ export interface WinnerPrize {
   round: number
   slotId: string
   prizeLabel: string
+  productName?: string
+  productSku?: string
+  scanCode?: string
 }
 export function findWinnerPrizes(phone: string): { name: string; prizes: WinnerPrize[] } {
   const key = last9(phone)
@@ -51,7 +54,7 @@ export function findWinnerPrizes(phone: string): { name: string; prizes: WinnerP
   const mine = readWinners().filter((w) => last9(w.phone) === key)
   return {
     name: mine[0]?.name ?? '',
-    prizes: mine.map((w) => ({ round: w.round, slotId: w.slotId, prizeLabel: w.prizeLabel })),
+    prizes: mine.map((w) => ({ round: w.round, slotId: w.slotId, prizeLabel: w.prizeLabel, productName: w.productName, productSku: w.productSku, scanCode: w.scanCode })),
   }
 }
 

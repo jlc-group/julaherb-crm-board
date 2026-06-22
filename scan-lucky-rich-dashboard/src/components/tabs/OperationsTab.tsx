@@ -9,7 +9,7 @@ import {
   DRAW_TOTAL_VALUE,
 } from '@/config/draw-rounds'
 import type { DrawWinner, PrizeSlot } from '@/config/draw-rounds'
-import type { PoolCustomer } from '@/components/operations/draw-utils'
+import { findPrevWins, type PoolCustomer } from '@/components/operations/draw-utils'
 import { numFmt } from '@/lib/utils'
 import TabHeader from '@/components/ui/TabHeader'
 import DrawRoundSelector from '@/components/operations/DrawRoundSelector'
@@ -91,10 +91,11 @@ export default function OperationsTab({ onOpenClaim }: { onOpenClaim?: (phoneLas
     if (!round) return
     const slots = roundSlots(round)
     const bySlot = new Map(winners.filter((w) => w.round === round.round).map((w) => [w.slotId, w]))
-    const rows: string[][] = [['รอบ', 'วันจับ', 'รางวัล', 'ลำดับ', 'ชื่อ-นามสกุล', 'เบอร์', 'รหัสสแกน']]
+    const rows: string[][] = [['รอบ', 'วันจับ', 'รางวัล', 'ลำดับ', 'ชื่อ-นามสกุล', 'เบอร์', 'สิทธิ์ที่ส่ง', 'ประวัติได้รางวัล', 'รหัสสแกน', 'ที่อยู่']]
     for (const s of slots) {
       const w = bySlot.get(s.slotId)
-      rows.push([String(round.round), round.drawDateLabel, s.tierLabel, String(s.indexInTier), w?.name ?? '', w?.phone ?? '', w?.scanCode ?? ''])
+      const prev = w ? findPrevWins(winners, w.phone, round.round).map((x) => getRound(x.round)?.prizeMonthShort ?? `รอบ ${x.round}`).join(' / ') : ''
+      rows.push([String(round.round), round.drawDateLabel, s.tierLabel, String(s.indexInTier), w?.name ?? '', w?.phone ?? '', w?.rightsCount != null ? String(w.rightsCount) : '', prev, w?.scanCode ?? '', w?.address ?? ''])
     }
     const csv = '﻿' + rows.map((r) => r.map((c) => `"${(c || '').replace(/"/g, '""')}"`).join(',')).join('\n')
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' })

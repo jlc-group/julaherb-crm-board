@@ -206,19 +206,16 @@ function MonthSwitcher({ months, active, onPick }: { months: PrizeMonth[]; activ
 
 function MonthHeroCard({ w }: { w: PubWinner }) {
   return (
-    <div className="rounded-2xl p-5 text-center text-white shadow-[0_6px_20px_rgba(21,128,61,0.28)]"
+    <div className="relative rounded-2xl p-5 pt-6 text-center text-white shadow-[0_6px_20px_rgba(21,128,61,0.28)]"
       style={{ background: 'linear-gradient(150deg,#16a34a 0%,#15803d 55%,#166534 100%)' }}>
+      <span className="absolute top-3 right-3 text-[10.5px] font-bold text-white bg-white/20 rounded-full px-2.5 py-1">{w.announceLabel}</span>
       <span className="inline-flex items-center justify-center w-14 h-14 rounded-full text-[26px] mb-2 bg-white/15">🎉</span>
-      <div className="text-[11px] text-white/75">ผู้โชคดีล่าสุดของเดือนนี้</div>
-      <div className="text-[23px] font-extrabold leading-tight mt-1">{w.name || '(ผู้โชคดี)'}</div>
-      <div className="text-[12px] text-white/80 mt-0.5">{w.announceLabel}</div>
+      <div className="text-[11px] text-white/75 tracking-wide">🏆 ผู้โชคดีล่าสุด</div>
+      <div className="text-[28px] font-extrabold leading-tight mt-1">{w.name || '(ผู้โชคดี)'}</div>
       <div className="text-[13px] text-white/80 mt-1 tracking-wide">{w.phoneMasked}</div>
       <div className="mt-3 rounded-xl px-3 py-2.5 bg-black/15 flex items-center justify-center gap-2">
         <span className="text-[11px] text-white/70">รางวัล</span>
-        <span className="text-[15px] font-bold">🏅 {w.prizeLabel}</span>
-      </div>
-      <div className="text-[11px] text-white/75 mt-3 leading-relaxed">
-        พนักงานจะติดต่อกลับไปยังเบอร์ที่ลงทะเบียน<br />ภายใน 3–5 วันทำการ
+        <span className="text-[16px] font-bold">🏅 {w.prizeLabel}</span>
       </div>
     </div>
   )
