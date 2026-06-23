@@ -675,7 +675,30 @@ interface SvUserSearch {
   display_name?: string
   first_name?: string
   last_name?: string
+  [k: string]: unknown // backend อาจส่ง address / address fields เพิ่ม — อ่านแบบเผื่อ
 }
+
+// ประกอบ "ที่อยู่" จาก response ลูกค้า — เผื่อ backend ส่งมาแบบ string เดียว หรือแยกฟิลด์/array
+function composeAddress(u: Record<string, unknown>): string {
+  const str = (v: unknown) => (typeof v === 'string' ? v.trim() : typeof v === 'number' ? String(v) : '')
+  // 1) string เดียว
+  const flat = str(u.address) || str(u.full_address) || str(u.addr) || str(u.address_text) || str(u.address_full)
+  if (flat) return flat
+  // 2) แยกฟิลด์ — top-level หรือ addresses[0]
+  const arr = u.addresses
+  const a = (Array.isArray(arr) && arr[0] && typeof arr[0] === 'object' ? (arr[0] as Record<string, unknown>) : u)
+  const line = str(a.address_line) || str(a.addressLine) || str(a.line1) || str(a.detail) ||
+    [str(a.house_no) || str(a.house_number), str(a.village) || str(a.moo), str(a.road) || str(a.street)].filter(Boolean).join(' ')
+  const parts = [
+    line,
+    str(a.subdistrict) || str(a.sub_district) || str(a.tambon) || str(a.subDistrict),
+    str(a.district) || str(a.amphoe) || str(a.amphur),
+    str(a.province) || str(a.changwat),
+    str(a.postcode) || str(a.postal_code) || str(a.zipcode) || str(a.zip),
+  ].filter(Boolean)
+  return parts.join(' ').trim()
+}
+
 export async function searchCustomers(q: string): Promise<CustomerSearchResponse> {
   const query = (q ?? '').trim()
   if (query.length < 2) return { q: query, results: [] }
@@ -685,6 +708,7 @@ export async function searchCustomers(q: string): Promise<CustomerSearchResponse
       id: String(u.id ?? ''),
       name: (u.display_name?.trim() || `${u.first_name ?? ''} ${u.last_name ?? ''}`.trim() || u.email || '').trim(),
       phone: u.phone ?? '',
+      address: composeAddress(u) || undefined, // auto-fill หน้า Operations ถ้า backend คืนที่อยู่มา
     }))
     .filter((c) => c.name || c.phone)
   return { q: query, results }

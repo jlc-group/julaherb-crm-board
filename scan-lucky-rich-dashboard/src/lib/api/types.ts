@@ -342,6 +342,7 @@ export interface CustomerSearchResult {
   id: string
   name: string
   phone: string                  // raw — mask ตอน render
+  address?: string               // ที่อยู่ลูกค้า (ถ้า backend คืนมา) — ใช้ auto-fill หน้า Operations
 }
 export interface CustomerSearchResponse {
   q: string

@@ -50,7 +50,28 @@ export default function WinnerPicker({
   const [mCode, setMCode] = useState('')
   const [mAddress, setMAddress] = useState('')
   const [saving, setSaving] = useState(false)
+  const [addrLoading, setAddrLoading] = useState(false)
   const [err, setErr] = useState('')
+
+  // ดึงที่อยู่ลูกค้าจาก API (ค้นด้วยเบอร์) แล้ว auto-fill — เติมเฉพาะถ้าช่องยังว่าง/ยังไม่ได้แก้เอง
+  async function lookupAddress(phone: string) {
+    const digits = (phone || '').replace(/\D/g, '')
+    if (digits.length < 4) return
+    setAddrLoading(true)
+    try {
+      const r = await fetch('/api/customers/search?q=' + encodeURIComponent(digits))
+      const b = await r.json()
+      const last9 = digits.slice(-9)
+      const hit = (b.results ?? []).find((c: any) => (c.phone || '').replace(/\D/g, '').endsWith(last9)) ?? (b.results ?? [])[0]
+      if (hit?.address) {
+        setPicked((p) => (p && !p.address.trim() ? { ...p, address: String(hit.address) } : p))
+      }
+    } catch {
+      /* ดึงที่อยู่ไม่สำเร็จ — กรอกเองได้ */
+    } finally {
+      setAddrLoading(false)
+    }
+  }
 
   // ค้นจากพูล: ชื่อ / เบอร์ / รหัสสแกน (ช่องเดียว)
   const results = useMemo(() => {
@@ -177,9 +198,15 @@ export default function WinnerPicker({
                 <div className="mt-1 text-[12px] text-[var(--dark)]">📦 สินค้า: <span className="font-semibold">{picked.productName}</span>{picked.productSku ? <span className="text-[var(--text-secondary)]"> ({picked.productSku})</span> : null}</div>
               )}
 
-              {/* ที่อยู่ลูกค้า — แก้/วางได้ (สำหรับทีมโทร + ส่งรางวัลถึงบ้าน) */}
+              {/* ที่อยู่ลูกค้า — ดึงจาก API อัตโนมัติ · แก้ได้ (สำหรับทีมโทร + ส่งรางวัลถึงบ้าน) */}
               <div className="mt-2">
-                <div className="text-[11px] text-[var(--text-secondary)] mb-1">ที่อยู่ลูกค้า (สำหรับติดต่อ/ส่งรางวัล · ไม่บังคับ)</div>
+                <div className="text-[11px] text-[var(--text-secondary)] mb-1 flex items-center gap-1.5">
+                  ที่อยู่ลูกค้า (สำหรับติดต่อ/ส่งรางวัล)
+                  {addrLoading && <span className="text-[var(--primary)]">⏳ กำลังดึงที่อยู่…</span>}
+                  {!addrLoading && (
+                    <button onClick={() => lookupAddress(picked.phone)} className="text-[var(--primary)] font-semibold underline">ดึงที่อยู่จากระบบ</button>
+                  )}
+                </div>
                 <textarea
                   value={picked.address}
                   onChange={(e) => setPicked({ ...picked, address: e.target.value })}
@@ -226,6 +253,7 @@ export default function WinnerPicker({
                 setErr('')
                 setPicked({ name: mName, phone: mPhone, scanCode: mCode, address: mAddress, codes: [] })
                 setManual(false)
+                if (!mAddress.trim()) lookupAddress(mPhone) // ลองดึงที่อยู่จากระบบมาเติม
               }}
               className="w-full mt-3 px-4 py-2 rounded-md text-white font-semibold text-sm"
               style={{ background: 'var(--primary)' }}
@@ -265,11 +293,11 @@ export default function WinnerPicker({
                 return (
                   <button
                     key={(c.phone || c.name) + idx}
-                    // TODO(address): เติม address: c.address ?? '' เมื่อ /draw/pool คืน address → auto-fill ทันที
                     onClick={() => {
                       const code = matchedCode ?? (c.codes.length === 1 ? c.codes[0] : '')
                       const prod = c.products?.[code]
-                      setPicked({ name: c.name, phone: c.phone, scanCode: code, productName: prod?.name, productSku: prod?.sku, address: '', rights: c.rights, codes: c.codes, products: c.products })
+                      setPicked({ name: c.name, phone: c.phone, scanCode: code, productName: prod?.name, productSku: prod?.sku, address: c.address ?? '', rights: c.rights, codes: c.codes, products: c.products })
+                      if (!c.address) lookupAddress(c.phone) // ดึงที่อยู่จาก API มาเติมอัตโนมัติ
                     }}
                     className="w-full text-left px-3 py-2 hover:bg-[var(--bg-soft)] flex items-center justify-between gap-2"
                   >
