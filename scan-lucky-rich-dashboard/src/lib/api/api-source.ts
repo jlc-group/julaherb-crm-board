@@ -734,6 +734,34 @@ export async function getCustomerAddress(phone: string): Promise<string> {
     .join(' ')
 }
 
+// วิเคราะห์ปัญหา (debug) — บอกว่าติดขั้นไหน: หา id เจอมั้ย / มีที่อยู่กี่อัน / field อะไรบ้าง
+export async function getCustomerAddressDiag(phone: string): Promise<Record<string, unknown>> {
+  const digits = (phone || '').replace(/\D/g, '')
+  const out: Record<string, unknown> = { dataSource: process.env.DATA_SOURCE ?? 'mock', phoneDigits: digits }
+  try {
+    const sr = await sv<{ data: SvUserSearch[] }>('/customers/search', { q: digits })
+    const data = sr.data ?? []
+    out.searchCount = data.length
+    out.searchPhones = data.slice(0, 5).map((x) => x.phone ?? '')
+    const last9 = digits.slice(-9)
+    const u = data.find((x) => (x.phone ?? '').replace(/\D/g, '').endsWith(last9)) ?? data[0]
+    out.matchedId = u?.id ?? null
+    out.matchedPhone = u?.phone ?? null
+    if (u?.id) {
+      const dr = await sv<{ addresses?: Array<Record<string, unknown>> }>(`/customers/${u.id}/detail`, {})
+      const addrs = dr.addresses ?? []
+      out.addrCount = addrs.length
+      out.hasDefault = addrs.some((a) => a.is_default === true)
+      out.firstAddrKeys = addrs[0] ? Object.keys(addrs[0]) : []
+      out.detailTopKeys = Object.keys(dr as Record<string, unknown>).slice(0, 15)
+    }
+    out.address = await getCustomerAddress(phone)
+  } catch (e: any) {
+    out.error = e?.message ?? String(e)
+  }
+  return out
+}
+
 // ════════════════════════════════════════════════════════════════
 // SKU Co-Scan Pairs — saversureV2 `/dashboard/sku-co-scan`
 // Source: analytics_product_affinities (pre-computed, no scan_history)
