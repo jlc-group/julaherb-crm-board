@@ -75,6 +75,8 @@ export interface DataSource {
 
   // ค้นหาลูกค้า (หน้า Operation: หาผู้ได้รางวัลมาบันทึก)
   searchCustomers(q: string): Promise<CustomerSearchResponse>
+  // ที่อยู่จัดส่งค่าเริ่มต้นของลูกค้า (จากเบอร์ → /customers/search หา id → /customers/{id}/detail)
+  getCustomerAddress(phone: string): Promise<string>
 
   // NEW — deploy 2026-06-18
   getScansByDayHour(from: DateString, to: DateString): Promise<DayHourResponse>

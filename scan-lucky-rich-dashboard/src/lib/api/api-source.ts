@@ -714,6 +714,26 @@ export async function searchCustomers(q: string): Promise<CustomerSearchResponse
   return { q: query, results }
 }
 
+// ที่อยู่จัดส่งค่าเริ่มต้นของลูกค้า — หา id จากเบอร์ (/customers/search) แล้วดึง addresses จาก /customers/{id}/detail
+export async function getCustomerAddress(phone: string): Promise<string> {
+  const digits = (phone || '').replace(/\D/g, '')
+  if (digits.length < 4) return ''
+  // 1) หา user id จากเบอร์
+  const sr = await sv<{ data: SvUserSearch[] }>('/customers/search', { q: digits })
+  const last9 = digits.slice(-9)
+  const u = (sr.data ?? []).find((x) => (x.phone ?? '').replace(/\D/g, '').endsWith(last9)) ?? (sr.data ?? [])[0]
+  if (!u?.id) return ''
+  // 2) ดึงรายละเอียดลูกค้า (มี addresses[]) → เลือกที่อยู่ default (ไม่งั้นอันแรก)
+  const dr = await sv<{ addresses?: Array<Record<string, unknown>> }>(`/customers/${u.id}/detail`, {})
+  const addrs = dr.addresses ?? []
+  const a = addrs.find((x) => x.is_default === true) ?? addrs[0]
+  if (!a) return ''
+  const str = (v: unknown) => (typeof v === 'string' ? v.trim() : '')
+  return [str(a.address_line1), str(a.address_line2), str(a.sub_district), str(a.district), str(a.province), str(a.postal_code)]
+    .filter(Boolean)
+    .join(' ')
+}
+
 // ════════════════════════════════════════════════════════════════
 // SKU Co-Scan Pairs — saversureV2 `/dashboard/sku-co-scan`
 // Source: analytics_product_affinities (pre-computed, no scan_history)

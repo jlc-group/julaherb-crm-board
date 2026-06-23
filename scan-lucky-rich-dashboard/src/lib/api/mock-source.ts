@@ -453,6 +453,10 @@ export async function searchCustomers(q: string): Promise<CustomerSearchResponse
   return { q: (q ?? '').trim(), results: [] }
 }
 
+export async function getCustomerAddress(_phone: string): Promise<string> {
+  return '' // mock ไม่มีที่อยู่จริง
+}
+
 // ════════════════════════════════════════════════════════════════
 // System / Uptime
 // ════════════════════════════════════════════════════════════════

@@ -53,18 +53,16 @@ export default function WinnerPicker({
   const [addrLoading, setAddrLoading] = useState(false)
   const [err, setErr] = useState('')
 
-  // ดึงที่อยู่ลูกค้าจาก API (ค้นด้วยเบอร์) แล้ว auto-fill — เติมเฉพาะถ้าช่องยังว่าง/ยังไม่ได้แก้เอง
+  // ดึงที่อยู่จัดส่งค่าเริ่มต้นจาก API (ตามเบอร์) แล้ว auto-fill — เติมเฉพาะถ้าช่องยังว่าง
   async function lookupAddress(phone: string) {
     const digits = (phone || '').replace(/\D/g, '')
     if (digits.length < 4) return
     setAddrLoading(true)
     try {
-      const r = await fetch('/api/customers/search?q=' + encodeURIComponent(digits))
+      const r = await fetch('/api/customers/address?phone=' + encodeURIComponent(digits))
       const b = await r.json()
-      const last9 = digits.slice(-9)
-      const hit = (b.results ?? []).find((c: any) => (c.phone || '').replace(/\D/g, '').endsWith(last9)) ?? (b.results ?? [])[0]
-      if (hit?.address) {
-        setPicked((p) => (p && !p.address.trim() ? { ...p, address: String(hit.address) } : p))
+      if (b.address) {
+        setPicked((p) => (p && !p.address.trim() ? { ...p, address: String(b.address) } : p))
       }
     } catch {
       /* ดึงที่อยู่ไม่สำเร็จ — กรอกเองได้ */
