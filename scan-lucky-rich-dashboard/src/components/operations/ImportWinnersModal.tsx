@@ -25,7 +25,7 @@ interface Entry {
   phone: string
   slot?: PrizeSlot
   inPool: boolean
-  matchKey: '' | 'เบอร์' | 'รหัส' // จับคู่พูลด้วยอะไร
+  matchKey: '' | 'เบอร์' | 'รหัส' | 'ชื่อ' // จับคู่ด้วยอะไร ('ชื่อ' = ค้น /customers/search ตอนบันทึก)
   rights?: number
   scanCode?: string
   productName?: string
@@ -154,7 +154,7 @@ export default function ImportWinnersModal({ round, winners, pool, onClose, onSa
         const slot = ordered[i]
         const warn: string[] = []
         let block: string | undefined
-        let matchKey: '' | 'เบอร์' | 'รหัส' = ''
+        let matchKey: '' | 'เบอร์' | 'รหัส' | 'ชื่อ' = ''
         let name = p.name
         let phone = p.phone
         let scanCode = (p.code || '').trim()
@@ -164,8 +164,9 @@ export default function ImportWinnersModal({ round, winners, pool, onClose, onSa
         let inPool = false
 
         const phoneKey = phoneLast9(phone)
+        const codeHit = scanCode ? poolByCode.get(scanCode.toUpperCase()) : undefined
         if (phoneKey && phoneKey.length >= 9) {
-          // โหมดเบอร์ — จับพูลด้วยเบอร์โดยตรง
+          // 1) มีเบอร์ → จับพูลด้วยเบอร์โดยตรง
           matchKey = 'เบอร์'
           const c = poolByPhone.get(phoneKey)
           if (c) {
@@ -178,36 +179,32 @@ export default function ImportWinnersModal({ round, winners, pool, onClose, onSa
               productSku = pr?.sku
             }
           }
-        } else if (scanCode) {
-          // โหมดรหัส — ไม่มีเบอร์ → หาเบอร์จากพูลด้วยรหัสสแกน
+        } else if (codeHit) {
+          // 2) รหัสอยู่ในพูล → ดึงเบอร์จากรหัส
           matchKey = 'รหัส'
-          const c = poolByCode.get(scanCode.toUpperCase())
-          if (c) {
-            inPool = true
-            phone = c.phone // ✅ ดึงเบอร์จากรหัส → ใช้ดึงที่อยู่ต่อ
-            if (!name) name = c.name
-            rights = c.rights
-            const pr = c.products?.[scanCode] ?? c.products?.[scanCode.toUpperCase()]
-            productName = productName ?? pr?.name
-            productSku = pr?.sku
-          } else {
-            block = 'รหัสไม่พบในพูลของรอบนี้ (ดึงเบอร์/ที่อยู่ไม่ได้)'
-          }
+          inPool = true
+          phone = codeHit.phone
+          if (!name) name = codeHit.name
+          rights = codeHit.rights
+          const pr = codeHit.products?.[scanCode] ?? codeHit.products?.[scanCode.toUpperCase()]
+          productName = productName ?? pr?.name
+          productSku = pr?.sku
+        } else if (name && name.trim()) {
+          // 3) ไม่มีเบอร์ + รหัสไม่อยู่ในพูล แต่มีชื่อ → ค้น /customers/search ตอนบันทึก
+          matchKey = 'ชื่อ'
         } else {
-          block = 'ไม่มีเบอร์และไม่มีรหัส — บันทึกไม่ได้'
+          block = 'ไม่มีชื่อ/เบอร์/รหัส — บันทึกไม่ได้'
         }
 
-        // ตรวจซ้ำ/เกิน (ใช้เบอร์ที่ได้ — รวมเบอร์ที่ดึงจากรหัส)
+        // ตรวจซ้ำ/เกิน — เฉพาะแถวที่รู้เบอร์แล้ว (โหมดชื่อจะตรวจตอนบันทึกหลังได้เบอร์)
         const k = phoneLast9(phone)
-        if (!block) {
-          if (!k || k.length < 9) block = 'หาเบอร์ไม่ได้ — บันทึกไม่ได้'
-          else if (seen.has(k)) block = 'เบอร์ซ้ำในไฟล์ (คนเดียวกัน)'
+        if (!block && k) {
+          if (seen.has(k)) block = 'เบอร์ซ้ำในไฟล์ (คนเดียวกัน)'
           else if (existingByPhone.has(k)) block = 'เป็นผู้ชนะในรอบนี้แล้ว'
+          seen.add(k)
         }
-        if (k) seen.add(k)
         if (!slot) block = block ?? 'เกินจำนวนรางวัลของรอบ'
         else if (!block && filledSlots.has(slot.slotId)) warn.push('ช่องนี้มีคนแล้ว — จะเขียนทับ')
-        if (!block && !inPool) warn.push('ไม่เจอในพูล')
 
         return { idx: i, name, phone, slot, inPool, matchKey, rights, scanCode, productName, productSku, warn, block }
       })
@@ -243,6 +240,27 @@ export default function ImportWinnersModal({ round, winners, pool, onClose, onSa
     }
   }
 
+  // ค้นลูกค้าจาก "ชื่อ" → เบอร์ + ที่อยู่ (สำหรับไฟล์ที่รหัสไม่อยู่ในพูล/ไม่มีเบอร์)
+  // ใช้ /customers/search (ค้นชื่อได้จริง ไม่ติด cap พูลแบบรหัส) · เลือกที่ชื่อตรงเป๊ะก่อน
+  async function resolveByName(name: string): Promise<{ phone: string; address: string } | null> {
+    const q = (name || '').replace(/\s+/g, ' ').trim()
+    if (q.length < 2) return null
+    try {
+      const r = await fetch('/api/customers/search?q=' + encodeURIComponent(q))
+      const b = await r.json()
+      const results: Array<{ name?: string; phone?: string; address?: string }> = b.results || []
+      if (!results.length) return null
+      const norm = (s?: string) => (s || '').replace(/\s+/g, ' ').trim()
+      const withPhone = results.filter((x) => phoneLast9(x.phone || '').length >= 9)
+      if (!withPhone.length) return null
+      const pick = withPhone.find((x) => norm(x.name) === q) ?? (withPhone.length === 1 ? withPhone[0] : null)
+      if (!pick?.phone) return null // ชื่อซ้ำหลายคน + ไม่ตรงเป๊ะ → ไม่เดา ให้เพิ่มเอง
+      return { phone: pick.phone, address: pick.address || '' }
+    } catch {
+      return null
+    }
+  }
+
   async function save() {
     const toSave = entries.filter((en) => en.slot && !en.block)
     setPhase('saving')
@@ -250,10 +268,36 @@ export default function ImportWinnersModal({ round, winners, pool, onClose, onSa
     const logs: string[] = []
     let saved = 0
     let failed = 0
+    let skippedAtSave = 0
+    // กันซ้ำตอนบันทึก (รวมผู้ชนะเดิมในรอบ + ที่เพิ่งบันทึกรอบนี้)
+    const savedPhones = new Set<string>(winners.filter((w) => w.round === round.round).map((w) => phoneLast9(w.phone)))
     for (let i = 0; i < toSave.length; i++) {
       const en = toSave[i]
       const slot = en.slot!
-      const address = autoAddr ? await lookupAddress(en.phone) : ''
+      let phone = en.phone
+      let addrFromSearch = ''
+      // โหมดชื่อ: ยังไม่รู้เบอร์ → ค้นจากชื่อก่อน
+      if (phoneLast9(phone).length < 9 && en.name) {
+        const hit = await resolveByName(en.name)
+        if (hit) {
+          phone = hit.phone
+          addrFromSearch = hit.address
+        }
+      }
+      const k = phoneLast9(phone)
+      if (k.length < 9) {
+        skippedAtSave++
+        logs.push(`⊘ ${en.name}: ค้นด้วยชื่อไม่เจอลูกค้าในระบบ — เพิ่มเองทีหลัง`)
+        setProgress({ done: i + 1, total: toSave.length })
+        continue
+      }
+      if (savedPhones.has(k)) {
+        skippedAtSave++
+        logs.push(`⊘ ${en.name} (${phone}): เบอร์ซ้ำ — ข้าม`)
+        setProgress({ done: i + 1, total: toSave.length })
+        continue
+      }
+      const address = autoAddr ? addrFromSearch || (await lookupAddress(phone)) : ''
       try {
         const r = await fetch('/api/draw/winners', {
           method: 'POST',
@@ -264,7 +308,7 @@ export default function ImportWinnersModal({ round, winners, pool, onClose, onSa
             tier: slot.tier,
             prizeLabel: slot.tierLabel,
             name: en.name,
-            phone: en.phone,
+            phone,
             scanCode: en.scanCode || undefined,
             productName: en.productName || undefined,
             productSku: en.productSku || undefined,
@@ -272,19 +316,25 @@ export default function ImportWinnersModal({ round, winners, pool, onClose, onSa
             address: address || undefined,
           }),
         })
-        if (r.ok) saved++
-        else {
+        if (r.ok) {
+          saved++
+          savedPhones.add(k)
+        } else if (r.status === 409) {
+          skippedAtSave++
+          const b = await r.json().catch(() => ({}))
+          logs.push(`⊘ ${en.name} (${phone}): ${b.error ?? 'ได้รางวัลในรอบนี้แล้ว'}`)
+        } else {
           failed++
           const b = await r.json().catch(() => ({}))
-          logs.push(`❌ ${en.name} (${en.phone}): ${b.error ?? 'HTTP ' + r.status}`)
+          logs.push(`❌ ${en.name} (${phone}): ${b.error ?? 'HTTP ' + r.status}`)
         }
       } catch (err) {
         failed++
-        logs.push(`❌ ${en.name} (${en.phone}): ${err instanceof Error ? err.message : String(err)}`)
+        logs.push(`❌ ${en.name} (${phone}): ${err instanceof Error ? err.message : String(err)}`)
       }
       setProgress({ done: i + 1, total: toSave.length })
     }
-    const skipped = entries.length - toSave.length
+    const skipped = entries.length - toSave.length + skippedAtSave
     setResult({ saved, skipped, failed, logs })
     setPhase('done')
     onSaved()
@@ -311,9 +361,9 @@ export default function ImportWinnersModal({ round, winners, pool, onClose, onSa
         {phase === 'select' && (
           <div>
             <div className="text-[12.5px] text-[var(--text-secondary)] bg-[var(--bg-soft)] rounded-md px-3 py-2 leading-relaxed mb-3">
-              ไฟล์ <b>.xlsx / .csv</b> · คอลัมน์ <b>ชื่อ · นามสกุล</b> + <b>เบอร์โทรศัพท์</b> หรือ <b>รหัสสแกน</b> อย่างใดอย่างหนึ่ง
+              ไฟล์ <b>.xlsx / .csv</b> · ต้องมี <b>ชื่อ · นามสกุล</b> เป็นอย่างน้อย (มี เบอร์ / รหัสสแกน ด้วยก็ได้)
               <br />
-              <span className="text-[var(--primary)]">มีแต่รหัสสแกน (ไม่มีเบอร์) ก็ได้</span> — ระบบจะหาเบอร์ + ที่อยู่ + จังหวัด จากรหัสมาเติมให้เอง
+              <span className="text-[var(--primary)]">ระบบจะค้นลูกค้าจาก ชื่อ → รหัส → เบอร์ แล้วเติม เบอร์ + ที่อยู่ + จังหวัด ให้เอง</span>
               <br />
               <b>ลำดับแถว = ลำดับวัน</b> — แถวแรกลงผู้โชคดีวันที่ 1 ของเดือน ไล่ลงไปจนครบ แล้วต่อรางวัลรายเดือน/รางวัลใหญ่
             </div>
@@ -375,9 +425,13 @@ export default function ImportWinnersModal({ round, winners, pool, onClose, onSa
                           <span className="text-[11px] text-red-700 font-semibold">⛔ {en.block}</span>
                         ) : (
                           <span className="flex flex-col gap-0.5">
-                            <span className="text-[11px] text-[#15803d]">
-                              {en.inPool ? `✓ เจอในพูล (จับด้วย${en.matchKey})${en.rights ? ` · ${en.rights} สิทธิ์` : ''}` : '• กรอกจากไฟล์'}
-                            </span>
+                            {en.inPool ? (
+                              <span className="text-[11px] text-[#15803d]">✓ เจอในพูล (จับด้วย{en.matchKey}){en.rights ? ` · ${en.rights} สิทธิ์` : ''}</span>
+                            ) : en.matchKey === 'ชื่อ' ? (
+                              <span className="text-[11px] text-[var(--primary)]">🔎 จะค้นเบอร์/ที่อยู่จากชื่อตอนบันทึก</span>
+                            ) : (
+                              <span className="text-[11px] text-[var(--text-secondary)]">• กรอกจากไฟล์</span>
+                            )}
                             {en.warn.map((w, i) => <span key={i} className="text-[11px] text-amber-700">⚠️ {w}</span>)}
                           </span>
                         )}
