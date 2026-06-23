@@ -1,11 +1,13 @@
 // นัดหมายเข้ารับรางวัลหน้างาน — เก็บเป็นไฟล์ JSON ใน dashboard server (ไม่แตะ saversureV2)
-// GET = อ่านทั้งหมด · POST = upsert การจอง/อัปเดตสถานะ (key = เบอร์ 9 หลักท้าย)
-// ฝั่งลูกค้าหน้า /claim จะ POST มาบันทึกการจอง · แอดมินใช้ POST อัปเดตสถานะ (booked/done/no_show)
+// GET ?phone=  = ดูนัดของเบอร์นั้น (ลูกค้าเช็คเองได้ทุกเครื่อง · ไม่ leak คนอื่น)
+// GET (ไม่มี phone) = ดูทั้งหมด (แอดมินเท่านั้น — มี PII)
+// POST = upsert การจอง (เช็คโควตา + วันที่ถูกต้อง) / อัปเดตสถานะ (booked/done/no_show)
 import { NextRequest, NextResponse } from 'next/server'
 import fs from 'fs'
 import path from 'path'
 import { fail } from '../../_utils'
 import type { DrawAppointment, AppointmentStatus } from '@/config/draw-rounds'
+import { ALL_PICKUP_DATES, slotById } from '@/config/pickup'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -14,6 +16,7 @@ const DATA_DIR = process.env.DATA_DIR || path.join(process.cwd(), 'data')
 const FILE = path.join(DATA_DIR, 'draw-appointments.json')
 
 const VALID: AppointmentStatus[] = ['booked', 'done', 'no_show']
+const PICKUP_DATES = new Set(ALL_PICKUP_DATES)
 
 function last9(phone: string): string {
   const d = (phone || '').replace(/\D/g, '')
@@ -38,8 +41,29 @@ function json(data: unknown, status = 200) {
   return NextResponse.json(data, { status, headers: { 'Cache-Control': 'no-store' } })
 }
 
-export async function GET() {
-  return json({ appointments: read() })
+// แอดมินดูรายการทั้งหมดได้ไหม — ไม่ตั้ง ADMIN_KEY = เปิด (local dev) · ตั้งแล้วต้องมี header/cookie
+function adminOk(req: NextRequest): boolean {
+  const key = process.env.ADMIN_KEY
+  if (!key) return true
+  return req.headers.get('x-admin-key') === key || req.cookies.get('adminKey')?.value === key
+}
+
+// นับที่จองแล้วของ (date, slot) — ไม่นับ no_show และไม่นับเบอร์ตัวเอง (กันนับซ้ำตอนแก้/จองใหม่)
+function bookedCount(list: DrawAppointment[], date: string, slotId: string, exceptKey: string): number {
+  return list.filter((a) => a.date === date && a.slotId === slotId && a.status !== 'no_show' && a.phoneLast9 !== exceptKey).length
+}
+
+export async function GET(req: NextRequest) {
+  const list = read()
+  const phone = req.nextUrl.searchParams.get('phone')
+  if (phone) {
+    // ลูกค้าเช็คนัดของตัวเอง (เครื่องไหนก็ได้) — คืนเฉพาะเบอร์นั้น
+    const key = last9(phone)
+    return json({ appointments: key ? list.filter((a) => a.phoneLast9 === key) : [] })
+  }
+  // ดูทั้งหมด = มี PII (ชื่อ+เบอร์ทุกคน) → แอดมินเท่านั้น
+  if (!adminOk(req)) return fail('unauthorized — รายการนัดทั้งหมดต้องใช้สิทธิ์แอดมิน', 401)
+  return json({ appointments: list })
 }
 
 export async function POST(req: NextRequest) {
@@ -68,12 +92,26 @@ export async function POST(req: NextRequest) {
 
   // upsert การจอง (จากหน้า /claim หรือ seed)
   if (!body.date || !body.slotId) return fail('ต้องมี date + slotId', 400)
+  const date = String(body.date)
+  const slotId = body.slotId === 'afternoon' ? 'afternoon' : 'morning'
+
+  // ── เช็ควันที่ต้องเป็น "วันรับรางวัล" จริง (กันจองวันหยุด/วันจับ/นอกช่วง) ──
+  if (!PICKUP_DATES.has(date)) return fail('วันที่นี้ไม่เปิดรับรางวัล — กรุณาเลือกวันจากปฏิทิน', 400)
+
+  // ── เช็คโควตาช่วงเวลา (เช้า 3 / บ่าย 5) — กันจองเกิน คนล้นหน้างาน ──
+  const cap = slotById(slotId)?.capacity ?? 0
+  const used = bookedCount(list, date, slotId, key)
+  if (used >= cap) {
+    const slotName = slotId === 'morning' ? 'ช่วงเช้า' : 'ช่วงบ่าย'
+    return fail(`${slotName}ของวันนี้เต็มแล้ว (${cap} คน) — กรุณาเลือกช่วงเวลาหรือวันอื่น`, 409)
+  }
+
   const rec: DrawAppointment = {
     phoneLast9: key,
     phone: String(phone),
     name: String(body.name ?? ''),
-    date: String(body.date),
-    slotId: body.slotId === 'afternoon' ? 'afternoon' : 'morning',
+    date,
+    slotId,
     pickupMode: body.pickupMode === 'proxy' ? 'proxy' : body.pickupMode === 'self' ? 'self' : idx >= 0 ? list[idx].pickupMode : undefined,
     prizes: Array.isArray(body.prizes) ? body.prizes : [],
     rounds: Array.isArray(body.rounds) ? body.rounds : [],
