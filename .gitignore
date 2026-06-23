@@ -26,3 +26,7 @@ campaign-repo/
 
 # ⚠️ PII exports — ห้าม commit (ชื่อลูกค้า/พนักงานจริง)
 รายชื่อ*
+Report Update per Month/
+file update รายวัน/
+*.docx
+*.csv
