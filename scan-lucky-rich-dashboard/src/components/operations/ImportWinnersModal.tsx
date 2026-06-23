@@ -60,20 +60,25 @@ async function parseFile(file: File): Promise<{ name: string; phone: string; cod
   let cFull = -1
   let cCode = -1
   let cProduct = -1
+  // จับเฉพาะ "เซลล์หัวตาราง" (สั้น) — กัน title ยาวที่มีคำว่า "รายชื่อ"/"สแกน" โดนเข้าใจผิดเป็น header
+  const isHdr = (c: string) => c.length > 0 && c.length <= 40
   for (let r = 0; r < Math.min(aoa.length, 8); r++) {
     const cells = norm(aoa[r])
     const low = cells.map((c) => c.toLowerCase())
-    const phoneIdx = low.findIndex((c) => PHONE_K.some((k) => c.includes(k)))
-    const lastIdx = cells.findIndex((c) => LAST_K.some((k) => c.toLowerCase().includes(k)))
-    const firstIdx = cells.findIndex((c) => c.includes('ชื่อ') && !c.includes('นามสกุล'))
-    const combinedIdx = cells.findIndex((c) => c.includes('ชื่อ') && c.includes('สกุล'))
-    const nameLatin = low.findIndex((c) => c === 'name' || c.includes('firstname') || c.includes('first name'))
+    const phoneIdx = low.findIndex((c) => isHdr(c) && PHONE_K.some((k) => c.includes(k)))
+    const lastIdx = cells.findIndex((c) => isHdr(c) && LAST_K.some((k) => c.toLowerCase().includes(k)))
+    const firstIdx = cells.findIndex((c) => isHdr(c) && c.includes('ชื่อ') && !c.includes('นามสกุล'))
+    const combinedIdx = cells.findIndex((c) => isHdr(c) && c.includes('ชื่อ') && c.includes('สกุล'))
+    const nameLatin = low.findIndex((c) => isHdr(c) && (c === 'name' || c.includes('firstname') || c.includes('first name')))
     // รหัสสแกน (กัน "รหัสไปรษณีย์") · สินค้า
     const codeIdx = cells.findIndex(
-      (c) => (c.includes('รหัส') && !c.includes('ไปรษณีย์')) || c.toLowerCase() === 'code' || c.toLowerCase().includes('scancode') || c.includes('สแกน'),
+      (c) => isHdr(c) && ((c.includes('รหัส') && !c.includes('ไปรษณีย์')) || c.toLowerCase() === 'code' || c.toLowerCase().includes('scancode') || c.includes('สแกน')),
     )
-    const productIdx = cells.findIndex((c) => c.includes('สินค้า') || c.toLowerCase().includes('product'))
-    if (phoneIdx >= 0 || lastIdx >= 0 || firstIdx >= 0 || combinedIdx >= 0 || codeIdx >= 0) {
+    const productIdx = cells.findIndex((c) => isHdr(c) && (c.includes('สินค้า') || c.toLowerCase().includes('product')))
+    const hasName = firstIdx >= 0 || combinedIdx >= 0 || lastIdx >= 0 || nameLatin >= 0
+    const hasKey = phoneIdx >= 0 || codeIdx >= 0
+    // header จริงต้องมี "ชื่อ" + ("เบอร์" หรือ "รหัส") ในแถวเดียวกัน — กัน title/แถวเดี่ยวโดนจับผิด
+    if (hasName && hasKey) {
       headerRow = r
       cPhone = phoneIdx
       cLast = lastIdx
