@@ -63,10 +63,14 @@
 
 ## 🟡 กลุ่ม 2 — ฟิลด์ที่ขาดจาก API ที่มีอยู่แล้ว
 
-### 2.1 ที่อยู่ลูกค้า (address)
-- **ใช้ที่:** ตารางผู้ชนะ (Operations) — ทีมต้องโทร + ส่งของถึงบ้าน
-- **ปัญหา:** `GET /customers/search?q=` คืนแค่ `id, name, phone` — **ไม่มี address** → ตอนนี้ทีมต้องพิมพ์เอง
-- **ต้องการ:** เพิ่ม `address` (+ จังหวัด/อำเภอ/ตำบล/ไปรษณีย์) ใน `/customers/search` **หรือ** เพิ่ม `GET /customers/<id>/address`
+### 2.1 ที่อยู่ลูกค้า (ที่อยู่จัดส่ง default) ✅ แก้แล้ว — ไม่ต้องแก้ backend
+- **ใช้ที่:** หน้า Operations — บันทึกผู้โชคดี (ช่อง "ที่อยู่ (ติดต่อ/ส่งรางวัล)")
+- **วิธีที่ใช้:** ดึงจาก endpoint ที่ **มีอยู่แล้ว** — ไม่ต้องแก้ saversureV2
+  1. `GET /customers/search?q=<เบอร์>` → ได้ `id`
+  2. `GET /customers/{id}/detail` → คืน `addresses[]` (มี `address_line1, sub_district, district, province, postal_code, is_default`)
+  3. dashboard เลือกแถว `is_default = true` → รวมเป็นข้อความ → auto-fill
+- **ฝั่ง dashboard:** route ใหม่ `GET /api/customers/address?phone=` + `getCustomerAddress()` ใน api-source · WinnerPicker เรียกตอนเลือกผู้ชนะ (commit `9cd733d`)
+- **เหลือแค่:** deploy dashboard (pull+build+restart) → ที่อยู่ขึ้นเอง (เฉพาะลูกค้าที่ตั้งที่อยู่ default ไว้)
 
 ---
 
