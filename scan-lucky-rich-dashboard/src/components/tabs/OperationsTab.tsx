@@ -15,6 +15,7 @@ import TabHeader from '@/components/ui/TabHeader'
 import DrawRoundSelector from '@/components/operations/DrawRoundSelector'
 import DrawSlotList from '@/components/operations/DrawSlotList'
 import WinnerPicker from '@/components/operations/WinnerPicker'
+import ImportWinnersModal from '@/components/operations/ImportWinnersModal'
 
 // หน้า "จับรางวัล" สำหรับวันงานจริง — บันทึกผู้ได้รางวัล 7 รอบ
 // การจับจริง = ปริ้นสลิปกระดาษ → โยนจับด้วยมือ · หน้านี้ใช้ "บันทึก" คนที่จับได้
@@ -22,6 +23,7 @@ export default function OperationsTab({ onOpenClaim }: { onOpenClaim?: (phoneLas
   const [winners, setWinners] = useState<DrawWinner[]>([])
   const [selectedRound, setSelectedRound] = useState<number | null>(null)
   const [picker, setPicker] = useState<{ slot: PrizeSlot; existing?: DrawWinner } | null>(null)
+  const [showImport, setShowImport] = useState(false)
   const [today, setToday] = useState('')
   // พูลค้นหาของรอบที่เลือก (ดึงครั้งเดียวตอนเลือกรอบ)
   const [pool, setPool] = useState<PoolCustomer[]>([])
@@ -87,6 +89,12 @@ export default function OperationsTab({ onOpenClaim }: { onOpenClaim?: (phoneLas
     load()
   }
 
+  // ดาวน์โหลด "รายชื่อผู้โชคดี" ตาม pattern ไฟล์ต้นฉบับ (10 คอลัมน์) ของรอบที่เลือก — ผ่าน server route
+  function downloadForm() {
+    if (!round) return
+    window.location.href = `/api/draw/winners/export?round=${round.round}&format=xlsx`
+  }
+
   function exportCsv() {
     if (!round) return
     const slots = roundSlots(round)
@@ -146,6 +154,8 @@ export default function OperationsTab({ onOpenClaim }: { onOpenClaim?: (phoneLas
             onPick={(slot, existing) => setPicker({ slot, existing })}
             onRemove={removeSlot}
             onExport={exportCsv}
+            onDownloadForm={downloadForm}
+            onImport={() => setShowImport(true)}
             onOpenClaim={onOpenClaim}
           />
         </>
@@ -165,6 +175,16 @@ export default function OperationsTab({ onOpenClaim }: { onOpenClaim?: (phoneLas
           poolCapped={poolMeta.capped}
           existing={picker.existing}
           onClose={() => setPicker(null)}
+          onSaved={load}
+        />
+      )}
+
+      {showImport && round && (
+        <ImportWinnersModal
+          round={round}
+          winners={winners}
+          pool={pool}
+          onClose={() => setShowImport(false)}
           onSaved={load}
         />
       )}

@@ -23,7 +23,9 @@ interface Props {
   winners: DrawWinner[]
   onPick: (slot: PrizeSlot, existing?: DrawWinner) => void
   onRemove: (slot: PrizeSlot) => void
-  onExport: () => void
+  onExport: () => void // CSV ละเอียด (สิทธิ์/ประวัติ/ที่อยู่) สำหรับทีมโทร
+  onDownloadForm: () => void // Excel ตาม pattern ไฟล์ต้นฉบับ (10 คอลัมน์)
+  onImport: () => void // อัปโหลดรายชื่อ → ระบุรายวันอัตโนมัติ
   onOpenClaim?: (phoneLast9: string) => void // กดผู้ได้รางวัล → ไปหน้ารับรางวัล
 }
 
@@ -38,7 +40,7 @@ function slotLabel(slot: PrizeSlot, round: DrawRound): { kicker: string; main: s
   return { kicker: 'รางวัลใหญ่ท้ายแคมเปญ', main: '🏆 ทอง 1 ล้าน', sub: '', big: true }
 }
 
-export default function DrawSlotList({ round, winners, onPick, onRemove, onExport, onOpenClaim }: Props) {
+export default function DrawSlotList({ round, winners, onPick, onRemove, onExport, onDownloadForm, onImport, onOpenClaim }: Props) {
   const ordered = DAY_ORDER.flatMap((t) => roundSlots(round).filter((s) => s.tier === t))
   const bySlot = new Map(winners.filter((w) => w.round === round.round).map((w) => [w.slotId, w]))
   const filled = ordered.filter((s) => bySlot.has(s.slotId)).length
@@ -57,9 +59,15 @@ export default function DrawSlotList({ round, winners, onPick, onRemove, onExpor
 
       <div className="card p-4">
         <ProgressBar label="ความคืบหน้าการบันทึก" current={filled} total={round.totalCount} />
-        <div className="flex justify-end">
-          <button onClick={onExport} disabled={filled === 0} className="px-3 py-1.5 rounded-md border border-[var(--border)] text-[13px] font-semibold disabled:opacity-40">
-            <i className="ti ti-download mr-1" /> Export CSV
+        <div className="flex justify-end gap-2 flex-wrap">
+          <button onClick={onImport} className="px-3 py-1.5 rounded-md border border-[var(--primary)] text-[var(--primary)] text-[13px] font-semibold mr-auto" title="อัปโหลดไฟล์รายชื่อ (ชื่อ/นามสกุล/เบอร์) แล้วระบบจะระบุรายวันให้อัตโนมัติตามลำดับแถว">
+            <i className="ti ti-upload mr-1" /> อัปโหลดรายชื่อ (ระบุรายวัน)
+          </button>
+          <button onClick={onExport} disabled={filled === 0} className="px-3 py-1.5 rounded-md border border-[var(--border)] text-[13px] font-semibold disabled:opacity-40" title="CSV ละเอียด — มีสิทธิ์ที่ส่ง / ประวัติรางวัล / ที่อยู่ สำหรับทีมโทร">
+            <i className="ti ti-file-spreadsheet mr-1" /> Export CSV (ละเอียด)
+          </button>
+          <button onClick={onDownloadForm} className="px-3 py-1.5 rounded-md text-white text-[13px] font-semibold" style={{ background: 'var(--primary)' }} title="Excel ตามฟอร์มต้นฉบับ: ลำดับ · รางวัล · วันจับ · วันประกาศ · ชื่อ · นามสกุล · เบอร์ · รหัส · สินค้า · จังหวัด">
+            <i className="ti ti-download mr-1" /> ดาวน์โหลดรายชื่อผู้โชคดี (Excel)
           </button>
         </div>
       </div>
