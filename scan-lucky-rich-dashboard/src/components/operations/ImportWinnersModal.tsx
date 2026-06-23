@@ -25,6 +25,7 @@ interface Entry {
   phone: string
   slot?: PrizeSlot
   inPool: boolean
+  matchKey: '' | 'เบอร์' | 'รหัส' // จับคู่พูลด้วยอะไร
   rights?: number
   scanCode?: string
   productName?: string
@@ -35,8 +36,8 @@ interface Entry {
 
 const digits = (s: string) => (s || '').replace(/\D/g, '')
 
-// แยกชื่อ/เบอร์จากไฟล์ — รองรับหัวตาราง (ชื่อ/นามสกุล/เบอร์) หรือไม่มีหัว (เดาจากรูปแบบเบอร์)
-async function parseFile(file: File): Promise<{ name: string; phone: string }[]> {
+// แยก ชื่อ/เบอร์/รหัส/สินค้า จากไฟล์ — รองรับหัวตาราง หรือไม่มีหัว (เดาจากรูปแบบเบอร์)
+async function parseFile(file: File): Promise<{ name: string; phone: string; code: string; product: string }[]> {
   const XLSX = await import('xlsx')
   // CSV: อ่านเป็น text (UTF-8) เพื่อกันภาษาไทยเพี้ยน — array buffer จะถอดรหัสผิด codepage
   // XLSX/XLS: อ่านเป็น array buffer (string ใน .xlsx เป็น UTF-8 อยู่แล้ว)
@@ -57,6 +58,8 @@ async function parseFile(file: File): Promise<{ name: string; phone: string }[]>
   let cLast = -1
   let cPhone = -1
   let cFull = -1
+  let cCode = -1
+  let cProduct = -1
   for (let r = 0; r < Math.min(aoa.length, 8); r++) {
     const cells = norm(aoa[r])
     const low = cells.map((c) => c.toLowerCase())
@@ -65,11 +68,18 @@ async function parseFile(file: File): Promise<{ name: string; phone: string }[]>
     const firstIdx = cells.findIndex((c) => c.includes('ชื่อ') && !c.includes('นามสกุล'))
     const combinedIdx = cells.findIndex((c) => c.includes('ชื่อ') && c.includes('สกุล'))
     const nameLatin = low.findIndex((c) => c === 'name' || c.includes('firstname') || c.includes('first name'))
-    if (phoneIdx >= 0 || lastIdx >= 0 || firstIdx >= 0 || combinedIdx >= 0) {
+    // รหัสสแกน (กัน "รหัสไปรษณีย์") · สินค้า
+    const codeIdx = cells.findIndex(
+      (c) => (c.includes('รหัส') && !c.includes('ไปรษณีย์')) || c.toLowerCase() === 'code' || c.toLowerCase().includes('scancode') || c.includes('สแกน'),
+    )
+    const productIdx = cells.findIndex((c) => c.includes('สินค้า') || c.toLowerCase().includes('product'))
+    if (phoneIdx >= 0 || lastIdx >= 0 || firstIdx >= 0 || combinedIdx >= 0 || codeIdx >= 0) {
       headerRow = r
       cPhone = phoneIdx
       cLast = lastIdx
       cFirst = firstIdx
+      cCode = codeIdx
+      cProduct = productIdx
       if (combinedIdx >= 0 && lastIdx < 0) {
         cFull = combinedIdx
         cFirst = -1
@@ -80,7 +90,7 @@ async function parseFile(file: File): Promise<{ name: string; phone: string }[]>
     }
   }
 
-  const out: { name: string; phone: string }[] = []
+  const out: { name: string; phone: string; code: string; product: string }[] = []
   if (headerRow >= 0) {
     for (let r = headerRow + 1; r < aoa.length; r++) {
       const cells = norm(aoa[r])
@@ -89,8 +99,10 @@ async function parseFile(file: File): Promise<{ name: string; phone: string }[]>
       let name = ''
       if (cFull >= 0) name = cells[cFull] ?? ''
       else name = `${cFirst >= 0 ? cells[cFirst] ?? '' : ''} ${cLast >= 0 ? cells[cLast] ?? '' : ''}`.trim()
-      if (!name && !phone) continue
-      out.push({ name, phone })
+      const code = cCode >= 0 ? cells[cCode] ?? '' : ''
+      const product = cProduct >= 0 ? cells[cProduct] ?? '' : ''
+      if (!name && !phone && !code) continue
+      out.push({ name, phone, code, product })
     }
   } else {
     // ไม่มีหัวตาราง — เดา: เบอร์ = ช่องที่ดูเป็นเบอร์, ชื่อ = ช่องข้อความก่อนหน้าเบอร์
@@ -101,7 +113,7 @@ async function parseFile(file: File): Promise<{ name: string; phone: string }[]>
       const phone = digits(pIdx >= 0 ? cells[pIdx] : '')
       const name = (pIdx >= 0 ? cells.slice(0, pIdx) : cells).join(' ').trim()
       if (!name && !phone) continue
-      out.push({ name, phone })
+      out.push({ name, phone, code: '', product: '' })
     }
   }
   return out
@@ -122,35 +134,77 @@ export default function ImportWinnersModal({ round, winners, pool, onClose, onSa
   )
 
   const build = useCallback(
-    (parsed: { name: string; phone: string }[]): Entry[] => {
+    (parsed: { name: string; phone: string; code: string; product: string }[]): Entry[] => {
       const poolByPhone = new Map(pool.map((c) => [phoneLast9(c.phone), c]))
+      // map รหัสสแกน (uppercase) → ลูกค้าในพูล (สำหรับไฟล์ที่ไม่มีเบอร์ แต่มีรหัส)
+      const poolByCode = new Map<string, PoolCustomer>()
+      for (const c of pool) for (const code of c.codes) poolByCode.set(code.toUpperCase().trim(), c)
+
       const roundWinners = winners.filter((w) => w.round === round.round)
       const existingByPhone = new Set(roundWinners.map((w) => phoneLast9(w.phone)))
       const filledSlots = new Set(roundWinners.map((w) => w.slotId))
       const seen = new Set<string>()
+
       return parsed.map((p, i) => {
-        const k = phoneLast9(p.phone)
         const slot = ordered[i]
-        const c = k ? poolByPhone.get(k) : undefined
         const warn: string[] = []
         let block: string | undefined
-        if (!k || k.length < 9) block = 'เบอร์ไม่ครบ/ไม่ถูกต้อง'
-        else if (seen.has(k)) block = 'เบอร์ซ้ำในไฟล์'
-        else if (existingByPhone.has(k)) block = 'เบอร์นี้เป็นผู้ชนะในรอบนี้แล้ว'
+        let matchKey: '' | 'เบอร์' | 'รหัส' = ''
+        let name = p.name
+        let phone = p.phone
+        let scanCode = (p.code || '').trim()
+        let productName: string | undefined = p.product || undefined
+        let productSku: string | undefined
+        let rights: number | undefined
+        let inPool = false
+
+        const phoneKey = phoneLast9(phone)
+        if (phoneKey && phoneKey.length >= 9) {
+          // โหมดเบอร์ — จับพูลด้วยเบอร์โดยตรง
+          matchKey = 'เบอร์'
+          const c = poolByPhone.get(phoneKey)
+          if (c) {
+            inPool = true
+            rights = c.rights
+            if (!scanCode && c.codes.length === 1) scanCode = c.codes[0]
+            if (!productName && scanCode) {
+              const pr = c.products?.[scanCode] ?? c.products?.[scanCode.toUpperCase()]
+              productName = pr?.name
+              productSku = pr?.sku
+            }
+          }
+        } else if (scanCode) {
+          // โหมดรหัส — ไม่มีเบอร์ → หาเบอร์จากพูลด้วยรหัสสแกน
+          matchKey = 'รหัส'
+          const c = poolByCode.get(scanCode.toUpperCase())
+          if (c) {
+            inPool = true
+            phone = c.phone // ✅ ดึงเบอร์จากรหัส → ใช้ดึงที่อยู่ต่อ
+            if (!name) name = c.name
+            rights = c.rights
+            const pr = c.products?.[scanCode] ?? c.products?.[scanCode.toUpperCase()]
+            productName = productName ?? pr?.name
+            productSku = pr?.sku
+          } else {
+            block = 'รหัสไม่พบในพูลของรอบนี้ (ดึงเบอร์/ที่อยู่ไม่ได้)'
+          }
+        } else {
+          block = 'ไม่มีเบอร์และไม่มีรหัส — บันทึกไม่ได้'
+        }
+
+        // ตรวจซ้ำ/เกิน (ใช้เบอร์ที่ได้ — รวมเบอร์ที่ดึงจากรหัส)
+        const k = phoneLast9(phone)
+        if (!block) {
+          if (!k || k.length < 9) block = 'หาเบอร์ไม่ได้ — บันทึกไม่ได้'
+          else if (seen.has(k)) block = 'เบอร์ซ้ำในไฟล์ (คนเดียวกัน)'
+          else if (existingByPhone.has(k)) block = 'เป็นผู้ชนะในรอบนี้แล้ว'
+        }
         if (k) seen.add(k)
         if (!slot) block = block ?? 'เกินจำนวนรางวัลของรอบ'
-        else if (filledSlots.has(slot.slotId)) warn.push('ช่องนี้มีคนแล้ว — จะเขียนทับ')
-        if (slot && !c) warn.push('ไม่เจอในพูล (ลงได้ แต่ไม่เติมรหัส/สินค้าให้)')
-        let scanCode = ''
-        let productName: string | undefined
-        let productSku: string | undefined
-        if (c && c.codes.length === 1) {
-          scanCode = c.codes[0]
-          const pr = c.products?.[scanCode]
-          productName = pr?.name
-          productSku = pr?.sku
-        }
-        return { idx: i, name: p.name, phone: p.phone, slot, inPool: !!c, rights: c?.rights, scanCode, productName, productSku, warn, block }
+        else if (!block && filledSlots.has(slot.slotId)) warn.push('ช่องนี้มีคนแล้ว — จะเขียนทับ')
+        if (!block && !inPool) warn.push('ไม่เจอในพูล')
+
+        return { idx: i, name, phone, slot, inPool, matchKey, rights, scanCode, productName, productSku, warn, block }
       })
     },
     [ordered, pool, winners, round.round],
@@ -164,7 +218,7 @@ export default function ImportWinnersModal({ round, winners, pool, onClose, onSa
     try {
       const parsed = await parseFile(file)
       if (parsed.length === 0) {
-        setParseErr('อ่านไฟล์ไม่พบรายชื่อ — ตรวจว่ามีคอลัมน์ ชื่อ/นามสกุล/เบอร์')
+        setParseErr('อ่านไฟล์ไม่พบรายชื่อ — ตรวจว่ามีคอลัมน์ ชื่อ/นามสกุล + เบอร์ หรือ รหัสสแกน')
         return
       }
       setEntries(build(parsed))
@@ -252,7 +306,9 @@ export default function ImportWinnersModal({ round, winners, pool, onClose, onSa
         {phase === 'select' && (
           <div>
             <div className="text-[12.5px] text-[var(--text-secondary)] bg-[var(--bg-soft)] rounded-md px-3 py-2 leading-relaxed mb-3">
-              ไฟล์ <b>.xlsx / .csv</b> · คอลัมน์ <b>ชื่อ · นามสกุล · เบอร์โทรศัพท์</b> (มีหัวตารางหรือไม่มีก็ได้)
+              ไฟล์ <b>.xlsx / .csv</b> · คอลัมน์ <b>ชื่อ · นามสกุล</b> + <b>เบอร์โทรศัพท์</b> หรือ <b>รหัสสแกน</b> อย่างใดอย่างหนึ่ง
+              <br />
+              <span className="text-[var(--primary)]">มีแต่รหัสสแกน (ไม่มีเบอร์) ก็ได้</span> — ระบบจะหาเบอร์ + ที่อยู่ + จังหวัด จากรหัสมาเติมให้เอง
               <br />
               <b>ลำดับแถว = ลำดับวัน</b> — แถวแรกลงผู้โชคดีวันที่ 1 ของเดือน ไล่ลงไปจนครบ แล้วต่อรางวัลรายเดือน/รางวัลใหญ่
             </div>
@@ -281,14 +337,15 @@ export default function ImportWinnersModal({ round, winners, pool, onClose, onSa
             </div>
 
             <div className="border border-[var(--border)] rounded-md overflow-auto max-h-[52vh]">
-              <table className="w-full text-left text-[12.5px] border-collapse min-w-[640px]">
+              <table className="w-full text-left text-[12.5px] border-collapse min-w-[760px]">
                 <thead className="sticky top-0 bg-[var(--bg-soft)] text-[11px] uppercase tracking-wider text-[var(--text-secondary)]">
                   <tr className="border-b border-[var(--border)]">
                     <th className="px-2 py-2 w-10 text-center">#</th>
                     <th className="px-2 py-2">รางวัล / วันที่ประกาศ</th>
                     <th className="px-2 py-2">ชื่อ-นามสกุล</th>
+                    <th className="px-2 py-2 w-24 text-center">รหัส</th>
                     <th className="px-2 py-2 w-28 text-center">เบอร์</th>
-                    <th className="px-2 py-2 w-44">สถานะ</th>
+                    <th className="px-2 py-2 w-48">สถานะ</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -303,13 +360,19 @@ export default function ImportWinnersModal({ round, winners, pool, onClose, onSa
                         )}
                       </td>
                       <td className="px-2 py-1.5 font-semibold">{en.name || <span className="text-red-600 font-normal">(ไม่มีชื่อ)</span>}</td>
-                      <td className="px-2 py-1.5 text-center num whitespace-nowrap">{en.phone || '—'}</td>
+                      <td className="px-2 py-1.5 text-center num whitespace-nowrap text-[11.5px]">{en.scanCode || '—'}</td>
+                      <td className="px-2 py-1.5 text-center num whitespace-nowrap">
+                        {en.phone || '—'}
+                        {en.matchKey === 'รหัส' && en.phone && <span className="block text-[10px] text-[var(--primary)]">↑ จากรหัส</span>}
+                      </td>
                       <td className="px-2 py-1.5">
                         {en.block ? (
                           <span className="text-[11px] text-red-700 font-semibold">⛔ {en.block}</span>
                         ) : (
                           <span className="flex flex-col gap-0.5">
-                            <span className="text-[11px] text-[#15803d]">{en.inPool ? `✓ เจอในพูล${en.rights ? ` · ${en.rights} สิทธิ์` : ''}` : '• กรอกจากไฟล์'}</span>
+                            <span className="text-[11px] text-[#15803d]">
+                              {en.inPool ? `✓ เจอในพูล (จับด้วย${en.matchKey})${en.rights ? ` · ${en.rights} สิทธิ์` : ''}` : '• กรอกจากไฟล์'}
+                            </span>
                             {en.warn.map((w, i) => <span key={i} className="text-[11px] text-amber-700">⚠️ {w}</span>)}
                           </span>
                         )}
@@ -368,9 +431,13 @@ export default function ImportWinnersModal({ round, winners, pool, onClose, onSa
   )
 }
 
-// ไฟล์ตัวอย่าง 3 คอลัมน์ (BOM กัน Excel อ่านไทยเพี้ยน)
+// ไฟล์ตัวอย่าง (BOM กัน Excel อ่านไทยเพี้ยน) — โชว์ทั้งแบบมีเบอร์ และแบบมีแต่รหัสสแกน
 function downloadTemplate() {
-  const csv = '﻿' + ['ชื่อ,นามสกุล,เบอร์โทรศัพท์', 'สมชาย,ใจดี,0812345678', 'สมหญิง,รักสวย,0898765432'].join('\r\n')
+  const csv = '﻿' + [
+    'ชื่อ,นามสกุล,เบอร์โทรศัพท์,รหัส,สินค้า',
+    'สมชาย,ใจดี,0812345678,,',
+    'สมหญิง,รักสวย,,A6B8G3AV,จุฬาเฮิร์บ ดีดีครีม วอเตอร์เมลอน ซันสกรีน 8 กรัม',
+  ].join('\r\n')
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' })
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
