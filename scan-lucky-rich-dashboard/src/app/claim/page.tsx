@@ -22,6 +22,8 @@ interface Prize {
 
 const BRAND = '#15803d'
 const BRAND_BG = 'var(--brand-grad)' // ไล่สีแบรนด์ (เขียวเข้ม→อ่อน) สำหรับปุ่มหลัก
+const CARD_GRAD = 'linear-gradient(160deg,#0c5a2c 0%,#157f3c 48%,#34a956 100%)' // การ์ดผล/สรุปแบบ grand
+const GOLD = 'linear-gradient(135deg,#fde08a,#f1ad24)' // ทอง — เหรียญ/ป้ายรางวัล/ปุ่ม
 
 // เอกสารที่ต้องเตรียม แยกตามวิธีรับ — ใช้ร่วมกันระหว่าง checklist และหน้าสรุป
 const DOC_LIST: Record<'self' | 'proxy', string[]> = {
@@ -203,26 +205,43 @@ export default function ClaimPage() {
                 <AppointmentSummary appt={appt} name={verified.name} prizes={verified.prizes} mode={pickupMode} justBooked={justBooked} onChangeAppt={openBooking} />
               ) : (
                 <>
-                  <div className="bg-white rounded-2xl border border-[var(--border)] p-5">
-                    <span className="inline-flex items-center gap-1.5 text-[12px] font-semibold px-2.5 py-1 rounded-full" style={{ background: '#dcfce7', color: BRAND }}>
-                      <i className="ti ti-confetti" aria-hidden="true" /> ผู้โชคดี
+                  <div className="rounded-3xl overflow-hidden text-center text-white px-5 pt-7 pb-6" style={{ background: CARD_GRAD, boxShadow: '0 10px 30px rgba(12,90,44,0.28)' }}>
+                    <span className="inline-flex items-center justify-center w-16 h-16 rounded-full text-[32px] text-[#7a4d00]" style={{ background: GOLD, boxShadow: '0 4px 14px rgba(0,0,0,0.18)' }}>
+                      <i className="ti ti-trophy" aria-hidden="true" />
                     </span>
-                    <div className="text-[21px] font-bold text-[var(--dark)] mt-2.5">{verified.name || '(ผู้โชคดี)'}</div>
-                    <div className="mt-2 divide-y divide-[var(--border)]">
+                    <div className="text-[12.5px] text-[#ffe9a8] mt-3 tracking-wide">ยินดีด้วย คุณคือผู้โชคดี</div>
+                    <div className="text-[26px] font-extrabold leading-tight mt-1">{verified.name || '(ผู้โชคดี)'}</div>
+                    <div className="mt-4 space-y-3">
                       {verified.prizes.map((p, i) => (
-                        <div key={i} className="py-1.5">
-                          <InfoRow icon="ti-trophy" label="รางวัล" value={p.prizeLabel} />
-                          {p.announce && <InfoRow icon="ti-calendar" label="ประกาศ" value={p.announce} />}
-                          {p.productName && <InfoRow icon="ti-package" label="สินค้าที่ต้องนำมาแสดง" value={`${p.productName}${p.productSku ? ` (${p.productSku})` : ''}`} />}
-                          {p.scanCode && <InfoRow icon="ti-qrcode" label="รหัสการสแกน" value={p.scanCode} />}
+                        <div key={i}>
+                          <div className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full font-bold text-[15px] text-[#5a3a00]" style={{ background: GOLD }}>
+                            <i className="ti ti-coin" aria-hidden="true" />{p.prizeLabel}
+                          </div>
+                          {p.announce && <div className="text-[12px] text-white/85 mt-1">{p.announce}</div>}
+                          {(p.productName || p.scanCode) && (
+                            <div className="text-left mt-2.5 p-3 rounded-xl" style={{ background: 'rgba(255,255,255,0.12)', border: '0.5px solid rgba(255,255,255,0.22)' }}>
+                              {p.productName && (
+                                <>
+                                  <div className="text-[11px] text-white/70">สินค้าที่ต้องนำมาแสดง</div>
+                                  <div className="text-[12.5px] font-semibold">{p.productName}{p.productSku ? ` (${p.productSku})` : ''}</div>
+                                </>
+                              )}
+                              {p.scanCode && (
+                                <>
+                                  <div className="text-[11px] text-white/70 mt-2">รหัสการสแกน</div>
+                                  <div className="text-[13px] font-semibold tracking-wider">{p.scanCode}</div>
+                                </>
+                              )}
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>
                   </div>
                   <button
                     onClick={openBooking}
-                    className="w-full py-3.5 rounded-xl text-white font-bold text-[15px] transition active:scale-[0.98]"
-                    style={{ background: BRAND_BG }}
+                    className="w-full py-3.5 rounded-2xl font-bold text-[15px] text-[#5a3a00] transition active:scale-[0.98]"
+                    style={{ background: GOLD }}
                   >
                     <i className="ti ti-calendar-plus mr-1.5" aria-hidden="true" />นัดหมายเข้ารับรางวัล
                   </button>
@@ -327,19 +346,6 @@ export default function ClaimPage() {
   )
 }
 
-// แถวข้อมูล: ไอคอน + ป้าย + ค่า (ใช้ในการ์ดผู้โชคดี)
-function InfoRow({ icon, label, value }: { icon: string; label: string; value: string }) {
-  return (
-    <div className="flex items-start gap-2.5 py-1">
-      <i className={`ti ${icon} text-[18px] text-[var(--text-muted)] mt-0.5`} aria-hidden="true" />
-      <div className="min-w-0">
-        <div className="text-[11.5px] text-[var(--text-secondary)]">{label}</div>
-        <div className="text-[13.5px] text-[var(--text)]">{value}</div>
-      </div>
-    </div>
-  )
-}
-
 // รายการเอกสาร (ไม่มีตัวอย่างแล้ว) — เลขลำดับ + ชื่อ + ปุ่มดาวน์โหลด (เฉพาะหนังสือมอบอำนาจ)
 function DocItem({ step, title, onDownload }: { step: number; title: string; onDownload?: () => void }) {
   return (
@@ -431,13 +437,13 @@ function AppointmentSummary({
       {/* ── การ์ดสรุป (จับเป็นรูปทั้งใบ) — มีสีธีม เขียว+ทอง ── */}
       <div ref={cardRef} className="rounded-2xl border border-[#bbf7d0] overflow-hidden bg-white">
         {/* หัวการ์ด — ไล่สีเขียวเข้ม→อ่อน */}
-        <div className="px-5 pt-5 pb-4 text-white" style={{ background: 'linear-gradient(135deg,#136e35 0%,#1f9e49 50%,#6cba38 100%)' }}>
-          <div className="flex items-center gap-2.5">
-            <span className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 bg-white/20">
-              <i className={`ti ${justBooked ? 'ti-circle-check' : 'ti-clipboard-list'} text-[22px]`} aria-hidden="true" />
+        <div className="px-5 pt-6 pb-5 text-white" style={{ background: CARD_GRAD }}>
+          <div className="flex items-center gap-3">
+            <span className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 text-[#7a4d00]" style={{ background: GOLD, boxShadow: '0 4px 14px rgba(0,0,0,0.18)' }}>
+              <i className={`ti ${justBooked ? 'ti-circle-check' : 'ti-clipboard-list'} text-[24px]`} aria-hidden="true" />
             </span>
             <div className="min-w-0">
-              <div className="text-[17px] font-extrabold">{justBooked ? 'บันทึกนัดหมายแล้ว' : 'นัดหมายของคุณ'}</div>
+              <div className="text-[18px] font-extrabold">{justBooked ? 'บันทึกนัดหมายแล้ว' : 'นัดหมายของคุณ'}</div>
               <div className="text-[11px] text-white/85 truncate">จุฬาเฮิร์บ สานฝันคนไทย · สแกนลุ้นรวย สวยลุ้นล้าน</div>
             </div>
           </div>
