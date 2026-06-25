@@ -22,7 +22,7 @@ interface Prize {
 
 const BRAND = '#15803d'
 const BRAND_BG = 'var(--brand-grad)' // ไล่สีแบรนด์ (เขียวเข้ม→อ่อน) สำหรับปุ่มหลัก
-const CARD_GRAD = 'linear-gradient(160deg,#0c5a2c 0%,#157f3c 48%,#34a956 100%)' // การ์ดผล/สรุปแบบ grand
+const CARD_GRAD = 'linear-gradient(160deg,#08461f 0%,#137d38 46%,#54bf3c 100%)' // การ์ดผล/สรุปแบบ grand (เขียวเข้ม→อ่อน ชัด)
 const GOLD = 'linear-gradient(135deg,#fde08a,#f1ad24)' // ทอง — เหรียญ/ป้ายรางวัล/ปุ่ม
 
 // เอกสารที่ต้องเตรียม แยกตามวิธีรับ — ใช้ร่วมกันระหว่าง checklist และหน้าสรุป
@@ -47,7 +47,6 @@ export default function ClaimPage() {
   const [notWinner, setNotWinner] = useState(false)
   const [err, setErr] = useState('')
   const [pickupMode, setPickupMode] = useState<'self' | 'proxy'>('self')
-  const [formNote, setFormNote] = useState(false)
   const [booking, setBooking] = useState(false) // ซีน ③ หน้าจอง (แยกหน้า)
   const [modeChosen, setModeChosen] = useState(false) // เลือกวิธีรับแล้วหรือยัง
   const [selDate, setSelDate] = useState<string | null>(null)
@@ -148,7 +147,6 @@ export default function ClaimPage() {
     setNotWinner(false)
     setErr('')
     setPickupMode('self')
-    setFormNote(false)
     setAppt(null)
     setJustBooked(false)
   }
@@ -159,8 +157,8 @@ export default function ClaimPage() {
         /* ─────────── ซีน ① ตรวจสิทธิ์ ─────────── */
         <div className="float-up">
           <div className="text-center mb-5 mt-2">
-            <span className="inline-flex items-center justify-center w-12 h-12 rounded-full text-[22px] mb-3" style={{ background: '#dcfce7', color: BRAND }}>
-              <i className="ti ti-gift" aria-hidden="true" />
+            <span className="inline-flex items-center justify-center w-14 h-14 rounded-full text-[28px] mb-3" style={{ background: '#dcfce7' }}>
+              🎁
             </span>
             <h1 className="text-[22px] font-bold text-[var(--dark)] leading-tight">ตรวจสอบสิทธิ์รับรางวัล</h1>
             <p className="text-[13px] text-[var(--text-secondary)] mt-1.5">กรอกเบอร์ที่ใช้ลงทะเบียนสแกน</p>
@@ -202,20 +200,20 @@ export default function ClaimPage() {
             /* ─────────── ซีน ② ผู้โชคดี / สรุปนัดหมาย ─────────── */
             <>
               {appt ? (
-                <AppointmentSummary appt={appt} name={verified.name} prizes={verified.prizes} mode={pickupMode} justBooked={justBooked} onChangeAppt={openBooking} />
+                <AppointmentSummary appt={appt} name={verified.name} prizes={verified.prizes} mode={pickupMode} justBooked={justBooked} onChangeAppt={openBooking} onUseOther={resetAll} />
               ) : (
                 <>
                   <div className="rounded-3xl overflow-hidden text-center text-white px-5 pt-7 pb-6" style={{ background: CARD_GRAD, boxShadow: '0 10px 30px rgba(12,90,44,0.28)' }}>
-                    <span className="inline-flex items-center justify-center w-16 h-16 rounded-full text-[32px] text-[#7a4d00]" style={{ background: GOLD, boxShadow: '0 4px 14px rgba(0,0,0,0.18)' }}>
-                      <i className="ti ti-trophy" aria-hidden="true" />
+                    <span className="inline-flex items-center justify-center w-16 h-16 rounded-full text-[34px]" style={{ background: GOLD, boxShadow: '0 4px 14px rgba(0,0,0,0.18)' }}>
+                      🏆
                     </span>
                     <div className="text-[12.5px] text-[#ffe9a8] mt-3 tracking-wide">ยินดีด้วย คุณคือผู้โชคดี</div>
-                    <div className="text-[26px] font-extrabold leading-tight mt-1">{verified.name || '(ผู้โชคดี)'}</div>
+                    <div className="text-[27px] font-extrabold leading-tight mt-1">{verified.name || '(ผู้โชคดี)'}</div>
                     <div className="mt-4 space-y-3">
                       {verified.prizes.map((p, i) => (
                         <div key={i}>
-                          <div className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full font-bold text-[15px] text-[#5a3a00]" style={{ background: GOLD }}>
-                            <i className="ti ti-coin" aria-hidden="true" />{p.prizeLabel}
+                          <div className="inline-flex items-center px-5 py-1.5 rounded-full font-bold text-[15px] text-[#5a3a00]" style={{ background: GOLD }}>
+                            {p.prizeLabel}
                           </div>
                           {p.announce && <div className="text-[12px] text-white/85 mt-1">{p.announce}</div>}
                           {(p.productName || p.scanCode) && (
@@ -245,10 +243,9 @@ export default function ClaimPage() {
                   >
                     <i className="ti ti-calendar-plus mr-1.5" aria-hidden="true" />นัดหมายเข้ารับรางวัล
                   </button>
+                  <button onClick={resetAll} className="w-full text-[12.5px] text-[var(--text-secondary)] py-2">ใช้เบอร์อื่น</button>
                 </>
               )}
-
-              <button onClick={resetAll} className="w-full text-[12.5px] text-[var(--text-secondary)] py-2">ใช้เบอร์อื่น</button>
             </>
           ) : (
             /* ─────────── ซีน ③ หน้าจอง ─────────── */
@@ -271,7 +268,7 @@ export default function ClaimPage() {
                     return (
                       <button
                         key={mode}
-                        onClick={() => { setPickupMode(mode); setModeChosen(true); setFormNote(false) }}
+                        onClick={() => { setPickupMode(mode); setModeChosen(true) }}
                         className={`flex-1 py-2 rounded-lg text-[13px] font-semibold transition ${active ? 'text-white' : 'text-[var(--text-secondary)]'}`}
                         style={active ? { background: BRAND } : undefined}
                       >
@@ -292,18 +289,8 @@ export default function ClaimPage() {
                     </div>
                     <div className="space-y-2.5">
                       {DOC_LIST[pickupMode].map((d, i) => (
-                        <DocItem
-                          key={i}
-                          step={i + 1}
-                          title={d}
-                          onDownload={d.startsWith('หนังสือมอบอำนาจ') ? () => setFormNote(true) : undefined}
-                        />
+                        <DocItem key={i} step={i + 1} title={d} />
                       ))}
-                      {formNote && (
-                        <div className="text-[11.5px] text-[var(--text-secondary)] bg-[var(--bg-soft)] border border-[var(--border)] rounded-lg px-3 py-2">
-                          แบบฟอร์มหนังสือมอบอำนาจกำลังเตรียมไฟล์ — ระหว่างนี้ใช้แบบฟอร์มมาตรฐานทั่วไปได้ หรือสอบถามทีมงาน
-                        </div>
-                      )}
                     </div>
                     <div className="text-[11.5px] text-[var(--text-secondary)] flex gap-2 pt-1">
                       <i className="ti ti-info-circle mt-0.5" aria-hidden="true" />
@@ -346,18 +333,13 @@ export default function ClaimPage() {
   )
 }
 
-// รายการเอกสาร (ไม่มีตัวอย่างแล้ว) — เลขลำดับ + ชื่อ + ปุ่มดาวน์โหลด (เฉพาะหนังสือมอบอำนาจ)
-function DocItem({ step, title, onDownload }: { step: number; title: string; onDownload?: () => void }) {
+// รายการเอกสาร (ไม่มีตัวอย่าง/ดาวน์โหลด) — เลขลำดับ + ชื่อ
+function DocItem({ step, title }: { step: number; title: string }) {
   return (
     <div className="flex items-start gap-2.5">
       <span className="mt-0.5 inline-flex items-center justify-center w-5 h-5 rounded-full text-[11px] font-bold flex-shrink-0" style={{ background: '#dcfce7', color: BRAND }}>{step}</span>
       <div className="min-w-0 flex-1">
         <div className="text-[13px] text-[var(--text)]">{title}</div>
-        {onDownload && (
-          <button onClick={onDownload} className="mt-1.5 inline-flex items-center gap-1 text-[11.5px] font-semibold text-[#15803d] bg-[#f0fdf4] border border-[#bbf7d0] rounded-lg px-2.5 py-1.5">
-            <i className="ti ti-download" aria-hidden="true" /> ดาวน์โหลดแบบฟอร์ม
-          </button>
-        )}
       </div>
     </div>
   )
@@ -365,8 +347,8 @@ function DocItem({ step, title, onDownload }: { step: number; title: string; onD
 
 // สรุปนัดหมาย — ฝังในหน้า (ทั้งหลังจอง justBooked=true และเช็คย้อนหลัง=false) · ไม่มี popup แล้ว
 function AppointmentSummary({
-  appt, name, prizes, mode, justBooked, onChangeAppt,
-}: { appt: Appt; name: string; prizes: Prize[]; mode: 'self' | 'proxy'; justBooked: boolean; onChangeAppt: () => void }) {
+  appt, name, prizes, mode, justBooked, onChangeAppt, onUseOther,
+}: { appt: Appt; name: string; prizes: Prize[]; mode: 'self' | 'proxy'; justBooked: boolean; onChangeAppt: () => void; onUseOther: () => void }) {
   const slot = slotById(appt.slotId)
   const [copied, setCopied] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -434,54 +416,50 @@ function AppointmentSummary({
 
   return (
     <div>
-      {/* ── การ์ดสรุป (จับเป็นรูปทั้งใบ) — มีสีธีม เขียว+ทอง ── */}
-      <div ref={cardRef} className="rounded-2xl border border-[#bbf7d0] overflow-hidden bg-white">
-        {/* หัวการ์ด — ไล่สีเขียวเข้ม→อ่อน */}
-        <div className="px-5 pt-6 pb-5 text-white" style={{ background: CARD_GRAD }}>
-          <div className="flex items-center gap-3">
-            <span className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 text-[#7a4d00]" style={{ background: GOLD, boxShadow: '0 4px 14px rgba(0,0,0,0.18)' }}>
-              <i className={`ti ${justBooked ? 'ti-circle-check' : 'ti-clipboard-list'} text-[24px]`} aria-hidden="true" />
+      {/* ── การ์ดสรุป (จับเป็นรูปทั้งใบ) — การ์ดเขียว grand ── */}
+      <div ref={cardRef} className="rounded-3xl overflow-hidden text-white" style={{ background: CARD_GRAD, boxShadow: '0 10px 30px rgba(8,70,31,0.3)' }}>
+        <div className="px-5 pt-6 pb-5">
+          {/* หัว */}
+          <div className="flex items-center gap-3 mb-4">
+            <span className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 text-[26px]" style={{ background: GOLD, boxShadow: '0 4px 14px rgba(0,0,0,0.18)' }}>
+              {justBooked ? '✅' : '📋'}
             </span>
             <div className="min-w-0">
               <div className="text-[18px] font-extrabold">{justBooked ? 'บันทึกนัดหมายแล้ว' : 'นัดหมายของคุณ'}</div>
               <div className="text-[11px] text-white/85 truncate">จุฬาเฮิร์บ สานฝันคนไทย · สแกนลุ้นรวย สวยลุ้นล้าน</div>
             </div>
           </div>
-        </div>
 
-        {/* เนื้อการ์ด — พื้นเขียวอ่อนจางลงขาว */}
-        <div className="px-5 pt-4 pb-5" style={{ background: 'linear-gradient(180deg,#f0fdf4 0%,#ffffff 55%)' }}>
-          <div className="rounded-xl border border-[#bbf7d0] bg-white p-3 mb-3">
-            <div className="text-[11.5px] font-semibold text-[#15803d]">นัดหมายเข้ารับรางวัล</div>
-            <div className="text-[16px] font-bold text-[var(--dark)] mt-0.5">{pickupDateLabel(appt.date)}</div>
-            <div className="text-[12.5px] text-[var(--text-secondary)]">{slot?.period} · {slot?.time}</div>
-            <div className="text-[12px] text-[var(--text)] mt-1">ผู้โชคดี: <span className="font-semibold">{name || '-'}</span></div>
+          {/* วันนัด */}
+          <div className="rounded-xl p-3 mb-3" style={{ background: 'rgba(255,255,255,0.12)', border: '0.5px solid rgba(255,255,255,0.22)' }}>
+            <div className="text-[11.5px] text-white/75">นัดหมายเข้ารับรางวัล</div>
+            <div className="text-[16px] font-bold mt-0.5">{pickupDateLabel(appt.date)}</div>
+            <div className="text-[12.5px] text-white/85">{slot?.period} · {slot?.time}</div>
+            <div className="text-[12px] text-white/90 mt-1">ผู้โชคดี: <span className="font-semibold">{name || '-'}</span></div>
           </div>
 
-          {/* รางวัล — โทนทอง */}
-          <div className="mb-3">
-            <div className="text-[12px] font-semibold text-[#b45309] mb-1.5">รางวัลที่ได้ ({prizes.length})</div>
-            <div className="space-y-1.5">
-              {prizes.map((p, i) => (
-                <div key={i} className="rounded-lg border border-[#fde68a] bg-[#fffbeb] px-3 py-2">
-                  <div className="text-[13px] font-bold text-[#b45309]">{i + 1}. {p.prizeLabel}</div>
-                  {p.announce && <div className="text-[11.5px] text-[#a16207]">{p.announce}</div>}
-                  {p.productName && <div className="text-[11.5px] text-[var(--text)] mt-0.5">สินค้าที่ต้องนำมาแสดง*: <span className="font-semibold">{p.productName}</span>{p.productSku ? ` (${p.productSku})` : ''}</div>}
-                  {p.scanCode && <div className="text-[11.5px] text-[#a16207] mt-0.5">รหัสการสแกน: {p.scanCode}</div>}
-                </div>
-              ))}
-            </div>
-            {items.length > 0 && <div className="text-[10.5px] text-[#92400e] mt-1.5">* นำสินค้าจริงที่สแกนมาแสดงต่อเจ้าหน้าที่ในวันรับรางวัล</div>}
+          {/* รางวัล */}
+          <div className="text-[12px] font-semibold text-[#ffe9a8] mb-1.5">รางวัลที่ได้ ({prizes.length})</div>
+          <div className="space-y-1.5">
+            {prizes.map((p, i) => (
+              <div key={i} className="rounded-lg px-3 py-2.5" style={{ background: 'rgba(255,255,255,0.12)', border: '0.5px solid rgba(255,255,255,0.22)' }}>
+                <div className="inline-flex items-center px-3.5 py-1 rounded-full font-bold text-[13px] text-[#5a3a00]" style={{ background: GOLD }}>{p.prizeLabel}</div>
+                {p.announce && <div className="text-[11.5px] text-white/80 mt-1.5">{p.announce}</div>}
+                {p.productName && <div className="text-[11.5px] text-white/90 mt-1">สินค้าที่ต้องนำมาแสดง*: <span className="font-semibold">{p.productName}</span>{p.productSku ? ` (${p.productSku})` : ''}</div>}
+                {p.scanCode && <div className="text-[11.5px] text-white/80 mt-0.5">รหัสการสแกน: {p.scanCode}</div>}
+              </div>
+            ))}
           </div>
+          {items.length > 0 && <div className="text-[10.5px] text-white/65 mt-1.5">* นำสินค้าจริงที่สแกนมาแสดงต่อเจ้าหน้าที่ในวันรับรางวัล</div>}
 
           {/* เอกสาร */}
-          <div className="rounded-xl border border-[#bbf7d0] bg-white p-3">
-            <div className="text-[12.5px] font-semibold text-[#15803d]">วิธีรับ: {modeLabel}</div>
-            <div className="text-[11.5px] text-[var(--text-secondary)] mt-1.5 mb-1">เอกสารที่ต้องเตรียม</div>
+          <div className="rounded-xl p-3 mt-3" style={{ background: 'rgba(255,255,255,0.12)', border: '0.5px solid rgba(255,255,255,0.22)' }}>
+            <div className="text-[12.5px] font-semibold">วิธีรับ: {modeLabel}</div>
+            <div className="text-[11.5px] text-white/75 mt-1.5 mb-1">เอกสารที่ต้องเตรียม</div>
             <ol className="space-y-1">
               {docs.map((d, i) => (
-                <li key={i} className="text-[12px] text-[var(--text)] flex gap-1.5">
-                  <span className="font-bold text-[#15803d]">{i + 1}.</span>
+                <li key={i} className="text-[12px] text-white/95 flex gap-1.5">
+                  <span className="font-bold text-[#ffe08a]">{i + 1}.</span>
                   <span>{d}</span>
                 </li>
               ))}
@@ -491,7 +469,7 @@ function AppointmentSummary({
       </div>
 
       {/* ── ปุ่ม (นอกส่วนจับรูป) ── */}
-      <div className="pt-3 space-y-2">
+      <div className="pt-3">
         <div className="flex gap-2">
           <button onClick={saveImage} disabled={saving} className={`flex-1 py-3 rounded-xl font-semibold text-[13px] border transition disabled:opacity-60 ${imgSaved ? 'border-[#15803d] text-[#15803d] bg-[#f0fdf4]' : 'border-[var(--border)] text-[var(--text)]'}`}>
             <i className="ti ti-photo mr-1.5" aria-hidden="true" />{saving ? 'กำลังบันทึก…' : imgSaved ? 'บันทึกรูปแล้ว' : 'บันทึกเป็นรูป'}
@@ -500,9 +478,11 @@ function AppointmentSummary({
             <i className="ti ti-copy mr-1.5" aria-hidden="true" />{copied ? 'คัดลอกแล้ว' : 'คัดลอก'}
           </button>
         </div>
-        <button onClick={onChangeAppt} className="w-full py-2.5 text-[13px] text-[var(--text-secondary)]">
-          <i className="ti ti-refresh mr-1" aria-hidden="true" />เปลี่ยนนัดหมาย (เลือกวัน/รอบใหม่)
-        </button>
+        <div className="flex items-center justify-center gap-3 mt-2.5 text-[13px] text-[var(--text-secondary)]">
+          <button onClick={onChangeAppt} className="py-1">เปลี่ยนนัดหมาย</button>
+          <span className="text-[var(--border)]">|</span>
+          <button onClick={onUseOther} className="py-1">ใช้เบอร์อื่น</button>
+        </div>
       </div>
     </div>
   )
