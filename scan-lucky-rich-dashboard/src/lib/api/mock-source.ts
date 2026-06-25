@@ -28,7 +28,7 @@ import type {
   PrintSlipsResponse,
   PrintSlipRow,
   CustomerSearchResponse,
-  ScanByCodeResult,
+  WinnerResolve,
 } from './types'
 
 // ─── Helpers ───────────────────────────────────────────────────────
@@ -458,24 +458,29 @@ export async function getCustomerAddress(_phone: string): Promise<string> {
   return '' // mock ไม่มีที่อยู่จริง
 }
 
-// รหัสสแกน → ลูกค้า (mock: สร้างผล deterministic จากรหัส ให้ dev เห็น flow · ของจริงเมื่อ DATA_SOURCE=api)
-export async function getScanByCode(code: string): Promise<ScanByCodeResult | null> {
-  const c = (code ?? '').trim()
-  if (c.length < 4) return null
+// รีโซลฟ์ผู้ได้รางวัล (mock: deterministic ให้ dev เห็น flow · ของจริงเมื่อ DATA_SOURCE=api)
+export async function resolveWinner(opts: { code?: string; phone?: string; from: DateString; to: DateString }): Promise<WinnerResolve | null> {
+  const key = (opts.code || opts.phone || '').trim()
+  if (key.length < 4) return null
   let seed = 0
-  for (let i = 0; i < c.length; i++) seed += c.charCodeAt(i) * (i + 1)
+  for (let i = 0; i < key.length; i++) seed += key.charCodeAt(i) * (i + 1)
   const product = PRODUCTS_MASTER[seed % PRODUCTS_MASTER.length]
+  const code = (opts.code || '').trim().toUpperCase() || `MOCK${seed % 9999}`
+  const pn = stripProductSuffix(product.displayName)
   return {
     name: `${pick(FIRST_NAMES, seed + 100)} ${pick(LAST_NAMES, seed + 200)}`,
-    phone: thaiPhone(seed + 300),
-    productName: stripProductSuffix(product.displayName),
-    productSku: product.sku,
+    phone: opts.phone ? opts.phone.replace(/\D/g, '') : thaiPhone(seed + 300),
     rights: (seed % 5) + 1,
+    scanCode: code,
+    productName: pn,
+    productSku: product.sku,
+    codes: [code],
+    products: { [code]: { name: pn, sku: product.sku } },
   }
 }
 
 // จำนวนสิทธิ์ของเบอร์ (mock: deterministic จากเบอร์) — ของจริงเมื่อ DATA_SOURCE=api
-export async function getRightsByPhone(phone: string): Promise<number | null> {
+export async function getRightsByPhone(phone: string, _from: DateString, _to: DateString): Promise<number | null> {
   const d = (phone ?? '').replace(/\D/g, '')
   if (d.length < 9) return null
   let s = 0

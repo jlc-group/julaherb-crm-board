@@ -96,7 +96,7 @@ export default function DrawSlotList({ round, winners, onPick, onRemove, onExpor
       {/* ตารางรางวัล เรียงตามวัน (รางวัลประจำวันก่อน → รางวัลใหญ่ท้ายสุด)
           · เบอร์โทร "เต็ม" เฉพาะหน้านี้ เพื่อให้ทีมโทร + ส่งที่อยู่ไปรับรางวัล (หน้าอื่นยัง mask) */}
       <div className="card p-0 overflow-x-auto">
-        <table className="w-full text-left border-collapse min-w-[1120px]">
+        <table className="w-full text-left border-collapse min-w-[1320px]">
           <thead>
             <tr className="text-[11px] uppercase tracking-wider text-[var(--text-secondary)] bg-[var(--bg-soft)] border-b border-[var(--border)]">
               <th className="font-semibold px-3 py-2.5 w-40">รางวัล</th>
@@ -106,6 +106,7 @@ export default function DrawSlotList({ round, winners, onPick, onRemove, onExpor
               <th className="font-semibold px-3 py-2.5 w-28 text-center">ประวัติรางวัล</th>
               <th className="font-semibold px-3 py-2.5">ที่อยู่ (ติดต่อ/ส่งรางวัล)</th>
               <th className="font-semibold px-3 py-2.5 w-24 text-center">รหัสสแกน</th>
+              <th className="font-semibold px-3 py-2.5 w-48">สินค้า</th>
               <th className="font-semibold px-3 py-2.5 w-56 text-right">จัดการ</th>
             </tr>
           </thead>
@@ -118,7 +119,7 @@ export default function DrawSlotList({ round, winners, onPick, onRemove, onExpor
                 <Fragment key={slot.slotId}>
                   {i === firstBigIdx && firstBigIdx > 0 && (
                     <tr>
-                      <td colSpan={8} className="px-3 pt-3 pb-1">
+                      <td colSpan={9} className="px-3 pt-3 pb-1">
                         <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-[#854d0e]">
                           <span className="h-px flex-1 bg-[var(--yellow)] opacity-40" /> รางวัลใหญ่รายเดือน <span className="h-px flex-1 bg-[var(--yellow)] opacity-40" />
                         </div>
@@ -179,6 +180,14 @@ export default function DrawSlotList({ round, winners, onPick, onRemove, onExpor
                         </td>
                         {/* รหัสสแกน */}
                         <td className="px-3 py-2.5 text-[12px] text-[var(--text-secondary)] text-center whitespace-nowrap">{w.scanCode || '—'}</td>
+                        {/* สินค้า (ที่ลูกค้าสแกน) */}
+                        <td className="px-3 py-2.5 text-[12px] text-[var(--text)]">
+                          {w.productName ? (
+                            <span>{w.productName}{w.productSku ? <span className="text-[var(--text-secondary)]"> ({w.productSku})</span> : null}</span>
+                          ) : (
+                            <span className="text-[var(--text-muted)]">—</span>
+                          )}
+                        </td>
                         {/* จัดการ */}
                         <td className="px-3 py-2.5">
                           <div className="flex items-center justify-end gap-2 whitespace-nowrap">
@@ -197,7 +206,7 @@ export default function DrawSlotList({ round, winners, onPick, onRemove, onExpor
                         </td>
                       </>
                     ) : (
-                      <td colSpan={7} className="px-3 py-2.5">
+                      <td colSpan={8} className="px-3 py-2.5">
                         <button onClick={() => onPick(slot)} className="text-[13px] text-[var(--primary)] font-semibold">
                           ＋ ระบุผู้ได้รางวัล
                         </button>

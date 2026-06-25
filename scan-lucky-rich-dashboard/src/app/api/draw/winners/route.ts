@@ -5,6 +5,7 @@ import fs from 'fs'
 import path from 'path'
 import { ds } from '@/lib/api/adapter'
 import { fail } from '../../_utils'
+import { getRound } from '@/config/draw-rounds'
 import type { DrawWinner } from '@/config/draw-rounds'
 
 export const runtime = 'nodejs'
@@ -44,19 +45,31 @@ export async function GET(req: NextRequest) {
   const enrich = new URL(req.url).searchParams.get('enrich') === '1'
   const winners = readWinners()
   if (enrich) {
-    // เติม "สิทธิ์ที่ส่ง" ย้อนหลังให้คนที่ยังว่าง — นับจากดัชนี print-slips (ครั้งแรกอาจ ~1-2 นาที)
+    // เติม "สิทธิ์ที่ส่ง / สินค้า / รหัส" ย้อนหลังให้คนที่ยังว่าง — จากดัชนี print-slips รายรอบ (ครั้งแรกอาจ ~1-2 นาที)
     let changed = false
     for (const w of winners) {
-      if (typeof w.rightsCount !== 'number' && w.phone) {
-        try {
-          const n = await ds.getRightsByPhone(w.phone)
-          if (typeof n === 'number') {
-            w.rightsCount = n
-            changed = true
-          }
-        } catch {
-          /* เติมคนนี้ไม่ได้ — ข้าม */
+      if (!w.phone) continue
+      if (typeof w.rightsCount === 'number' && w.productName && w.scanCode) continue
+      const r = getRound(w.round)
+      if (!r) continue
+      try {
+        const res = await ds.resolveWinner({ phone: w.phone, from: r.windowFrom, to: r.windowTo })
+        if (!res) continue
+        if (typeof w.rightsCount !== 'number' && typeof res.rights === 'number') {
+          w.rightsCount = res.rights
+          changed = true
         }
+        if (!w.productName && res.productName) {
+          w.productName = res.productName
+          w.productSku = res.productSku
+          changed = true
+        }
+        if (!w.scanCode && res.scanCode) {
+          w.scanCode = res.scanCode
+          changed = true
+        }
+      } catch {
+        /* เติมคนนี้ไม่ได้ — ข้าม */
       }
     }
     if (changed) writeWinners(winners)

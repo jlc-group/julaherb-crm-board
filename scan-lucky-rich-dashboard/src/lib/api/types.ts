@@ -349,11 +349,14 @@ export interface CustomerSearchResponse {
   results: CustomerSearchResult[]
 }
 
-// รหัสสแกน → ลูกค้า+เบอร์เต็ม (ดึงจากดัชนี print-slips · ดู getScanByCode)
-export interface ScanByCodeResult {
+// ผลรีโซลฟ์ผู้ได้รางวัลจากดัชนี print-slips (รายรอบ) — ใช้ทั้งค้นด้วยรหัสและด้วยเบอร์
+export interface WinnerResolve {
   name: string
   phone: string                  // raw เต็ม — mask ตอน render (ยกเว้นหน้า Operations)
-  productName: string
-  productSku: string
-  rights?: number                // จำนวนสิทธิ์ที่ส่งเข้าลุ้น (นับสลิปต่อเบอร์)
+  rights?: number                // จำนวนสิทธิ์ที่ส่งเข้าลุ้นในรอบนั้น (นับสลิป)
+  scanCode?: string              // รหัสที่จับได้ (ถ้าค้นด้วยรหัส) หรือรหัสเดียวของคนนี้
+  productName?: string
+  productSku?: string
+  codes: string[]                // รหัสทั้งหมดของคนนี้ในรอบ
+  products: Record<string, { name: string; sku: string }> // map รหัส→สินค้า
 }

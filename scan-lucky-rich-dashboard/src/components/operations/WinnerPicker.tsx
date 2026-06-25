@@ -111,7 +111,7 @@ export default function WinnerPicker({
     // 2) ไม่อยู่ในพูล → ยิง server (ดัชนี print-slips · ครั้งแรกอาจช้า ~1-2 นาที แล้วเร็ว)
     setCodeLoading(true)
     try {
-      const r = await fetch('/api/draw/resolve-code?code=' + encodeURIComponent(c))
+      const r = await fetch(`/api/draw/resolve-code?round=${slot.round}&code=${encodeURIComponent(c)}`)
       const b = await r.json().catch(() => ({}))
       if (!r.ok) {
         setErr(b.error ?? `ดึงรหัสไม่สำเร็จ (HTTP ${r.status})`)
@@ -128,12 +128,13 @@ export default function WinnerPicker({
       setPicked({
         name: String(b.name ?? ''),
         phone: String(b.phone ?? ''),
-        scanCode: c,
+        scanCode: String(b.scanCode ?? c),
         productName: b.productName || undefined,
         productSku: b.productSku || undefined,
         address: '',
         rights: typeof b.rights === 'number' ? b.rights : undefined,
-        codes: [],
+        codes: Array.isArray(b.codes) ? b.codes : [],
+        products: b.products ?? undefined,
       })
       lookupAddress(String(b.phone ?? '')) // ดึงที่อยู่มาเติมอัตโนมัติ
     } catch (e: any) {
@@ -141,6 +142,32 @@ export default function WinnerPicker({
     } finally {
       setCodeLoading(false)
     }
+  }
+
+  // เลือกจากชื่อ/เบอร์ → ตั้งค่าพื้นฐาน แล้วเติมรหัส/สินค้า/สิทธิ์ จากดัชนีรายรอบ (ตามเบอร์)
+  function pickName(name: string, phone: string, address?: string) {
+    setErr('')
+    setPicked({ name, phone, scanCode: '', address: address ?? '', codes: [] })
+    if (!address) lookupAddress(phone)
+    fetch(`/api/draw/resolve-code?round=${slot.round}&phone=${encodeURIComponent(phone)}`)
+      .then((r) => r.json())
+      .then((b) => {
+        if (!b || !b.found) return
+        setPicked((p) =>
+          p && p.phone === phone
+            ? {
+                ...p,
+                scanCode: p.scanCode || String(b.scanCode ?? ''),
+                productName: p.productName || b.productName || undefined,
+                productSku: p.productSku || b.productSku || undefined,
+                rights: typeof p.rights === 'number' ? p.rights : typeof b.rights === 'number' ? b.rights : undefined,
+                codes: p.codes && p.codes.length ? p.codes : Array.isArray(b.codes) ? b.codes : [],
+                products: p.products ?? b.products ?? undefined,
+              }
+            : p,
+        )
+      })
+      .catch(() => {})
   }
 
   // ค้นจากพูล: ชื่อ / เบอร์ / รหัสสแกน (ช่องเดียว)
@@ -500,10 +527,7 @@ export default function WinnerPicker({
                         return (
                           <button
                             key={'srv' + i}
-                            onClick={() => {
-                              setPicked({ name: s.name, phone: s.phone, scanCode: '', address: s.address ?? '', codes: [] })
-                              if (!s.address) lookupAddress(s.phone)
-                            }}
+                            onClick={() => pickName(s.name, s.phone, s.address)}
                             className="w-full text-left px-3 py-2 hover:bg-[var(--bg-soft)] flex items-center justify-between gap-2"
                           >
                             <span className="min-w-0">

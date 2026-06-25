@@ -99,11 +99,12 @@ export default function OperationsTab({ onOpenClaim }: { onOpenClaim?: (phoneLas
     if (!round) return
     const slots = roundSlots(round)
     const bySlot = new Map(winners.filter((w) => w.round === round.round).map((w) => [w.slotId, w]))
-    const rows: string[][] = [['รอบ', 'วันจับ', 'รางวัล', 'ลำดับ', 'ชื่อ-นามสกุล', 'เบอร์', 'สิทธิ์ที่ส่ง', 'ประวัติได้รางวัล', 'รหัสสแกน', 'ที่อยู่']]
+    const rows: string[][] = [['รอบ', 'วันจับ', 'รางวัล', 'ลำดับ', 'ชื่อ-นามสกุล', 'เบอร์', 'สิทธิ์ที่ส่ง', 'ประวัติได้รางวัล', 'รหัสสแกน', 'สินค้า', 'ที่อยู่']]
     for (const s of slots) {
       const w = bySlot.get(s.slotId)
       const prev = w ? findPrevWins(winners, w.phone, round.round).map((x) => getRound(x.round)?.prizeMonthShort ?? `รอบ ${x.round}`).join(' / ') : ''
-      rows.push([String(round.round), round.drawDateLabel, s.tierLabel, String(s.indexInTier), w?.name ?? '', w?.phone ?? '', w?.rightsCount != null ? String(w.rightsCount) : '', prev, w?.scanCode ?? '', w?.address ?? ''])
+      const prod = w?.productName ? `${w.productName}${w.productSku ? ` (${w.productSku})` : ''}` : ''
+      rows.push([String(round.round), round.drawDateLabel, s.tierLabel, String(s.indexInTier), w?.name ?? '', w?.phone ?? '', w?.rightsCount != null ? String(w.rightsCount) : '', prev, w?.scanCode ?? '', prod, w?.address ?? ''])
     }
     const csv = '﻿' + rows.map((r) => r.map((c) => `"${(c || '').replace(/"/g, '""')}"`).join(',')).join('\n')
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' })

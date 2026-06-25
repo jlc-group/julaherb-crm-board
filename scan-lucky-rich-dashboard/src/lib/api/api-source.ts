@@ -46,7 +46,7 @@ import type {
   OutageInfo,
   PrintSlipsResponse,
   CustomerSearchResponse,
-  ScanByCodeResult,
+  WinnerResolve,
   DayHourResponse,
   SkuDailyMatrixResponse,
   RfmDistributionResponse,
@@ -719,13 +719,20 @@ export async function searchCustomers(q: string): Promise<CustomerSearchResponse
 //   ⚠️ ไม่ใช้ /scan-history — ไม่มี index บน legacy_qr_code_serial → seq-scan 12M แถว → ช้า/timeout/502
 //   วิธี: ทำ "ดัชนีรหัส→ลูกค้า" จาก /dashboard/print-slips (มี index ตาม scanned_at + ใช้สิทธิ์ dashboard ที่ token มีอยู่)
 //   แบ่งดึงเป็นช่วงวัน (กัน cap 50k/คำขอ) แล้ว cache ทั้งดัชนี (TTL 1 ชม.) → ครั้งถัดไปค้นเร็วทันที
-interface CodeIndex {
-  codes: Map<string, ScanByCodeResult> // รหัส(upper) → ลูกค้า
-  rights: Map<string, number>          // เบอร์ 9 หลักท้าย → จำนวนสิทธิ์ (นับสลิป)
+interface RoundCustomer {
+  name: string
+  phone: string
+  codes: string[]
+  products: Record<string, { name: string; sku: string }>
+  rights: number
 }
-let _codeIdx: { to: DateString; builtAt: number; idx: CodeIndex } | null = null
-let _codeIdxBuilding: Promise<CodeIndex> | null = null
-const CODE_IDX_TTL_MS = 60 * 60 * 1000
+interface RoundIndex {
+  byCode: Map<string, string> // รหัส(upper) → เบอร์ 9 หลักท้าย
+  byPhone: Map<string, RoundCustomer>
+}
+const _idxCache = new Map<string, { builtAt: number; idx: RoundIndex }>()
+const _idxBuilding = new Map<string, Promise<RoundIndex>>()
+const IDX_TTL_MS = 60 * 60 * 1000
 
 function addDaysISO(d: DateString, n: number): DateString {
   const dt = new Date(d + 'T00:00:00Z')
@@ -737,62 +744,98 @@ function idxLast9(p: string): string {
   return d.length >= 9 ? d.slice(-9) : d
 }
 
-// ทำดัชนีจาก print-slips (มี index ตาม scanned_at) แบ่งช่วงละ 3 วัน [cur..cur+2]
-//   (backend: to รวมทั้งวันนั้น → chunk ไม่ซ้อน/ไม่ขาด → นับสิทธิ์ถูก) · กัน cap 50k/คำขอ
-async function buildCodeIndex(from: DateString, to: DateString): Promise<CodeIndex> {
-  const codes = new Map<string, ScanByCodeResult>()
-  const rights = new Map<string, number>()
+// ดัชนี "รายรอบ" จาก print-slips (ช่วงวันเดียวกับพูล) — นับสิทธิ์/รหัส/สินค้าต่อเบอร์เฉพาะช่วงรอบนั้น
+//   backend: to รวมทั้งวันนั้น → chunk 3 วัน [cur..cur+2] ไม่ซ้อน/ไม่ขาด · กัน cap 50k/คำขอ
+async function buildRoundIndex(from: DateString, to: DateString): Promise<RoundIndex> {
+  const byCode = new Map<string, string>()
+  const byPhone = new Map<string, RoundCustomer>()
   let cur = from
   while (cur <= to) {
     let end = addDaysISO(cur, 2)
     if (end > to) end = to
     const r = await getPrintSlips(cur, end, 50000, HEAVY_TIMEOUT_MS)
     for (const s of r.slips) {
-      const k = idxLast9(s.phone || '')
-      if (k) rights.set(k, (rights.get(k) ?? 0) + 1) // ทุกสลิป = 1 สิทธิ์
+      const ph = idxLast9(s.phone || '')
+      if (!ph) continue
+      let c = byPhone.get(ph)
+      if (!c) {
+        c = { name: s.name || '', phone: s.phone || '', codes: [], products: {}, rights: 0 }
+        byPhone.set(ph, c)
+      }
+      c.rights += 1 // ทุกสลิป = 1 สิทธิ์
+      if (!c.name && s.name) c.name = s.name
+      if (!c.phone && s.phone) c.phone = s.phone
       const code = (s.scanCode || '').toUpperCase()
-      if (code && !codes.has(code)) {
-        codes.set(code, { name: s.name || '', phone: s.phone || '', productName: s.productName || '', productSku: s.productSku || '' })
+      if (code) {
+        byCode.set(code, ph)
+        if (!c.products[code]) {
+          c.products[code] = { name: s.productName || '', sku: s.productSku || '' }
+          if (c.codes.length < 40) c.codes.push(code)
+        }
       }
     }
     cur = addDaysISO(end, 1)
   }
-  return { codes, rights }
+  return { byCode, byPhone }
 }
 
-async function ensureCodeIndex(): Promise<CodeIndex> {
-  const to = new Date().toISOString().slice(0, 10) as DateString
-  if (_codeIdx && _codeIdx.to === to && Date.now() - _codeIdx.builtAt <= CODE_IDX_TTL_MS) return _codeIdx.idx
-  if (!_codeIdxBuilding) {
-    _codeIdxBuilding = buildCodeIndex(CAMPAIGN_START, to)
+async function ensureRoundIndex(from: DateString, to: DateString): Promise<RoundIndex> {
+  const key = `${from}_${to}`
+  const cached = _idxCache.get(key)
+  if (cached && Date.now() - cached.builtAt <= IDX_TTL_MS) return cached.idx
+  let p = _idxBuilding.get(key)
+  if (!p) {
+    p = buildRoundIndex(from, to)
       .then((idx) => {
-        _codeIdx = { to, builtAt: Date.now(), idx }
+        _idxCache.set(key, { builtAt: Date.now(), idx })
         return idx
       })
       .finally(() => {
-        _codeIdxBuilding = null
+        _idxBuilding.delete(key)
       })
+    _idxBuilding.set(key, p)
   }
-  return _codeIdxBuilding
+  return p
 }
 
-export async function getScanByCode(code: string): Promise<ScanByCodeResult | null> {
-  const c = (code ?? '').trim().toUpperCase()
-  if (c.length < 4) return null
-  const idx = await ensureCodeIndex()
-  const hit = idx.codes.get(c)
-  if (!hit) return null
-  const n = idx.rights.get(idxLast9(hit.phone))
-  return { ...hit, rights: typeof n === 'number' ? n : undefined }
+// รีโซลฟ์ผู้ได้รางวัลจากดัชนีรายรอบ — ด้วยรหัสสแกน หรือ เบอร์ (คืนข้อมูลครบชุดเดียวกัน)
+export async function resolveWinner(opts: { code?: string; phone?: string; from: DateString; to: DateString }): Promise<WinnerResolve | null> {
+  const idx = await ensureRoundIndex(opts.from, opts.to)
+  let ph: string | undefined
+  let matched: string | undefined
+  if (opts.code) {
+    const c = opts.code.trim().toUpperCase()
+    const p = idx.byCode.get(c)
+    if (p) {
+      ph = p
+      matched = c
+    }
+  }
+  if (!ph && opts.phone) ph = idxLast9(opts.phone)
+  if (!ph) return null
+  const cust = idx.byPhone.get(ph)
+  if (!cust) return null
+  const scanCode = matched ?? (cust.codes.length === 1 ? cust.codes[0] : undefined)
+  const prod = scanCode ? cust.products[scanCode] : undefined
+  return {
+    name: cust.name,
+    phone: cust.phone,
+    rights: cust.rights,
+    scanCode,
+    productName: prod?.name,
+    productSku: prod?.sku,
+    codes: cust.codes,
+    products: cust.products,
+  }
 }
 
-// จำนวนสิทธิ์ที่ส่งเข้าลุ้นของเบอร์ (นับสลิปจากดัชนี) — ใช้เติม rightsCount ย้อนหลัง
-export async function getRightsByPhone(phone: string): Promise<number | null> {
+// จำนวนสิทธิ์ของเบอร์ในรอบ (นับสลิป) — เติม rightsCount ย้อนหลัง
+export async function getRightsByPhone(phone: string, from: DateString, to: DateString): Promise<number | null> {
   const k = idxLast9(phone)
   if (k.length < 9) return null
-  const idx = await ensureCodeIndex()
-  const n = idx.rights.get(k)
-  return typeof n === 'number' ? n : null
+  const idx = await ensureRoundIndex(from, to)
+  const cust = idx.byPhone.get(k)
+  return cust ? cust.rights : null
 }
 
 // ที่อยู่จัดส่งค่าเริ่มต้นของลูกค้า — หา id จากเบอร์ (/customers/search) แล้วดึง addresses จาก /customers/{id}/detail
