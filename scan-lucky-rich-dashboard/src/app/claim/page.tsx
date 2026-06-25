@@ -215,7 +215,13 @@ export default function ClaimPage() {
                           <div className="inline-flex items-center px-5 py-1.5 rounded-full font-bold text-[15px] text-[#5a3a00]" style={{ background: GOLD }}>
                             {p.prizeLabel}
                           </div>
-                          {p.announce && <div className="text-[12px] text-white/85 mt-1">{p.announce}</div>}
+                          {p.announce && (
+                            <div className="mt-3">
+                              <span className="inline-block px-4 py-2 rounded-xl font-extrabold text-[17px] leading-snug" style={{ background: 'rgba(255,224,138,0.2)', border: '1px solid rgba(255,224,138,0.6)', color: '#ffe08a' }}>
+                                {p.announce}
+                              </span>
+                            </div>
+                          )}
                           {(p.productName || p.scanCode) && (
                             <div className="text-left mt-2.5 p-3 rounded-xl" style={{ background: 'rgba(255,255,255,0.12)', border: '0.5px solid rgba(255,255,255,0.22)' }}>
                               {p.productName && (
