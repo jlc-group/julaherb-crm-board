@@ -157,6 +157,7 @@ export default function OperationsTab({ onOpenClaim }: { onOpenClaim?: (phoneLas
             onDownloadForm={downloadForm}
             onImport={() => setShowImport(true)}
             onOpenClaim={onOpenClaim}
+            onReload={load}
           />
         </>
       ) : (

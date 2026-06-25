@@ -1,6 +1,6 @@
 'use client'
 
-import { Fragment } from 'react'
+import { Fragment, useState } from 'react'
 import type { DrawRound, DrawWinner, PrizeSlot } from '@/config/draw-rounds'
 import { roundSlots, GOLD, getRound, winnerAnnounceISOBySlot } from '@/config/draw-rounds'
 import { numFmt } from '@/lib/utils'
@@ -27,6 +27,7 @@ interface Props {
   onDownloadForm: () => void // Excel ตาม pattern ไฟล์ต้นฉบับ (10 คอลัมน์)
   onImport: () => void // อัปโหลดรายชื่อ → ระบุรายวันอัตโนมัติ
   onOpenClaim?: (phoneLast9: string) => void // กดผู้ได้รางวัล → ไปหน้ารับรางวัล
+  onReload: () => void // โหลดรายชื่อใหม่ (หลังเติมสิทธิ์ย้อนหลัง)
 }
 
 // เรียงตามวัน: รางวัลประจำวัน (10K) ก่อน → รางวัลใหญ่รายเดือน (100K) → ใหญ่สุด (1M) ท้ายสุด
@@ -40,10 +41,25 @@ function slotLabel(slot: PrizeSlot, round: DrawRound): { kicker: string; main: s
   return { kicker: 'รางวัลใหญ่ท้ายแคมเปญ', main: '🏆 ทอง 1 ล้าน', sub: '', big: true }
 }
 
-export default function DrawSlotList({ round, winners, onPick, onRemove, onExport, onDownloadForm, onImport, onOpenClaim }: Props) {
+export default function DrawSlotList({ round, winners, onPick, onRemove, onExport, onDownloadForm, onImport, onOpenClaim, onReload }: Props) {
+  const [enriching, setEnriching] = useState(false)
   const ordered = DAY_ORDER.flatMap((t) => roundSlots(round).filter((s) => s.tier === t))
   const bySlot = new Map(winners.filter((w) => w.round === round.round).map((w) => [w.slotId, w]))
   const filled = ordered.filter((s) => bySlot.has(s.slotId)).length
+  // มีคนที่ยังไม่มี "สิทธิ์ที่ส่ง" ไหม (เติมย้อนหลังได้)
+  const missingRights = winners.some((w) => w.round === round.round && typeof w.rightsCount !== 'number')
+
+  async function enrichRights() {
+    setEnriching(true)
+    try {
+      await fetch('/api/draw/winners?enrich=1')
+      onReload()
+    } catch {
+      /* เติมไม่สำเร็จ — ลองใหม่ได้ */
+    } finally {
+      setEnriching(false)
+    }
+  }
   // ตำแหน่งแรกของรางวัลใหญ่ (สำหรับเส้นคั่นบาง ๆ — เฉพาะตอนมีทั้งรางวัลประจำวัน + รางวัลใหญ่)
   const firstBigIdx = ordered.findIndex((s) => s.tier !== '10K')
 
@@ -63,6 +79,11 @@ export default function DrawSlotList({ round, winners, onPick, onRemove, onExpor
           <button onClick={onImport} className="px-3 py-1.5 rounded-md border border-[var(--primary)] text-[var(--primary)] text-[13px] font-semibold mr-auto" title="อัปโหลดไฟล์รายชื่อ (ชื่อ/นามสกุล/เบอร์) แล้วระบบจะระบุรายวันให้อัตโนมัติตามลำดับแถว">
             <i className="ti ti-upload mr-1" /> อัปโหลดรายชื่อ (ระบุรายวัน)
           </button>
+          {missingRights && (
+            <button onClick={enrichRights} disabled={enriching} className="px-3 py-1.5 rounded-md border border-[var(--primary)] text-[var(--primary)] text-[13px] font-semibold disabled:opacity-50" title="เติม 'สิทธิ์ที่ส่ง' ที่ยังว่าง — นับจำนวนสลิปจากระบบ (ครั้งแรกอาจ ~1-2 นาที)">
+              <i className="ti ti-refresh mr-1" /> {enriching ? 'กำลังเติมสิทธิ์… (~1-2 นาที)' : 'เติมสิทธิ์ที่ส่ง'}
+            </button>
+          )}
           <button onClick={onExport} disabled={filled === 0} className="px-3 py-1.5 rounded-md border border-[var(--border)] text-[13px] font-semibold disabled:opacity-40" title="CSV ละเอียด — มีสิทธิ์ที่ส่ง / ประวัติรางวัล / ที่อยู่ สำหรับทีมโทร">
             <i className="ti ti-file-spreadsheet mr-1" /> Export CSV (ละเอียด)
           </button>

@@ -3,11 +3,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import fs from 'fs'
 import path from 'path'
+import { ds } from '@/lib/api/adapter'
 import { fail } from '../../_utils'
 import type { DrawWinner } from '@/config/draw-rounds'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
+export const maxDuration = 180 // ?enrich=1 อาจต้องทำดัชนี print-slips ครั้งแรก
 
 // DATA_DIR override ได้ด้วย env — production ชี้ออกนอก app folder (กัน robocopy /PURGE ลบ PII)
 const DATA_DIR = process.env.DATA_DIR || path.join(process.cwd(), 'data')
@@ -38,8 +40,28 @@ function json(data: unknown, status = 200) {
   return NextResponse.json(data, { status, headers: { 'Cache-Control': 'no-store' } })
 }
 
-export async function GET() {
-  return json({ winners: readWinners() })
+export async function GET(req: NextRequest) {
+  const enrich = new URL(req.url).searchParams.get('enrich') === '1'
+  const winners = readWinners()
+  if (enrich) {
+    // เติม "สิทธิ์ที่ส่ง" ย้อนหลังให้คนที่ยังว่าง — นับจากดัชนี print-slips (ครั้งแรกอาจ ~1-2 นาที)
+    let changed = false
+    for (const w of winners) {
+      if (typeof w.rightsCount !== 'number' && w.phone) {
+        try {
+          const n = await ds.getRightsByPhone(w.phone)
+          if (typeof n === 'number') {
+            w.rightsCount = n
+            changed = true
+          }
+        } catch {
+          /* เติมคนนี้ไม่ได้ — ข้าม */
+        }
+      }
+    }
+    if (changed) writeWinners(winners)
+  }
+  return json({ winners })
 }
 
 export async function POST(req: NextRequest) {

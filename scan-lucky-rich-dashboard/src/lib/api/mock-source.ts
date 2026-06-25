@@ -470,7 +470,17 @@ export async function getScanByCode(code: string): Promise<ScanByCodeResult | nu
     phone: thaiPhone(seed + 300),
     productName: stripProductSuffix(product.displayName),
     productSku: product.sku,
+    rights: (seed % 5) + 1,
   }
+}
+
+// จำนวนสิทธิ์ของเบอร์ (mock: deterministic จากเบอร์) — ของจริงเมื่อ DATA_SOURCE=api
+export async function getRightsByPhone(phone: string): Promise<number | null> {
+  const d = (phone ?? '').replace(/\D/g, '')
+  if (d.length < 9) return null
+  let s = 0
+  for (let i = 0; i < d.length; i++) s += d.charCodeAt(i)
+  return (s % 8) + 1
 }
 
 // ════════════════════════════════════════════════════════════════

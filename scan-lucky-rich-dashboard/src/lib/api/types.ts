@@ -349,10 +349,11 @@ export interface CustomerSearchResponse {
   results: CustomerSearchResult[]
 }
 
-// Backend: GET /api/v1/scan-history?legacy_serial=&scan_type=success (รหัสสแกน → ลูกค้า+เบอร์เต็ม)
+// รหัสสแกน → ลูกค้า+เบอร์เต็ม (ดึงจากดัชนี print-slips · ดู getScanByCode)
 export interface ScanByCodeResult {
   name: string
   phone: string                  // raw เต็ม — mask ตอน render (ยกเว้นหน้า Operations)
   productName: string
   productSku: string
+  rights?: number                // จำนวนสิทธิ์ที่ส่งเข้าลุ้น (นับสลิปต่อเบอร์)
 }

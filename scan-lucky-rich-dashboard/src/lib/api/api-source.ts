@@ -719,8 +719,12 @@ export async function searchCustomers(q: string): Promise<CustomerSearchResponse
 //   ⚠️ ไม่ใช้ /scan-history — ไม่มี index บน legacy_qr_code_serial → seq-scan 12M แถว → ช้า/timeout/502
 //   วิธี: ทำ "ดัชนีรหัส→ลูกค้า" จาก /dashboard/print-slips (มี index ตาม scanned_at + ใช้สิทธิ์ dashboard ที่ token มีอยู่)
 //   แบ่งดึงเป็นช่วงวัน (กัน cap 50k/คำขอ) แล้ว cache ทั้งดัชนี (TTL 1 ชม.) → ครั้งถัดไปค้นเร็วทันที
-let _codeIdx: { to: DateString; builtAt: number; map: Map<string, ScanByCodeResult> } | null = null
-let _codeIdxBuilding: Promise<Map<string, ScanByCodeResult>> | null = null
+interface CodeIndex {
+  codes: Map<string, ScanByCodeResult> // รหัส(upper) → ลูกค้า
+  rights: Map<string, number>          // เบอร์ 9 หลักท้าย → จำนวนสิทธิ์ (นับสลิป)
+}
+let _codeIdx: { to: DateString; builtAt: number; idx: CodeIndex } | null = null
+let _codeIdxBuilding: Promise<CodeIndex> | null = null
 const CODE_IDX_TTL_MS = 60 * 60 * 1000
 
 function addDaysISO(d: DateString, n: number): DateString {
@@ -728,46 +732,67 @@ function addDaysISO(d: DateString, n: number): DateString {
   dt.setUTCDate(dt.getUTCDate() + n)
   return dt.toISOString().slice(0, 10) as DateString
 }
+function idxLast9(p: string): string {
+  const d = (p || '').replace(/\D/g, '')
+  return d.length >= 9 ? d.slice(-9) : d
+}
 
-async function buildCodeIndex(from: DateString, to: DateString): Promise<Map<string, ScanByCodeResult>> {
-  const map = new Map<string, ScanByCodeResult>()
+// ทำดัชนีจาก print-slips (มี index ตาม scanned_at) แบ่งช่วงละ 3 วัน [cur..cur+2]
+//   (backend: to รวมทั้งวันนั้น → chunk ไม่ซ้อน/ไม่ขาด → นับสิทธิ์ถูก) · กัน cap 50k/คำขอ
+async function buildCodeIndex(from: DateString, to: DateString): Promise<CodeIndex> {
+  const codes = new Map<string, ScanByCodeResult>()
+  const rights = new Map<string, number>()
   let cur = from
-  // ช่วงละ 3 วัน (~30k สลิป < cap 50k) → ครอบทุกรหัสโดยไม่โดน cap
   while (cur <= to) {
     let end = addDaysISO(cur, 2)
     if (end > to) end = to
     const r = await getPrintSlips(cur, end, 50000, HEAVY_TIMEOUT_MS)
     for (const s of r.slips) {
+      const k = idxLast9(s.phone || '')
+      if (k) rights.set(k, (rights.get(k) ?? 0) + 1) // ทุกสลิป = 1 สิทธิ์
       const code = (s.scanCode || '').toUpperCase()
-      if (code && !map.has(code)) {
-        map.set(code, { name: s.name || '', phone: s.phone || '', productName: s.productName || '', productSku: s.productSku || '' })
+      if (code && !codes.has(code)) {
+        codes.set(code, { name: s.name || '', phone: s.phone || '', productName: s.productName || '', productSku: s.productSku || '' })
       }
     }
     cur = addDaysISO(end, 1)
   }
-  return map
+  return { codes, rights }
+}
+
+async function ensureCodeIndex(): Promise<CodeIndex> {
+  const to = new Date().toISOString().slice(0, 10) as DateString
+  if (_codeIdx && _codeIdx.to === to && Date.now() - _codeIdx.builtAt <= CODE_IDX_TTL_MS) return _codeIdx.idx
+  if (!_codeIdxBuilding) {
+    _codeIdxBuilding = buildCodeIndex(CAMPAIGN_START, to)
+      .then((idx) => {
+        _codeIdx = { to, builtAt: Date.now(), idx }
+        return idx
+      })
+      .finally(() => {
+        _codeIdxBuilding = null
+      })
+  }
+  return _codeIdxBuilding
 }
 
 export async function getScanByCode(code: string): Promise<ScanByCodeResult | null> {
   const c = (code ?? '').trim().toUpperCase()
   if (c.length < 4) return null
-  const to = new Date().toISOString().slice(0, 10) as DateString
-  const fresh = _codeIdx && _codeIdx.to === to && Date.now() - _codeIdx.builtAt <= CODE_IDX_TTL_MS
-  if (!fresh) {
-    // กันสร้างซ้อนหลายคำขอพร้อมกัน — แชร์ promise เดียว
-    if (!_codeIdxBuilding) {
-      _codeIdxBuilding = buildCodeIndex(CAMPAIGN_START, to)
-        .then((map) => {
-          _codeIdx = { to, builtAt: Date.now(), map }
-          return map
-        })
-        .finally(() => {
-          _codeIdxBuilding = null
-        })
-    }
-    await _codeIdxBuilding
-  }
-  return _codeIdx?.map.get(c) ?? null
+  const idx = await ensureCodeIndex()
+  const hit = idx.codes.get(c)
+  if (!hit) return null
+  const n = idx.rights.get(idxLast9(hit.phone))
+  return { ...hit, rights: typeof n === 'number' ? n : undefined }
+}
+
+// จำนวนสิทธิ์ที่ส่งเข้าลุ้นของเบอร์ (นับสลิปจากดัชนี) — ใช้เติม rightsCount ย้อนหลัง
+export async function getRightsByPhone(phone: string): Promise<number | null> {
+  const k = idxLast9(phone)
+  if (k.length < 9) return null
+  const idx = await ensureCodeIndex()
+  const n = idx.rights.get(k)
+  return typeof n === 'number' ? n : null
 }
 
 // ที่อยู่จัดส่งค่าเริ่มต้นของลูกค้า — หา id จากเบอร์ (/customers/search) แล้วดึง addresses จาก /customers/{id}/detail

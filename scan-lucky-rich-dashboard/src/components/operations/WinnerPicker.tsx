@@ -132,6 +132,7 @@ export default function WinnerPicker({
         productName: b.productName || undefined,
         productSku: b.productSku || undefined,
         address: '',
+        rights: typeof b.rights === 'number' ? b.rights : undefined,
         codes: [],
       })
       lookupAddress(String(b.phone ?? '')) // ดึงที่อยู่มาเติมอัตโนมัติ
