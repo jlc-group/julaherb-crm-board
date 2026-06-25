@@ -4,8 +4,8 @@ import { useEffect, useState } from 'react'
 import MobileShell from '@/components/public/MobileShell'
 import { DRAW_ROUNDS, winnerAnnounceISO } from '@/config/draw-rounds'
 
-// วันเวลาประกาศผลรอบแรก (ผู้โชคดีรายวันใบแรก) = 1 ก.ค. 2569 15:00 น. (เวลาไทย)
-const FIRST_ANNOUNCE = new Date(`${winnerAnnounceISO(DRAW_ROUNDS[0].round, '10K', 1)}T15:00:00+07:00`)
+// วันเวลาประกาศผลรอบแรก (ผู้โชคดีรายวันใบแรก) = 1 ก.ค. 2569 10:00 น. (เวลาไทย)
+const FIRST_ANNOUNCE = new Date(`${winnerAnnounceISO(DRAW_ROUNDS[0].round, '10K', 1)}T10:00:00+07:00`)
 const BRAND = '#15803d'
 const BRAND_BG = 'var(--brand-grad)' // ไล่สีแบรนด์ (เขียวเข้ม→อ่อน)
 
@@ -85,7 +85,7 @@ export default function WinnersPage() {
           <p className="text-[12.5px] font-semibold text-[#16a34a] mt-1">ประจำเดือน{activeLabel}</p>
         ) : (
           <p className="text-[12px] text-[var(--text-muted)] mt-1 flex items-center justify-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#16a34a]" /> อัปเดตทุกวัน 15:00 น.
+            <span className="w-1.5 h-1.5 rounded-full bg-[#16a34a]" /> อัปเดตทุกวัน 10:00 น.
           </p>
         )}
       </div>
@@ -105,15 +105,15 @@ export default function WinnersPage() {
         <div className="float-up pb-24">
           <div className="rounded-2xl border border-[var(--border)] bg-white p-5 mb-3 text-center">
             <i className="ti ti-clock text-[24px] text-[var(--text-muted)]" aria-hidden="true" />
-            <div className="text-[14px] text-[var(--text)] mt-2 leading-relaxed">ยังไม่เริ่มประกาศผล<br />ติดตามผลได้ทุกวัน <b>15:00 น.</b></div>
+            <div className="text-[14px] text-[var(--text)] mt-2 leading-relaxed">ยังไม่เริ่มประกาศผล<br />ติดตามผลได้ทุกวัน <b>10:00 น.</b></div>
           </div>
           <div className="rounded-2xl border border-[var(--border)] bg-white p-4 mb-4">
             <div className="text-[12.5px] font-semibold text-[var(--dark)]">เริ่มประกาศผลในอีก</div>
-            <div className="text-[11px] text-[var(--text-muted)] mt-0.5 mb-3">รอบแรก 1 ก.ค. 2569 · เวลา 15:00 น.</div>
+            <div className="text-[11px] text-[var(--text-muted)] mt-0.5 mb-3">รอบแรก 1 ก.ค. 2569 · เวลา 10:00 น.</div>
             <Countdown target={FIRST_ANNOUNCE} />
           </div>
           <p className="text-center text-[11px] text-[var(--text-muted)] mt-6 leading-relaxed">
-            ประกาศผลทุกวัน 15:00 น. ทาง ไทยรัฐออนไลน์ และ LINE OA<br />จุฬาเฮิร์บ สานฝันคนไทย
+            ประกาศผลทุกวัน 10:00 น. ทาง ไทยรัฐออนไลน์ และ LINE OA<br />จุฬาเฮิร์บ สานฝันคนไทย
           </p>
         </div>
       ) : (
@@ -152,7 +152,7 @@ export default function WinnersPage() {
           )}
 
           <p className="text-center text-[11px] text-[var(--text-muted)] mt-6 leading-relaxed">
-            ประกาศผลทุกวัน 15:00 น. ทาง ไทยรัฐออนไลน์ และ LINE OA<br />จุฬาเฮิร์บ สานฝันคนไทย
+            ประกาศผลทุกวัน 10:00 น. ทาง ไทยรัฐออนไลน์ และ LINE OA<br />จุฬาเฮิร์บ สานฝันคนไทย
           </p>
         </div>
       )}
