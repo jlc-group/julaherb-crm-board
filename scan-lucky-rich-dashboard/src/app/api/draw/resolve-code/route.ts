@@ -6,6 +6,7 @@ import { ds } from '@/lib/api/adapter'
 import { ok, fail } from '../../_utils'
 
 export const dynamic = 'force-dynamic'
+export const maxDuration = 180 // ครั้งแรกต้องทำดัชนีจาก print-slips (แบ่งช่วงวัน) อาจ ~1-2 นาที
 
 export async function GET(req: NextRequest) {
   const code = (new URL(req.url).searchParams.get('code') ?? '').trim()

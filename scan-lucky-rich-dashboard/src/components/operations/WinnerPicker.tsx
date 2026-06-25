@@ -82,6 +82,16 @@ export default function WinnerPicker({
     }
   }
 
+  // ดัชนีรหัส→ลูกค้า จากพูลที่โหลดไว้ (ค้นทันทีฝั่ง client ก่อนยิง server)
+  const poolCodeMap = useMemo(() => {
+    const m = new Map<string, PoolCustomer>()
+    for (const c of pool) for (const cd of c.codes) {
+      const k = cd.toUpperCase()
+      if (!m.has(k)) m.set(k, c)
+    }
+    return m
+  }, [pool])
+
   // รหัสสแกน → ดึงลูกค้า (ชื่อ+เบอร์เต็ม+สินค้า) มาเติมให้เลย (unique เป๊ะสุด)
   async function resolveByCode(raw: string) {
     const c = (raw || '').trim().toUpperCase()
@@ -90,12 +100,25 @@ export default function WinnerPicker({
       return
     }
     setErr('')
+    // 1) เจอในพูลที่โหลดไว้ → เติมทันที ไม่ต้องยิง server
+    const hit = poolCodeMap.get(c)
+    if (hit) {
+      const prod = hit.products?.[c]
+      setPicked({ name: hit.name, phone: hit.phone, scanCode: c, productName: prod?.name, productSku: prod?.sku, address: hit.address ?? '', rights: hit.rights, codes: hit.codes, products: hit.products })
+      if (!hit.address) lookupAddress(hit.phone)
+      return
+    }
+    // 2) ไม่อยู่ในพูล → ยิง server (ดัชนี print-slips · ครั้งแรกอาจช้า ~1-2 นาที แล้วเร็ว)
     setCodeLoading(true)
     try {
       const r = await fetch('/api/draw/resolve-code?code=' + encodeURIComponent(c))
       const b = await r.json().catch(() => ({}))
       if (!r.ok) {
         setErr(b.error ?? `ดึงรหัสไม่สำเร็จ (HTTP ${r.status})`)
+        return
+      }
+      if (b.error) {
+        setErr('ดึงรหัสไม่สำเร็จ: ' + b.error)
         return
       }
       if (!b.found) {
@@ -414,6 +437,7 @@ export default function WinnerPicker({
                 {codeLoading ? 'กำลังดึง…' : 'ดึงข้อมูล →'}
               </button>
             </div>
+            {codeLoading && <div className="text-[11px] text-[var(--primary)] mt-1">⏳ กำลังดึง… (ถ้ารหัสไม่อยู่ในพูล ครั้งแรกระบบทำดัชนี ~1-2 นาที ครั้งต่อไปเร็วทันที)</div>}
 
             <div className="text-center text-[11px] text-[var(--text-secondary)] my-2">— หรือ —</div>
 

@@ -627,7 +627,7 @@ export async function getBaselineCompare(from: DateString, to: DateString): Prom
 //    Backend คืน { total, rows:[{scanner_name, scanner_phone, legacy_qr_code_serial,
 //    product_name, product_sku}] } → map เป็น PrintSlip shape ของ dashboard ตรงนี้.
 //    ถ้า backend ยังไม่ deploy/unreachable → sv() throw → route fallback เป็น mock preview.
-export async function getPrintSlips(from: DateString, to: DateString, limit = 5000): Promise<PrintSlipsResponse> {
+export async function getPrintSlips(from: DateString, to: DateString, limit = 5000, timeoutMs?: number): Promise<PrintSlipsResponse> {
   const r = await sv<{
     total: number
     rows: Array<{
@@ -637,7 +637,7 @@ export async function getPrintSlips(from: DateString, to: DateString, limit = 50
       product_name: string
       product_sku: string
     }>
-  }>('/dashboard/print-slips', { ...campaignParams(), from, to, limit })
+  }>('/dashboard/print-slips', { ...campaignParams(), from, to, limit }, timeoutMs)
   const rows = r.rows ?? []
   // 🚫 ตัดพนักงาน (ทีมจุฬาเฮิร์บ) ออก — ไม่มีสิทธิ์เข้าร่วมจับฉลาก (ดู config/employee-exclude)
   const excluded = new Set<string>()
@@ -716,27 +716,58 @@ export async function searchCustomers(q: string): Promise<CustomerSearchResponse
 }
 
 // รหัสสแกน (legacy_qr_code_serial) → ลูกค้า+เบอร์เต็ม+สินค้า
-//   consume /scan-history?legacy_serial=&scan_type=success (read-only · unique 1 ใบ/รหัส)
-//   ⚠️ ต้อง token ที่มีสิทธิ์ scan_history (super_admin/brand_admin)
-interface SvScanEntry {
-  scanner_name?: string | null
-  scanner_phone?: string | null
-  product_name?: string | null
-  product_sku?: string | null
+//   ⚠️ ไม่ใช้ /scan-history — ไม่มี index บน legacy_qr_code_serial → seq-scan 12M แถว → ช้า/timeout/502
+//   วิธี: ทำ "ดัชนีรหัส→ลูกค้า" จาก /dashboard/print-slips (มี index ตาม scanned_at + ใช้สิทธิ์ dashboard ที่ token มีอยู่)
+//   แบ่งดึงเป็นช่วงวัน (กัน cap 50k/คำขอ) แล้ว cache ทั้งดัชนี (TTL 1 ชม.) → ครั้งถัดไปค้นเร็วทันที
+let _codeIdx: { to: DateString; builtAt: number; map: Map<string, ScanByCodeResult> } | null = null
+let _codeIdxBuilding: Promise<Map<string, ScanByCodeResult>> | null = null
+const CODE_IDX_TTL_MS = 60 * 60 * 1000
+
+function addDaysISO(d: DateString, n: number): DateString {
+  const dt = new Date(d + 'T00:00:00Z')
+  dt.setUTCDate(dt.getUTCDate() + n)
+  return dt.toISOString().slice(0, 10) as DateString
 }
-export async function getScanByCode(code: string): Promise<ScanByCodeResult | null> {
-  const c = (code ?? '').trim()
-  if (c.length < 4) return null
-  const r = await sv<{ data: SvScanEntry[] }>('/scan-history', { legacy_serial: c, scan_type: 'success', limit: 1 })
-  const e = (r.data ?? [])[0]
-  if (!e) return null
-  const str = (v: unknown) => (typeof v === 'string' ? v.trim() : '')
-  return {
-    name: str(e.scanner_name),
-    phone: str(e.scanner_phone),
-    productName: str(e.product_name),
-    productSku: str(e.product_sku),
+
+async function buildCodeIndex(from: DateString, to: DateString): Promise<Map<string, ScanByCodeResult>> {
+  const map = new Map<string, ScanByCodeResult>()
+  let cur = from
+  // ช่วงละ 3 วัน (~30k สลิป < cap 50k) → ครอบทุกรหัสโดยไม่โดน cap
+  while (cur <= to) {
+    let end = addDaysISO(cur, 2)
+    if (end > to) end = to
+    const r = await getPrintSlips(cur, end, 50000, HEAVY_TIMEOUT_MS)
+    for (const s of r.slips) {
+      const code = (s.scanCode || '').toUpperCase()
+      if (code && !map.has(code)) {
+        map.set(code, { name: s.name || '', phone: s.phone || '', productName: s.productName || '', productSku: s.productSku || '' })
+      }
+    }
+    cur = addDaysISO(end, 1)
   }
+  return map
+}
+
+export async function getScanByCode(code: string): Promise<ScanByCodeResult | null> {
+  const c = (code ?? '').trim().toUpperCase()
+  if (c.length < 4) return null
+  const to = new Date().toISOString().slice(0, 10) as DateString
+  const fresh = _codeIdx && _codeIdx.to === to && Date.now() - _codeIdx.builtAt <= CODE_IDX_TTL_MS
+  if (!fresh) {
+    // กันสร้างซ้อนหลายคำขอพร้อมกัน — แชร์ promise เดียว
+    if (!_codeIdxBuilding) {
+      _codeIdxBuilding = buildCodeIndex(CAMPAIGN_START, to)
+        .then((map) => {
+          _codeIdx = { to, builtAt: Date.now(), map }
+          return map
+        })
+        .finally(() => {
+          _codeIdxBuilding = null
+        })
+    }
+    await _codeIdxBuilding
+  }
+  return _codeIdx?.map.get(c) ?? null
 }
 
 // ที่อยู่จัดส่งค่าเริ่มต้นของลูกค้า — หา id จากเบอร์ (/customers/search) แล้วดึง addresses จาก /customers/{id}/detail
