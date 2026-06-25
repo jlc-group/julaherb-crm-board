@@ -427,57 +427,65 @@ function AppointmentSummary({
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-[var(--border)] overflow-hidden">
-      {/* ── ส่วนที่จับเป็นรูป ── */}
-      <div ref={cardRef} className="bg-white p-5">
-        <div className="flex items-center gap-2.5 mb-3">
-          <span className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: '#dcfce7', color: BRAND }}>
-            <i className={`ti ${justBooked ? 'ti-circle-check' : 'ti-clipboard-list'} text-[20px]`} aria-hidden="true" />
-          </span>
-          <div className="min-w-0">
-            <div className="text-[16px] font-bold text-[var(--dark)]">{justBooked ? 'บันทึกนัดหมายแล้ว' : 'นัดหมายของคุณ'}</div>
-            <div className="text-[11.5px] text-[var(--text-secondary)] truncate">จุฬาเฮิร์บ สานฝันคนไทย · สแกนลุ้นรวย สวยลุ้นล้าน</div>
+    <div>
+      {/* ── การ์ดสรุป (จับเป็นรูปทั้งใบ) — มีสีธีม เขียว+ทอง ── */}
+      <div ref={cardRef} className="rounded-2xl border border-[#bbf7d0] overflow-hidden bg-white">
+        {/* หัวการ์ด — ไล่สีเขียวเข้ม→อ่อน */}
+        <div className="px-5 pt-5 pb-4 text-white" style={{ background: 'linear-gradient(135deg,#136e35 0%,#1f9e49 50%,#6cba38 100%)' }}>
+          <div className="flex items-center gap-2.5">
+            <span className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 bg-white/20">
+              <i className={`ti ${justBooked ? 'ti-circle-check' : 'ti-clipboard-list'} text-[22px]`} aria-hidden="true" />
+            </span>
+            <div className="min-w-0">
+              <div className="text-[17px] font-extrabold">{justBooked ? 'บันทึกนัดหมายแล้ว' : 'นัดหมายของคุณ'}</div>
+              <div className="text-[11px] text-white/85 truncate">จุฬาเฮิร์บ สานฝันคนไทย · สแกนลุ้นรวย สวยลุ้นล้าน</div>
+            </div>
           </div>
         </div>
 
-        <div className="rounded-xl border border-[var(--border)] p-3 mb-3">
-          <div className="text-[11.5px] text-[var(--text-secondary)]">นัดหมายเข้ารับรางวัล</div>
-          <div className="text-[16px] font-bold text-[var(--dark)] mt-0.5">{pickupDateLabel(appt.date)}</div>
-          <div className="text-[12.5px] text-[var(--text-secondary)]">{slot?.period} · {slot?.time}</div>
-          <div className="text-[12px] text-[var(--text)] mt-1">ผู้โชคดี: <span className="font-semibold">{name || '-'}</span></div>
-        </div>
-
-        <div className="mb-3">
-          <div className="text-[12px] font-semibold text-[var(--text-secondary)] mb-1.5">รางวัลที่ได้ ({prizes.length})</div>
-          <div className="space-y-1.5">
-            {prizes.map((p, i) => (
-              <div key={i} className="rounded-lg border border-[var(--border)] px-3 py-2">
-                <div className="text-[13px] font-bold text-[var(--dark)]">{i + 1}. {p.prizeLabel}</div>
-                {p.announce && <div className="text-[11.5px] text-[var(--text-secondary)]">{p.announce}</div>}
-                {p.productName && <div className="text-[11.5px] text-[var(--text)] mt-0.5">สินค้าที่ต้องนำมาแสดง*: <span className="font-semibold">{p.productName}</span>{p.productSku ? ` (${p.productSku})` : ''}</div>}
-                {p.scanCode && <div className="text-[11.5px] text-[var(--text-secondary)] mt-0.5">รหัสการสแกน: {p.scanCode}</div>}
-              </div>
-            ))}
+        {/* เนื้อการ์ด — พื้นเขียวอ่อนจางลงขาว */}
+        <div className="px-5 pt-4 pb-5" style={{ background: 'linear-gradient(180deg,#f0fdf4 0%,#ffffff 55%)' }}>
+          <div className="rounded-xl border border-[#bbf7d0] bg-white p-3 mb-3">
+            <div className="text-[11.5px] font-semibold text-[#15803d]">นัดหมายเข้ารับรางวัล</div>
+            <div className="text-[16px] font-bold text-[var(--dark)] mt-0.5">{pickupDateLabel(appt.date)}</div>
+            <div className="text-[12.5px] text-[var(--text-secondary)]">{slot?.period} · {slot?.time}</div>
+            <div className="text-[12px] text-[var(--text)] mt-1">ผู้โชคดี: <span className="font-semibold">{name || '-'}</span></div>
           </div>
-          {items.length > 0 && <div className="text-[10.5px] text-[var(--text-muted)] mt-1.5">* นำสินค้าจริงที่สแกนมาแสดงต่อเจ้าหน้าที่ในวันรับรางวัล</div>}
-        </div>
 
-        <div className="rounded-xl border border-[var(--border)] p-3">
-          <div className="text-[12.5px] font-semibold text-[var(--dark)]">วิธีรับ: {modeLabel}</div>
-          <div className="text-[11.5px] text-[var(--text-secondary)] mt-1.5 mb-1">เอกสารที่ต้องเตรียม</div>
-          <ol className="space-y-1">
-            {docs.map((d, i) => (
-              <li key={i} className="text-[12px] text-[var(--text)] flex gap-1.5">
-                <span className="font-bold text-[#15803d]">{i + 1}.</span>
-                <span>{d}</span>
-              </li>
-            ))}
-          </ol>
+          {/* รางวัล — โทนทอง */}
+          <div className="mb-3">
+            <div className="text-[12px] font-semibold text-[#b45309] mb-1.5">รางวัลที่ได้ ({prizes.length})</div>
+            <div className="space-y-1.5">
+              {prizes.map((p, i) => (
+                <div key={i} className="rounded-lg border border-[#fde68a] bg-[#fffbeb] px-3 py-2">
+                  <div className="text-[13px] font-bold text-[#b45309]">{i + 1}. {p.prizeLabel}</div>
+                  {p.announce && <div className="text-[11.5px] text-[#a16207]">{p.announce}</div>}
+                  {p.productName && <div className="text-[11.5px] text-[var(--text)] mt-0.5">สินค้าที่ต้องนำมาแสดง*: <span className="font-semibold">{p.productName}</span>{p.productSku ? ` (${p.productSku})` : ''}</div>}
+                  {p.scanCode && <div className="text-[11.5px] text-[#a16207] mt-0.5">รหัสการสแกน: {p.scanCode}</div>}
+                </div>
+              ))}
+            </div>
+            {items.length > 0 && <div className="text-[10.5px] text-[#92400e] mt-1.5">* นำสินค้าจริงที่สแกนมาแสดงต่อเจ้าหน้าที่ในวันรับรางวัล</div>}
+          </div>
+
+          {/* เอกสาร */}
+          <div className="rounded-xl border border-[#bbf7d0] bg-white p-3">
+            <div className="text-[12.5px] font-semibold text-[#15803d]">วิธีรับ: {modeLabel}</div>
+            <div className="text-[11.5px] text-[var(--text-secondary)] mt-1.5 mb-1">เอกสารที่ต้องเตรียม</div>
+            <ol className="space-y-1">
+              {docs.map((d, i) => (
+                <li key={i} className="text-[12px] text-[var(--text)] flex gap-1.5">
+                  <span className="font-bold text-[#15803d]">{i + 1}.</span>
+                  <span>{d}</span>
+                </li>
+              ))}
+            </ol>
+          </div>
         </div>
       </div>
 
       {/* ── ปุ่ม (นอกส่วนจับรูป) ── */}
-      <div className="px-5 pb-5 pt-1 space-y-2">
+      <div className="pt-3 space-y-2">
         <div className="flex gap-2">
           <button onClick={saveImage} disabled={saving} className={`flex-1 py-3 rounded-xl font-semibold text-[13px] border transition disabled:opacity-60 ${imgSaved ? 'border-[#15803d] text-[#15803d] bg-[#f0fdf4]' : 'border-[var(--border)] text-[var(--text)]'}`}>
             <i className="ti ti-photo mr-1.5" aria-hidden="true" />{saving ? 'กำลังบันทึก…' : imgSaved ? 'บันทึกรูปแล้ว' : 'บันทึกเป็นรูป'}
