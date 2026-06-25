@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { getPickupDays, classifyDay, PICKUP_SLOTS, PICKUP_MONTHS, pickupDateLabel } from '@/config/pickup'
 
 const TH_MONTH: Record<string, string> = {
@@ -22,6 +22,14 @@ export default function ClaimPickupCalendar({ initial, onChange }: {
   const [mIdx, setMIdx] = useState(initIdx >= 0 ? initIdx : 0)
   const [selected, setSelected] = useState<string | null>(initial?.date ?? null)
   const [slot, setSlot] = useState<string | null>(initial?.slotId ?? null)
+  // จำนวนคิวที่จองแล้วต่อ (วัน, ช่วง) — ดึงจาก server (เลขล้วน) เพื่อโชว์ "ที่ว่าง"
+  const [counts, setCounts] = useState<Record<string, { morning: number; afternoon: number }>>({})
+  useEffect(() => {
+    fetch('/api/draw/appointments?counts=1')
+      .then((r) => r.json())
+      .then((b) => setCounts(b.counts ?? {}))
+      .catch(() => {})
+  }, [])
 
   const ym = PICKUP_MONTHS[mIdx]
   const [year, month] = ym.split('-').map(Number)
@@ -124,17 +132,25 @@ export default function ClaimPickupCalendar({ initial, onChange }: {
           <div className="grid grid-cols-2 gap-2">
             {PICKUP_SLOTS.map((s) => {
               const on = slot === s.id
+              const c = selected ? counts[selected] : undefined
+              const booked = c ? (s.id === 'afternoon' ? c.afternoon : c.morning) : 0
+              const left = Math.max(0, s.capacity - booked)
+              const full = left <= 0
               return (
                 <button
                   key={s.id}
-                  onClick={() => pickSlot(s.id)}
-                  className={`rounded-xl border px-3 py-2.5 text-left transition active:scale-[0.98] ${
-                    on ? 'border-[#16a34a] bg-[#f0fdf4]' : 'border-[var(--border)] bg-white'
+                  onClick={() => { if (!full) pickSlot(s.id) }}
+                  disabled={full}
+                  className={`rounded-xl border px-3 py-2.5 text-left transition active:scale-[0.98] disabled:active:scale-100 ${
+                    full ? 'border-[var(--border)] bg-[var(--bg-soft)] opacity-60' : on ? 'border-[#16a34a] bg-[#f0fdf4]' : 'border-[var(--border)] bg-white'
                   }`}
                 >
                   <div className="text-[13px] font-bold text-[#14532d]">{s.period}</div>
                   <div className="text-[11px] text-[var(--text-secondary)]">{s.time}</div>
-                  <div className="text-[10px] text-[var(--text-muted)] mt-0.5">รับสูงสุด {s.capacity} คน</div>
+                  <div className="mt-1 text-[11px] font-semibold">
+                    {full ? <span className="text-[#b91c1c]">เต็มแล้ว</span> : <span className="text-[#15803d]">เหลือ {left} ที่</span>}
+                    <span className="text-[10px] text-[var(--text-muted)] font-normal"> · จองแล้ว {booked}/{s.capacity}</span>
+                  </div>
                 </button>
               )
             })}

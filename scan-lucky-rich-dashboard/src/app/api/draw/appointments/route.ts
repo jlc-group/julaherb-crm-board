@@ -55,7 +55,19 @@ function bookedCount(list: DrawAppointment[], date: string, slotId: string, exce
 
 export async function GET(req: NextRequest) {
   const list = read()
-  const phone = req.nextUrl.searchParams.get('phone')
+  const sp = req.nextUrl.searchParams
+  // นับคิวที่จองแล้วต่อ (วัน, ช่วง) — เลขล้วน ไม่มี PII → ลูกค้าดู "ที่ว่าง" ได้
+  if (sp.get('counts') === '1') {
+    const counts: Record<string, { morning: number; afternoon: number }> = {}
+    for (const a of list) {
+      if (a.status === 'no_show') continue
+      if (!counts[a.date]) counts[a.date] = { morning: 0, afternoon: 0 }
+      if (a.slotId === 'afternoon') counts[a.date].afternoon++
+      else counts[a.date].morning++
+    }
+    return json({ counts })
+  }
+  const phone = sp.get('phone')
   if (phone) {
     // ลูกค้าเช็คนัดของตัวเอง (เครื่องไหนก็ได้) — คืนเฉพาะเบอร์นั้น
     const key = last9(phone)
