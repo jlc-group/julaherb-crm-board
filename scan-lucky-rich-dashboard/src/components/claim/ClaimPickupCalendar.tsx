@@ -52,10 +52,10 @@ export default function ClaimPickupCalendar({ initial, onChange }: {
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-[var(--border)] p-4 shadow-sm">
+    <div className="bg-white rounded-2xl border border-[var(--border)] p-4">
       {/* header */}
       <div className="flex items-start gap-2 mb-3">
-        <span className="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-[#dcfce7] text-[15px]">📅</span>
+        <span className="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-[#dcfce7] text-[#15803d] text-[15px]"><i className="ti ti-calendar" aria-hidden="true" /></span>
         <div className="flex-1">
           <div className="text-[15px] font-bold text-[#14532d]">นัดหมายรับรางวัล</div>
           <div className="text-[11.5px] text-[var(--text-secondary)]">เลือกวันและเวลาที่สะดวก</div>
@@ -92,9 +92,9 @@ export default function ClaimPickupCalendar({ initial, onChange }: {
                 key={i}
                 onClick={() => pickDay(iso)}
                 className={`aspect-square rounded-full text-[13px] font-semibold flex items-center justify-center transition active:scale-95 ${
-                  isSel ? 'text-white shadow-[0_3px_10px_rgba(22,163,74,0.4)]' : 'text-[#15803d] border border-[#86efac] bg-white'
+                  isSel ? 'text-white' : 'text-[#15803d] border border-[#86efac] bg-white'
                 }`}
-                style={isSel ? { background: 'linear-gradient(135deg,#16a34a,#15803d)' } : undefined}
+                style={isSel ? { background: '#15803d' } : undefined}
               >
                 {d}
               </button>
@@ -113,14 +113,14 @@ export default function ClaimPickupCalendar({ initial, onChange }: {
       {/* legend */}
       <div className="flex items-center justify-center gap-3 mt-3 text-[10.5px] text-[var(--text-secondary)]">
         <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full border border-[#86efac] bg-white" /> เลือกได้</span>
-        <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full" style={{ background: 'linear-gradient(135deg,#16a34a,#15803d)' }} /> เลือกแล้ว</span>
+        <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full" style={{ background: '#15803d' }} /> เลือกแล้ว</span>
         <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-[#fdf2f2] border border-[#f0d5d5]" /> ปิด/วันจับ</span>
       </div>
 
       {/* slot picker */}
       {selected && (
         <div className="mt-4 pt-4 border-t border-[var(--border-soft)]">
-          <div className="text-[12.5px] font-bold text-[#14532d] mb-2">📌 {pickupDateLabel(selected)} — เลือกช่วงเวลา</div>
+          <div className="text-[12.5px] font-bold text-[#14532d] mb-2"><i className="ti ti-calendar-event mr-1" aria-hidden="true" />{pickupDateLabel(selected)} — เลือกช่วงเวลา</div>
           <div className="grid grid-cols-2 gap-2">
             {PICKUP_SLOTS.map((s) => {
               const on = slot === s.id
