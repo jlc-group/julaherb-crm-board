@@ -40,6 +40,12 @@ export function middleware(req: NextRequest) {
     return res
   }
 
+  // หน้าแอดมิน /jlc-console — ต้องมีคีย์ ไม่งั้นเด้งไปหน้าลูกค้า (ซ่อน UI แอดมินจากคนนอก/ลูกค้า)
+  if (pathname === '/jlc-console' || pathname.startsWith('/jlc-console/')) {
+    const ok = req.headers.get('x-admin-key') === key || req.cookies.get('adminKey')?.value === key
+    return ok ? NextResponse.next() : NextResponse.redirect(new URL('/winners', req.url))
+  }
+
   // refresh token: เฉพาะ localhost (scheduled task ในเครื่อง)
   if (pathname === '/api/auth/refresh') {
     if (hostname === 'localhost' || hostname === '127.0.0.1') return NextResponse.next()
