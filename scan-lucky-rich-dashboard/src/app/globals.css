@@ -76,10 +76,12 @@
   --border-soft:    #f1f5f9;
 
   --sidebar-width:  240px;
+  --brand-grad:     linear-gradient(135deg,#136e35 0%,#1f9e49 50%,#6cba38 100%); /* เขียวเข้ม→เขียวอ่อน (ตาม KV) */
 }
 
 body {
-  font-family: 'Noto Sans Thai', sans-serif;
+  /* DB Heavent ถ้าเครื่องมีฟอนต์ (ไม่ใช่ฟอนต์ฟรีบน web) → ไม่มีใช้ Noto Sans Thai */
+  font-family: 'DB Heavent', 'Noto Sans Thai', sans-serif;
   background: var(--bg);
   color: var(--text);
   min-height: 100vh;

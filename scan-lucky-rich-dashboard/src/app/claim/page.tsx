@@ -21,6 +21,7 @@ interface Prize {
 }
 
 const BRAND = '#15803d'
+const BRAND_BG = 'var(--brand-grad)' // ไล่สีแบรนด์ (เขียวเข้ม→อ่อน) สำหรับปุ่มหลัก
 
 // เอกสารที่ต้องเตรียม แยกตามวิธีรับ — ใช้ร่วมกันระหว่าง checklist และหน้าสรุป
 const DOC_LIST: Record<'self' | 'proxy', string[]> = {
@@ -184,7 +185,7 @@ export default function ClaimPage() {
               onClick={check}
               disabled={checking}
               className="w-full mt-4 py-3.5 rounded-xl text-white font-bold text-[15px] disabled:opacity-50 transition active:scale-[0.98]"
-              style={{ background: BRAND }}
+              style={{ background: BRAND_BG }}
             >
               {checking ? 'กำลังตรวจสอบ…' : 'ตรวจสอบสิทธิ์'}
             </button>
@@ -221,7 +222,7 @@ export default function ClaimPage() {
                   <button
                     onClick={openBooking}
                     className="w-full py-3.5 rounded-xl text-white font-bold text-[15px] transition active:scale-[0.98]"
-                    style={{ background: BRAND }}
+                    style={{ background: BRAND_BG }}
                   >
                     <i className="ti ti-calendar-plus mr-1.5" aria-hidden="true" />นัดหมายเข้ารับรางวัล
                   </button>
@@ -315,7 +316,7 @@ export default function ClaimPage() {
               onClick={() => { if (ready) bookAppt(selDate!, selSlot!) }}
               disabled={!ready}
               className="w-full py-4 rounded-2xl text-white font-bold text-[15px] disabled:opacity-40 transition active:scale-[0.98]"
-              style={{ background: BRAND }}
+              style={{ background: BRAND_BG }}
             >
               {appt ? 'เปลี่ยนนัดหมาย' : 'ยืนยันนัดหมาย'}
             </button>
@@ -435,7 +436,7 @@ function AppointmentSummary({
           </span>
           <div className="min-w-0">
             <div className="text-[16px] font-bold text-[var(--dark)]">{justBooked ? 'บันทึกนัดหมายแล้ว' : 'นัดหมายของคุณ'}</div>
-            <div className="text-[11.5px] text-[var(--text-secondary)] truncate">สแกนลุ้นรวย สวยลุ้นล้าน · Jula&apos;s Herb × ไทยรัฐ</div>
+            <div className="text-[11.5px] text-[var(--text-secondary)] truncate">จุฬาเฮิร์บ สานฝันคนไทย · สแกนลุ้นรวย สวยลุ้นล้าน</div>
           </div>
         </div>
 

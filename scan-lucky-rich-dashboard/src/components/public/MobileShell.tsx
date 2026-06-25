@@ -27,7 +27,7 @@ export default function MobileShell({
         <header
           className="sticky top-0 z-30 flex items-center gap-2.5 px-4 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))]"
           style={{
-            background: 'linear-gradient(135deg,#15803d 0%,#16a34a 100%)',
+            background: 'var(--brand-grad)',
             boxShadow: '0 2px 12px rgba(21,128,61,0.22)',
           }}
         >
@@ -44,8 +44,8 @@ export default function MobileShell({
             {icon}
           </span>
           <div className="leading-tight">
-            <div className="text-[13.5px] font-extrabold text-white tracking-tight">สแกนลุ้นรวย สวยลุ้นล้าน</div>
-            <div className="text-[10px] font-medium text-white/80">Jula&apos;s Herb × ไทยรัฐ</div>
+            <div className="text-[10px] font-medium text-white/85">จุฬาเฮิร์บ สานฝันคนไทย</div>
+            <div className="text-[14px] font-extrabold text-white tracking-tight">สแกนลุ้นรวย สวยลุ้นล้าน</div>
           </div>
           {badge && <div className="ml-auto">{badge}</div>}
         </header>

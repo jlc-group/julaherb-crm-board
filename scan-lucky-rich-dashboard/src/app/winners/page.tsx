@@ -7,6 +7,7 @@ import { DRAW_ROUNDS, winnerAnnounceISO } from '@/config/draw-rounds'
 // วันเวลาประกาศผลรอบแรก (ผู้โชคดีรายวันใบแรก) = 1 ก.ค. 2569 15:00 น. (เวลาไทย)
 const FIRST_ANNOUNCE = new Date(`${winnerAnnounceISO(DRAW_ROUNDS[0].round, '10K', 1)}T15:00:00+07:00`)
 const BRAND = '#15803d'
+const BRAND_BG = 'var(--brand-grad)' // ไล่สีแบรนด์ (เขียวเข้ม→อ่อน)
 
 interface PubWinner {
   announceISO: string
@@ -112,7 +113,7 @@ export default function WinnersPage() {
             <Countdown target={FIRST_ANNOUNCE} />
           </div>
           <p className="text-center text-[11px] text-[var(--text-muted)] mt-6 leading-relaxed">
-            ประกาศผลทุกวัน 15:00 น. ทาง ไทยรัฐออนไลน์ และ LINE OA<br />Jula&apos;s Herb × ไทยรัฐ
+            ประกาศผลทุกวัน 15:00 น. ทาง ไทยรัฐออนไลน์ และ LINE OA<br />จุฬาเฮิร์บ สานฝันคนไทย
           </p>
         </div>
       ) : (
@@ -151,7 +152,7 @@ export default function WinnersPage() {
           )}
 
           <p className="text-center text-[11px] text-[var(--text-muted)] mt-6 leading-relaxed">
-            ประกาศผลทุกวัน 15:00 น. ทาง ไทยรัฐออนไลน์ และ LINE OA<br />Jula&apos;s Herb × ไทยรัฐ
+            ประกาศผลทุกวัน 15:00 น. ทาง ไทยรัฐออนไลน์ และ LINE OA<br />จุฬาเฮิร์บ สานฝันคนไทย
           </p>
         </div>
       )}
@@ -161,7 +162,7 @@ export default function WinnersPage() {
         <a
           href="/claim"
           className="pointer-events-auto flex items-center justify-center gap-2 w-full py-4 rounded-2xl text-white font-bold text-[15px] active:scale-[0.98] transition"
-          style={{ background: BRAND }}
+          style={{ background: BRAND_BG }}
         >
           <i className="ti ti-search" aria-hidden="true" /> ตรวจสอบสิทธิ์ของฉัน
         </a>
