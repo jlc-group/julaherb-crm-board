@@ -46,6 +46,7 @@ import type {
   OutageInfo,
   PrintSlipsResponse,
   CustomerSearchResponse,
+  ScanByCodeResult,
   DayHourResponse,
   SkuDailyMatrixResponse,
   RfmDistributionResponse,
@@ -712,6 +713,30 @@ export async function searchCustomers(q: string): Promise<CustomerSearchResponse
     }))
     .filter((c) => c.name || c.phone)
   return { q: query, results }
+}
+
+// รหัสสแกน (legacy_qr_code_serial) → ลูกค้า+เบอร์เต็ม+สินค้า
+//   consume /scan-history?legacy_serial=&scan_type=success (read-only · unique 1 ใบ/รหัส)
+//   ⚠️ ต้อง token ที่มีสิทธิ์ scan_history (super_admin/brand_admin)
+interface SvScanEntry {
+  scanner_name?: string | null
+  scanner_phone?: string | null
+  product_name?: string | null
+  product_sku?: string | null
+}
+export async function getScanByCode(code: string): Promise<ScanByCodeResult | null> {
+  const c = (code ?? '').trim()
+  if (c.length < 4) return null
+  const r = await sv<{ data: SvScanEntry[] }>('/scan-history', { legacy_serial: c, scan_type: 'success', limit: 1 })
+  const e = (r.data ?? [])[0]
+  if (!e) return null
+  const str = (v: unknown) => (typeof v === 'string' ? v.trim() : '')
+  return {
+    name: str(e.scanner_name),
+    phone: str(e.scanner_phone),
+    productName: str(e.product_name),
+    productSku: str(e.product_sku),
+  }
 }
 
 // ที่อยู่จัดส่งค่าเริ่มต้นของลูกค้า — หา id จากเบอร์ (/customers/search) แล้วดึง addresses จาก /customers/{id}/detail

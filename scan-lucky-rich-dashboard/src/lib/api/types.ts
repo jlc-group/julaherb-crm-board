@@ -348,3 +348,11 @@ export interface CustomerSearchResponse {
   q: string
   results: CustomerSearchResult[]
 }
+
+// Backend: GET /api/v1/scan-history?legacy_serial=&scan_type=success (รหัสสแกน → ลูกค้า+เบอร์เต็ม)
+export interface ScanByCodeResult {
+  name: string
+  phone: string                  // raw เต็ม — mask ตอน render (ยกเว้นหน้า Operations)
+  productName: string
+  productSku: string
+}

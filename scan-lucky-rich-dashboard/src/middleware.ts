@@ -14,6 +14,7 @@ const PROTECTED_PREFIXES = [
   '/api/claim/file',       // ไฟล์บัตรประชาชน/เอกสาร
   '/api/draw/claims',      // เอกสารรับรางวัล (PII)
   '/api/draw/winners',     // ผู้ชนะแบบ raw (ชื่อ+เบอร์ไม่ mask) — หน้า /winners ใช้ /api/winners/public ที่ mask แล้ว
+  '/api/draw/resolve-code',// รหัสสแกน → ชื่อ+เบอร์เต็ม (PII)
   '/api/customers/search', // ค้นหาลูกค้า (ชื่อ/เบอร์)
 ]
 

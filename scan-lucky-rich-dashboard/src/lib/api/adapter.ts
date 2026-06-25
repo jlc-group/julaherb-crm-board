@@ -29,6 +29,7 @@ import type {
   UptimeResponse,
   PrintSlipsResponse,
   CustomerSearchResponse,
+  ScanByCodeResult,
   DayHourResponse,
   SkuDailyMatrixResponse,
   RfmDistributionResponse,
@@ -77,6 +78,8 @@ export interface DataSource {
   searchCustomers(q: string): Promise<CustomerSearchResponse>
   // ที่อยู่จัดส่งค่าเริ่มต้นของลูกค้า (จากเบอร์ → /customers/search หา id → /customers/{id}/detail)
   getCustomerAddress(phone: string): Promise<string>
+  // รหัสสแกน → ลูกค้า+เบอร์เต็ม+สินค้า (/scan-history?legacy_serial=)
+  getScanByCode(code: string): Promise<ScanByCodeResult | null>
 
   // NEW — deploy 2026-06-18
   getScansByDayHour(from: DateString, to: DateString): Promise<DayHourResponse>

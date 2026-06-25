@@ -28,6 +28,7 @@ import type {
   PrintSlipsResponse,
   PrintSlipRow,
   CustomerSearchResponse,
+  ScanByCodeResult,
 } from './types'
 
 // ─── Helpers ───────────────────────────────────────────────────────
@@ -455,6 +456,21 @@ export async function searchCustomers(q: string): Promise<CustomerSearchResponse
 
 export async function getCustomerAddress(_phone: string): Promise<string> {
   return '' // mock ไม่มีที่อยู่จริง
+}
+
+// รหัสสแกน → ลูกค้า (mock: สร้างผล deterministic จากรหัส ให้ dev เห็น flow · ของจริงเมื่อ DATA_SOURCE=api)
+export async function getScanByCode(code: string): Promise<ScanByCodeResult | null> {
+  const c = (code ?? '').trim()
+  if (c.length < 4) return null
+  let seed = 0
+  for (let i = 0; i < c.length; i++) seed += c.charCodeAt(i) * (i + 1)
+  const product = PRODUCTS_MASTER[seed % PRODUCTS_MASTER.length]
+  return {
+    name: `${pick(FIRST_NAMES, seed + 100)} ${pick(LAST_NAMES, seed + 200)}`,
+    phone: thaiPhone(seed + 300),
+    productName: stripProductSuffix(product.displayName),
+    productSku: product.sku,
+  }
 }
 
 // ════════════════════════════════════════════════════════════════
