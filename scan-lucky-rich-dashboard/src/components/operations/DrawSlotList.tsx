@@ -46,8 +46,10 @@ export default function DrawSlotList({ round, winners, onPick, onRemove, onExpor
   const ordered = DAY_ORDER.flatMap((t) => roundSlots(round).filter((s) => s.tier === t))
   const bySlot = new Map(winners.filter((w) => w.round === round.round).map((w) => [w.slotId, w]))
   const filled = ordered.filter((s) => bySlot.has(s.slotId)).length
-  // มีคนที่ยังไม่มี "สิทธิ์ที่ส่ง" ไหม (เติมย้อนหลังได้)
-  const missingRights = winners.some((w) => w.round === round.round && typeof w.rightsCount !== 'number')
+  // มีคนที่ข้อมูลยังไม่ครบไหม (สิทธิ์/สินค้า/ที่อยู่) → เติมย้อนหลังได้
+  const needsEnrich = winners.some(
+    (w) => w.round === round.round && (typeof w.rightsCount !== 'number' || !w.productName || (!w.address && !w.province)),
+  )
 
   async function enrichRights() {
     setEnriching(true)
@@ -79,9 +81,9 @@ export default function DrawSlotList({ round, winners, onPick, onRemove, onExpor
           <button onClick={onImport} className="px-3 py-1.5 rounded-md border border-[var(--primary)] text-[var(--primary)] text-[13px] font-semibold mr-auto" title="อัปโหลดไฟล์รายชื่อ (ชื่อ/นามสกุล/เบอร์) แล้วระบบจะระบุรายวันให้อัตโนมัติตามลำดับแถว">
             <i className="ti ti-upload mr-1" /> อัปโหลดรายชื่อ (ระบุรายวัน)
           </button>
-          {missingRights && (
-            <button onClick={enrichRights} disabled={enriching} className="px-3 py-1.5 rounded-md border border-[var(--primary)] text-[var(--primary)] text-[13px] font-semibold disabled:opacity-50" title="เติม 'สิทธิ์ที่ส่ง' ที่ยังว่าง — นับจำนวนสลิปจากระบบ (ครั้งแรกอาจ ~1-2 นาที)">
-              <i className="ti ti-refresh mr-1" /> {enriching ? 'กำลังเติมสิทธิ์… (~1-2 นาที)' : 'เติมสิทธิ์ที่ส่ง'}
+          {needsEnrich && (
+            <button onClick={enrichRights} disabled={enriching} className="px-3 py-1.5 rounded-md border border-[var(--primary)] text-[var(--primary)] text-[13px] font-semibold disabled:opacity-50" title="เติมข้อมูลที่ยังว่าง (สิทธิ์ที่ส่ง / สินค้า / ที่อยู่-จังหวัด) จากระบบ — ครั้งแรกอาจ ~1-2 นาที">
+              <i className="ti ti-refresh mr-1" /> {enriching ? 'กำลังเติมข้อมูล… (~1-2 นาที)' : 'เติมข้อมูล (สิทธิ์/สินค้า/ที่อยู่)'}
             </button>
           )}
           <button onClick={onExport} disabled={filled === 0} className="px-3 py-1.5 rounded-md border border-[var(--border)] text-[13px] font-semibold disabled:opacity-40" title="CSV ละเอียด — มีสิทธิ์ที่ส่ง / ประวัติรางวัล / ที่อยู่ สำหรับทีมโทร">
@@ -168,10 +170,15 @@ export default function DrawSlotList({ round, winners, onPick, onRemove, onExpor
                             <span className="text-[11px] text-[#15803d]">ครั้งแรก</span>
                           )}
                         </td>
-                        {/* ที่อยู่ */}
+                        {/* ที่อยู่ (เต็ม → จังหวัด → เพิ่มที่อยู่) */}
                         <td className="px-3 py-2.5 text-[12.5px]">
                           {w.address ? (
                             <span className="text-[var(--text)] whitespace-pre-wrap">{w.address}</span>
+                          ) : w.province ? (
+                            <button onClick={() => onPick(slot, w)} className="text-left hover:opacity-80" title="ลูกค้ายังไม่ได้กรอกที่อยู่เต็ม — กดเพื่อเพิ่ม">
+                              <span className="text-[12.5px] text-[var(--text)]">📍 {w.province}</span>
+                              <span className="block text-[10.5px] text-amber-700">ยังไม่ได้กรอกที่อยู่เต็ม</span>
+                            </button>
                           ) : (
                             <button onClick={() => onPick(slot, w)} className="text-[12px] text-[var(--text-muted)] italic hover:text-[var(--primary)]">
                               — เพิ่มที่อยู่

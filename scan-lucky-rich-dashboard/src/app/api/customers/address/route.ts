@@ -10,7 +10,7 @@ export const dynamic = 'force-dynamic'
 export async function GET(req: NextRequest) {
   const url = new URL(req.url)
   const phone = url.searchParams.get('phone') ?? ''
-  if (phone.replace(/\D/g, '').length < 4) return ok({ address: '' })
+  if (phone.replace(/\D/g, '').length < 4) return ok({ address: '', province: '' })
   // ?debug=1 → วิเคราะห์ว่าติดขั้นไหน (เฉพาะตอนต่อ API จริง)
   if (url.searchParams.get('debug') === '1') {
     try {
@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
     }
   }
   try {
-    return ok({ address: await ds.getCustomerAddress(phone) })
+    return ok(await ds.getCustomerAddressInfo(phone)) // { address, province }
   } catch (e: any) {
     return fail('ดึงที่อยู่ไม่สำเร็จ: ' + (e?.message ?? String(e)), 502)
   }

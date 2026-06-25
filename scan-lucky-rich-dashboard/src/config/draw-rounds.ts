@@ -188,6 +188,7 @@ export interface DrawWinner {
   productSku?: string // SKU ของสินค้าที่สแกนใบที่จับได้ (เก็บตอนเลือกจากพูล)
   productName?: string // ชื่อสินค้าที่สแกนใบที่จับได้ — ให้ลูกค้าเตรียมเอามาแสดง
   address?: string // ที่อยู่ลูกค้า — กรอกเอง/auto-fill เมื่อ backend เปิด endpoint
+  province?: string // จังหวัด — fallback โชว์เมื่อยังไม่มีที่อยู่เต็ม (รู้ว่าลูกค้ายังไม่กรอกที่อยู่)
   rightsCount?: number // จำนวนสิทธิ์ที่ส่งเข้าลุ้น (เก็บตอนเลือกจากพูล)
   userId?: string
   assignedAt: string

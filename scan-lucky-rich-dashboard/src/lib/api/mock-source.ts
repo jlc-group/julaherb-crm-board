@@ -458,6 +458,16 @@ export async function getCustomerAddress(_phone: string): Promise<string> {
   return '' // mock ไม่มีที่อยู่จริง
 }
 
+// ที่อยู่ + จังหวัด (mock: ของจริงเมื่อ DATA_SOURCE=api) — dev โชว์จังหวัดสมมติเพื่อเห็น fallback
+export async function getCustomerAddressInfo(phone: string): Promise<{ address: string; province: string }> {
+  const d = (phone ?? '').replace(/\D/g, '')
+  if (d.length < 9) return { address: '', province: '' }
+  let s = 0
+  for (let i = 0; i < d.length; i++) s += d.charCodeAt(i)
+  const MOCK_PROVINCES = ['กรุงเทพมหานคร', 'นครปฐม', 'เชียงใหม่', 'ขอนแก่น', 'ชลบุรี', 'สงขลา', 'พิษณุโลก']
+  return { address: '', province: MOCK_PROVINCES[s % MOCK_PROVINCES.length] }
+}
+
 // รีโซลฟ์ผู้ได้รางวัล (mock: deterministic ให้ dev เห็น flow · ของจริงเมื่อ DATA_SOURCE=api)
 export async function resolveWinner(opts: { code?: string; phone?: string; from: DateString; to: DateString }): Promise<WinnerResolve | null> {
   const key = (opts.code || opts.phone || '').trim()

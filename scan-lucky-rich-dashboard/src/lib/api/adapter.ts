@@ -78,6 +78,8 @@ export interface DataSource {
   searchCustomers(q: string): Promise<CustomerSearchResponse>
   // ที่อยู่จัดส่งค่าเริ่มต้นของลูกค้า (จากเบอร์ → /customers/search หา id → /customers/{id}/detail)
   getCustomerAddress(phone: string): Promise<string>
+  // ที่อยู่ + จังหวัด (province fallback เมื่อไม่มีที่อยู่บันทึกไว้)
+  getCustomerAddressInfo(phone: string): Promise<{ address: string; province: string }>
   // รีโซลฟ์ผู้ได้รางวัลรายรอบ — ด้วยรหัสสแกน หรือ เบอร์ (ดัชนีจาก print-slips)
   resolveWinner(opts: { code?: string; phone?: string; from: string; to: string }): Promise<WinnerResolve | null>
   // จำนวนสิทธิ์ของเบอร์ในรอบ (นับสลิป) — เติม rightsCount ย้อนหลัง

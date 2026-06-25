@@ -30,6 +30,7 @@ interface Picked {
   productName?: string // สินค้าของรหัสที่เลือก (ใบที่จับได้)
   productSku?: string
   address: string // ที่อยู่ลูกค้า — กรอก/วางเองได้ (auto-fill เมื่อ backend เปิด endpoint)
+  province?: string // จังหวัด (fallback เมื่อไม่มีที่อยู่เต็ม)
   rights?: number // จำนวนสิทธิ์ที่ส่งเข้าลุ้น (จากพูล) — undefined ถ้ากรอกเอง
   codes: string[] // รหัสทั้งหมดของคนนี้ (ให้เลือก) — ว่างถ้ากรอกเอง
   products?: Record<string, { name: string; sku: string }> // map รหัส→สินค้า (จากพูล)
@@ -47,7 +48,7 @@ export default function WinnerPicker({
 }: Props) {
   const [q, setQ] = useState('')
   const [picked, setPicked] = useState<Picked | null>(
-    existing ? { name: existing.name, phone: existing.phone, scanCode: existing.scanCode ?? '', productName: existing.productName, productSku: existing.productSku, address: existing.address ?? '', rights: existing.rightsCount, codes: [] } : null,
+    existing ? { name: existing.name, phone: existing.phone, scanCode: existing.scanCode ?? '', productName: existing.productName, productSku: existing.productSku, address: existing.address ?? '', province: existing.province ?? '', rights: existing.rightsCount, codes: [] } : null,
   )
   const [manual, setManual] = useState(false)
   const [mName, setMName] = useState('')
@@ -72,9 +73,13 @@ export default function WinnerPicker({
     try {
       const r = await fetch('/api/customers/address?phone=' + encodeURIComponent(digits))
       const b = await r.json()
-      if (b.address) {
-        setPicked((p) => (p && !p.address.trim() ? { ...p, address: String(b.address) } : p))
-      }
+      setPicked((p) => {
+        if (!p) return p
+        const next = { ...p }
+        if (b.address && !p.address.trim()) next.address = String(b.address)
+        if (b.province && !(p.province ?? '').trim()) next.province = String(b.province)
+        return next
+      })
     } catch {
       /* ดึงที่อยู่ไม่สำเร็จ — กรอกเองได้ */
     } finally {
@@ -256,6 +261,7 @@ export default function WinnerPicker({
           productName: data.productName || undefined,
           productSku: data.productSku || undefined,
           address: data.address.trim() || undefined,
+          province: data.province?.trim() || undefined,
           rightsCount: data.rights,
         }),
       })
@@ -362,6 +368,9 @@ export default function WinnerPicker({
                   rows={2}
                   className="w-full px-3 py-2 rounded-md border border-[var(--border)] text-sm resize-y"
                 />
+                {!picked.address.trim() && (picked.province ?? '').trim() && (
+                  <div className="text-[11px] text-amber-700 mt-1">📍 จังหวัด: <b>{picked.province}</b> · ลูกค้ายังไม่ได้กรอกที่อยู่เต็ม (โชว์จังหวัดไว้ก่อน)</div>
+                )}
               </div>
             </div>
 

@@ -45,31 +45,48 @@ export async function GET(req: NextRequest) {
   const enrich = new URL(req.url).searchParams.get('enrich') === '1'
   const winners = readWinners()
   if (enrich) {
-    // เติม "สิทธิ์ที่ส่ง / สินค้า / รหัส" ย้อนหลังให้คนที่ยังว่าง — จากดัชนี print-slips รายรอบ (ครั้งแรกอาจ ~1-2 นาที)
+    // เติมข้อมูลย้อนหลังให้คนที่ยังว่าง (ครั้งแรกอาจ ~1-2 นาที):
+    //   สิทธิ์/สินค้า/รหัส ← ดัชนี print-slips รายรอบ · ที่อยู่/จังหวัด ← /customers/{id}/detail
     let changed = false
     for (const w of winners) {
       if (!w.phone) continue
-      if (typeof w.rightsCount === 'number' && w.productName && w.scanCode) continue
       const r = getRound(w.round)
-      if (!r) continue
-      try {
-        const res = await ds.resolveWinner({ phone: w.phone, from: r.windowFrom, to: r.windowTo })
-        if (!res) continue
-        if (typeof w.rightsCount !== 'number' && typeof res.rights === 'number') {
-          w.rightsCount = res.rights
-          changed = true
+      if (r && (typeof w.rightsCount !== 'number' || !w.productName || !w.scanCode)) {
+        try {
+          const res = await ds.resolveWinner({ phone: w.phone, from: r.windowFrom, to: r.windowTo })
+          if (res) {
+            if (typeof w.rightsCount !== 'number' && typeof res.rights === 'number') {
+              w.rightsCount = res.rights
+              changed = true
+            }
+            if (!w.productName && res.productName) {
+              w.productName = res.productName
+              w.productSku = res.productSku
+              changed = true
+            }
+            if (!w.scanCode && res.scanCode) {
+              w.scanCode = res.scanCode
+              changed = true
+            }
+          }
+        } catch {
+          /* ข้าม */
         }
-        if (!w.productName && res.productName) {
-          w.productName = res.productName
-          w.productSku = res.productSku
-          changed = true
+      }
+      if (!w.address || !w.province) {
+        try {
+          const info = await ds.getCustomerAddressInfo(w.phone)
+          if (!w.address && info.address) {
+            w.address = info.address
+            changed = true
+          }
+          if (!w.province && info.province) {
+            w.province = info.province
+            changed = true
+          }
+        } catch {
+          /* ข้าม */
         }
-        if (!w.scanCode && res.scanCode) {
-          w.scanCode = res.scanCode
-          changed = true
-        }
-      } catch {
-        /* เติมคนนี้ไม่ได้ — ข้าม */
       }
     }
     if (changed) writeWinners(winners)
@@ -109,6 +126,7 @@ export async function POST(req: NextRequest) {
     productSku: body.productSku ? String(body.productSku).trim() : undefined,
     productName: body.productName ? String(body.productName).trim() : undefined,
     address: body.address ? String(body.address).trim() : undefined,
+    province: body.province ? String(body.province).trim() : undefined,
     rightsCount: typeof body.rightsCount === 'number' ? body.rightsCount : undefined,
     userId: body.userId ? String(body.userId) : undefined,
     assignedAt: body.assignedAt ?? new Date().toISOString(),

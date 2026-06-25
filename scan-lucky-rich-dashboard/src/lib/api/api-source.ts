@@ -838,24 +838,34 @@ export async function getRightsByPhone(phone: string, from: DateString, to: Date
   return cust ? cust.rights : null
 }
 
-// ที่อยู่จัดส่งค่าเริ่มต้นของลูกค้า — หา id จากเบอร์ (/customers/search) แล้วดึง addresses จาก /customers/{id}/detail
-export async function getCustomerAddress(phone: string): Promise<string> {
+// ที่อยู่ + จังหวัด ของลูกค้า — หา id จากเบอร์ (/customers/search) แล้วดึงจาก /customers/{id}/detail
+//   address = ที่อยู่จัดส่ง default (ถ้ามี) · province = fallback (โปรไฟล์ → ที่อยู่ → จังหวัดตอนสแกน)
+//   ⚠️ ลูกค้ากลุ่มสแกนส่วนใหญ่ไม่เคยกรอกที่อยู่ → address ว่างได้ แต่ province มักมี
+export async function getCustomerAddressInfo(phone: string): Promise<{ address: string; province: string }> {
   const digits = (phone || '').replace(/\D/g, '')
-  if (digits.length < 4) return ''
-  // 1) หา user id จากเบอร์
+  if (digits.length < 4) return { address: '', province: '' }
   const sr = await sv<{ data: SvUserSearch[] }>('/customers/search', { q: digits })
   const last9 = digits.slice(-9)
   const u = (sr.data ?? []).find((x) => (x.phone ?? '').replace(/\D/g, '').endsWith(last9)) ?? (sr.data ?? [])[0]
-  if (!u?.id) return ''
-  // 2) ดึงรายละเอียดลูกค้า (มี addresses[]) → เลือกที่อยู่ default (ไม่งั้นอันแรก)
-  const dr = await sv<{ addresses?: Array<Record<string, unknown>> }>(`/customers/${u.id}/detail`, {})
-  const addrs = dr.addresses ?? []
-  const a = addrs.find((x) => x.is_default === true) ?? addrs[0]
-  if (!a) return ''
+  if (!u?.id) return { address: '', province: '' }
+  const dr = await sv<Record<string, unknown>>(`/customers/${u.id}/detail`, {})
   const str = (v: unknown) => (typeof v === 'string' ? v.trim() : '')
-  return [str(a.address_line1), str(a.address_line2), str(a.sub_district), str(a.district), str(a.province), str(a.postal_code)]
-    .filter(Boolean)
-    .join(' ')
+  const addrs = Array.isArray(dr.addresses) ? (dr.addresses as Array<Record<string, unknown>>) : []
+  const a = addrs.find((x) => x.is_default === true) ?? addrs[0]
+  const address = a
+    ? [str(a.address_line1), str(a.address_line2), str(a.sub_district), str(a.district), str(a.province), str(a.postal_code)].filter(Boolean).join(' ')
+    : ''
+  // จังหวัด fallback: โปรไฟล์ (users.province) → ที่อยู่ → จังหวัดตอนสแกนล่าสุด
+  const profile = dr.profile && typeof dr.profile === 'object' ? (dr.profile as Record<string, unknown>) : dr
+  const scans = Array.isArray(dr.scan_history) ? (dr.scan_history as Array<Record<string, unknown>>) : []
+  const scanProv = scans.map((s) => str(s.province)).find(Boolean) ?? ''
+  const province = str(profile.province) || str(dr.province) || str(a?.province) || scanProv
+  return { address, province }
+}
+
+// ที่อยู่อย่างเดียว (เผื่อโค้ดเดิมเรียกใช้)
+export async function getCustomerAddress(phone: string): Promise<string> {
+  return (await getCustomerAddressInfo(phone)).address
 }
 
 // วิเคราะห์ปัญหา (debug) — บอกว่าติดขั้นไหน: หา id เจอมั้ย / มีที่อยู่กี่อัน / field อะไรบ้าง
@@ -879,7 +889,9 @@ export async function getCustomerAddressDiag(phone: string): Promise<Record<stri
       out.firstAddrKeys = addrs[0] ? Object.keys(addrs[0]) : []
       out.detailTopKeys = Object.keys(dr as Record<string, unknown>).slice(0, 15)
     }
-    out.address = await getCustomerAddress(phone)
+    const info = await getCustomerAddressInfo(phone)
+    out.address = info.address
+    out.province = info.province
   } catch (e: any) {
     out.error = e?.message ?? String(e)
   }
