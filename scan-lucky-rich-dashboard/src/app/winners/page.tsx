@@ -282,9 +282,8 @@ function MonthHeroCard({ w }: { w: PubWinner }) {
       <span className="inline-flex items-center justify-center w-14 h-14 rounded-full text-[30px]" style={{ background: GOLD, boxShadow: '0 4px 14px rgba(0,0,0,0.18)' }}>
         🏆
       </span>
-      <div className="text-[12px] text-[#ffe9a8] mt-2.5 tracking-wide">ผู้โชคดีล่าสุด</div>
       {/* 1) วันที่ */}
-      <div className="mt-2.5">
+      <div className="mt-3">
         <span className="inline-block px-4 py-1.5 rounded-xl font-bold text-[12.5px]" style={{ background: 'rgba(255,224,138,0.18)', border: '1px solid rgba(255,224,138,0.5)', color: '#ffe08a' }}>{w.announceLabel}</span>
       </div>
       {/* 2) ชื่อ */}
