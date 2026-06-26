@@ -283,13 +283,17 @@ function MonthHeroCard({ w }: { w: PubWinner }) {
         🏆
       </span>
       <div className="text-[12px] text-[#ffe9a8] mt-2.5 tracking-wide">ผู้โชคดีล่าสุด</div>
-      <div className="text-[26px] font-extrabold leading-tight mt-1">{w.name || '(ผู้โชคดี)'}</div>
+      {/* 1) วันที่ */}
+      <div className="mt-2.5">
+        <span className="inline-block px-4 py-1.5 rounded-xl font-bold text-[12.5px]" style={{ background: 'rgba(255,224,138,0.18)', border: '1px solid rgba(255,224,138,0.5)', color: '#ffe08a' }}>{w.announceLabel}</span>
+      </div>
+      {/* 2) ชื่อ */}
+      <div className="text-[26px] font-extrabold leading-tight mt-2.5">{w.name || '(ผู้โชคดี)'}</div>
+      {/* 3) เบอร์โทร */}
       <div className="text-[12px] text-white/80 mt-1 tracking-wide">{w.phoneMasked}</div>
+      {/* 4) รางวัล */}
       <div className="mt-3.5">
         <span className="inline-flex items-center px-5 py-1.5 rounded-full font-bold text-[15px] text-[#5a3a00]" style={{ background: GOLD }}>{w.prizeLabel}</span>
-      </div>
-      <div className="mt-3">
-        <span className="inline-block px-4 py-1.5 rounded-xl font-bold text-[12.5px]" style={{ background: 'rgba(255,224,138,0.18)', border: '1px solid rgba(255,224,138,0.5)', color: '#ffe08a' }}>{w.announceLabel}</span>
       </div>
     </div>
   )
