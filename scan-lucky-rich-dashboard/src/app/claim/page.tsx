@@ -27,16 +27,18 @@ const CARD_GRAD = 'linear-gradient(160deg,#08461f 0%,#137d38 46%,#54bf3c 100%)' 
 const GOLD = 'linear-gradient(135deg,#fde08a,#f1ad24)' // ทอง — เหรียญ/ป้ายรางวัล/ปุ่ม
 
 // เอกสารที่ต้องเตรียม แยกตามวิธีรับ — ใช้ร่วมกันระหว่าง checklist และหน้าสรุป
-const DOC_LIST: Record<'self' | 'proxy', string[]> = {
+// proxyOnly = เอกสารที่ "เฉพาะวิธีมอบอำนาจ" ต้องใช้ (ไฮไลต์ให้เด่นว่าต่างจากรับเอง)
+type DocDef = { title: string; hint?: string; proxyOnly?: boolean }
+const DOC_LIST: Record<'self' | 'proxy', DocDef[]> = {
   self: [
-    'บัตรประจำตัวประชาชนตัวจริงของผู้โชคดี',
-    'สินค้าจริงที่ใช้สแกนเข้าร่วมกิจกรรม',
+    { title: 'บัตรประจำตัวประชาชนตัวจริงของผู้โชคดี', hint: 'ชื่อต้องตรงกับผู้โชคดี' },
+    { title: 'สินค้าจริงที่ใช้สแกนเข้าร่วมกิจกรรม' },
   ],
   proxy: [
-    'สำเนาบัตรประจำตัวประชาชนของผู้โชคดี (ลงนามรับรองสำเนาถูกต้อง)',
-    'บัตรประจำตัวประชาชนตัวจริงของผู้รับมอบอำนาจ',
-    'หนังสือมอบอำนาจ (ลงนามโดยผู้มอบอำนาจและผู้รับมอบอำนาจ)',
-    'สินค้าจริงที่ใช้สแกนเข้าร่วมกิจกรรม',
+    { title: 'สำเนาบัตรประจำตัวประชาชนของผู้โชคดี', hint: 'ลงนามรับรองสำเนาถูกต้องโดยผู้โชคดี' },
+    { title: 'บัตรประจำตัวประชาชนตัวจริงของผู้รับมอบอำนาจ', proxyOnly: true },
+    { title: 'หนังสือมอบอำนาจ', hint: 'ลงนามโดยผู้มอบอำนาจและผู้รับมอบอำนาจ', proxyOnly: true },
+    { title: 'สินค้าจริงที่ใช้สแกนเข้าร่วมกิจกรรม' },
   ],
 }
 
@@ -307,7 +309,7 @@ export default function ClaimPage() {
                     </div>
                     <div className="space-y-2.5">
                       {DOC_LIST[pickupMode].map((d, i) => (
-                        <DocItem key={i} step={i + 1} title={d} />
+                        <DocItem key={i} step={i + 1} doc={d} />
                       ))}
                     </div>
                     <div className="text-[11.5px] text-[var(--text-secondary)] flex gap-2 pt-1">
@@ -335,9 +337,15 @@ export default function ClaimPage() {
                   })}
                   <li className="flex gap-2">
                     <span className="flex-shrink-0">🪪</span>
-                    <span>แสดง<b>บัตรประชาชนตัวจริง</b> (ชื่อต้องตรงกับผู้โชคดี)
-                      <span className="block text-[11px] text-[#92600a] mt-0.5">หมายเหตุ: กรณีมอบอำนาจให้ผู้อื่นมารับแทน ถือเป็นความรับผิดชอบของผู้โชคดีในฐานะผู้มอบอำนาจ ทั้งนี้ บริษัทขอสงวนสิทธิ์ไม่รับผิดชอบต่อความเสียหายอันเกิดจากการมอบอำนาจดังกล่าว</span>
-                    </span>
+                    {modeChosen && pickupMode === 'proxy' ? (
+                      <span>กรณี<b>มอบอำนาจ</b>: ผู้รับมอบอำนาจแสดง<b>บัตรประชาชนตัวจริงของตนเอง</b> พร้อม<b>สำเนาบัตรประชาชนของผู้โชคดี</b> (ลงนามรับรองสำเนาถูกต้อง) — <b>ผู้โชคดีไม่ต้องมารับด้วยตนเอง</b>
+                        <span className="block text-[11px] text-[#92600a] mt-0.5">หมายเหตุ: การมอบอำนาจให้ผู้อื่นมารับแทนถือเป็นความรับผิดชอบของผู้โชคดีในฐานะผู้มอบอำนาจ ทั้งนี้ บริษัทขอสงวนสิทธิ์ไม่รับผิดชอบต่อความเสียหายอันเกิดจากการมอบอำนาจดังกล่าว</span>
+                      </span>
+                    ) : (
+                      <span><b>ผู้โชคดี</b>มารับด้วยตนเอง โดยแสดง<b>บัตรประชาชนตัวจริง</b> (ชื่อต้องตรงกับผู้โชคดี)
+                        <span className="block text-[11px] text-[#92600a] mt-0.5">หมายเหตุ: หากไม่สะดวกมารับเอง สามารถเลือก “มอบอำนาจให้ผู้อื่นรับ” ด้านบน — กรณีนั้นใช้เพียงสำเนาบัตรของผู้โชคดี ไม่ต้องใช้บัตรตัวจริง</span>
+                      </span>
+                    )}
                   </li>
                   <li className="flex gap-2">
                     <span className="flex-shrink-0">📍</span>
@@ -390,12 +398,17 @@ export default function ClaimPage() {
 }
 
 // รายการเอกสาร (ไม่มีตัวอย่าง/ดาวน์โหลด) — เลขลำดับ + ชื่อ
-function DocItem({ step, title }: { step: number; title: string }) {
+function DocItem({ step, doc }: { step: number; doc: DocDef }) {
+  const hl = doc.proxyOnly
   return (
-    <div className="flex items-start gap-2.5">
-      <span className="mt-0.5 inline-flex items-center justify-center w-5 h-5 rounded-full text-[11px] font-bold flex-shrink-0" style={{ background: '#dcfce7', color: BRAND }}>{step}</span>
+    <div className={`flex items-start gap-2.5 ${hl ? 'rounded-lg -mx-1 px-1.5 py-1.5' : ''}`} style={hl ? { background: '#fffbeb', border: '1px solid #fde68a' } : undefined}>
+      <span className="mt-0.5 inline-flex items-center justify-center w-5 h-5 rounded-full text-[11px] font-bold flex-shrink-0" style={hl ? { background: '#fde68a', color: '#92600a' } : { background: '#dcfce7', color: BRAND }}>{step}</span>
       <div className="min-w-0 flex-1">
-        <div className="text-[13px] text-[var(--text)]">{title}</div>
+        <div className="text-[13px] text-[var(--text)] flex items-center gap-1.5 flex-wrap">
+          {doc.title}
+          {hl && <span className="text-[9.5px] font-bold text-[#92600a] bg-[#fde68a] rounded px-1.5 py-0.5 leading-none">เฉพาะมอบอำนาจ</span>}
+        </div>
+        {doc.hint && <div className="text-[11px] text-[var(--text-muted)] mt-0.5">{doc.hint}</div>}
       </div>
     </div>
   )
@@ -431,7 +444,7 @@ function AppointmentSummary({
     lines.push('')
     lines.push('วิธีรับ: ' + modeLabel)
     lines.push('เอกสารที่ต้องเตรียม:')
-    docs.forEach((d, i) => lines.push((i + 1) + '. ' + d))
+    docs.forEach((d, i) => lines.push((i + 1) + '. ' + d.title + (d.hint ? ' (' + d.hint + ')' : '')))
     lines.push('')
     lines.push('* เจ้าหน้าที่ตรวจเอกสารตัวจริงที่จุดรับรางวัล กรุณาเตรียมให้ครบก่อนเดินทาง')
     return lines.join('\n')
@@ -516,7 +529,7 @@ function AppointmentSummary({
               {docs.map((d, i) => (
                 <li key={i} className="text-[12px] text-white/95 flex gap-1.5">
                   <span className="font-bold text-[#ffe08a]">{i + 1}.</span>
-                  <span>{d}</span>
+                  <span>{d.title}{d.hint ? <span className="text-white/70"> — {d.hint}</span> : null}</span>
                 </li>
               ))}
             </ol>
