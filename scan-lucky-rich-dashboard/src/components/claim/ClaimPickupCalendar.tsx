@@ -116,10 +116,9 @@ export default function ClaimPickupCalendar({ initial, onChange, allowedMonths }
               </button>
             )
           }
-          // holiday / draw / closed → ปิด
-          const isOff = type === 'holiday' || type === 'draw'
+          // holiday / draw / closed → แสดงเป็นเลขจาง ๆ เฉย ๆ (ไม่ไฮไลต์ว่าเป็นวันปิด/วันจับ — ลูกค้าไม่ต้องรู้)
           return (
-            <div key={i} className={`aspect-square rounded-full text-[13px] flex items-center justify-center ${isOff ? 'text-[#cbb6b6] bg-[#fdf2f2]' : 'text-[var(--text-muted)]'}`}>
+            <div key={i} className="aspect-square rounded-full text-[13px] flex items-center justify-center text-[var(--text-muted)]">
               {d}
             </div>
           )
@@ -130,7 +129,6 @@ export default function ClaimPickupCalendar({ initial, onChange, allowedMonths }
       <div className="flex items-center justify-center gap-3 mt-3 text-[10.5px] text-[var(--text-secondary)]">
         <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full border border-[#86efac] bg-white" /> เลือกได้</span>
         <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full" style={{ background: '#15803d' }} /> เลือกแล้ว</span>
-        <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-[#fdf2f2] border border-[#f0d5d5]" /> ปิด/วันจับ</span>
       </div>
 
       {/* slot picker */}
