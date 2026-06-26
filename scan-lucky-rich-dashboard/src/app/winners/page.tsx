@@ -156,7 +156,7 @@ export default function WinnersPage() {
           <MonthSwitcher months={PRIZE_MONTHS} active={activeMonth} onPick={pickMonth} />
 
           {latest ? (
-            <MonthHeroCard w={latest} sameDayCount={monthWinners.filter((x) => x.announceISO === latest.announceISO).length} />
+            <MonthHeroCard w={latest} />
           ) : (
             <div className="rounded-2xl border border-[var(--border)] bg-white p-6 text-center">
               <div className="text-[13.5px] text-[var(--text-secondary)] leading-relaxed">เดือน{activeLabel}<br />ยังไม่มีการประกาศผล</div>
@@ -295,7 +295,7 @@ function PreviewDatePicker({ dates, value, onChange, shownCount, total }: {
   )
 }
 
-function MonthHeroCard({ w, sameDayCount = 1 }: { w: PubWinner; sameDayCount?: number }) {
+function MonthHeroCard({ w }: { w: PubWinner }) {
   const big = isBigPrize(w.tier)
   return (
     <div className="rounded-3xl overflow-hidden text-center text-white px-5 pt-6 pb-6" style={{ background: CARD_GRAD, boxShadow: '0 10px 30px rgba(8,70,31,0.28)' }}>
@@ -306,12 +306,11 @@ function MonthHeroCard({ w, sameDayCount = 1 }: { w: PubWinner; sameDayCount?: n
         /* รางวัลใหญ่ (100K/1M) — มีหลายคนต่อรอบ → ไม่โชว์ชื่อ/เบอร์ เน้นรางวัลประจำเดือน + ของรางวัล */
         <>
           <div className="mt-3">
-            <span className="inline-block px-4 py-1.5 rounded-xl font-bold text-[13px]" style={{ background: 'rgba(255,224,138,0.18)', border: '1px solid rgba(255,224,138,0.5)', color: '#ffe08a' }}>{w.announceLabel}</span>
+            <span className="inline-block px-4 py-1.5 rounded-xl font-bold text-[13px]" style={{ background: 'rgba(255,224,138,0.18)', border: '1px solid rgba(255,224,138,0.5)', color: '#ffe08a' }}>รางวัลประจำวันที่ {thDate(w.announceISO)}</span>
           </div>
           <div className="mt-3.5">
             <span className="inline-flex items-center px-6 py-2 rounded-full font-extrabold text-[20px] text-[#5a3a00]" style={{ background: GOLD }}>{w.prizeLabel}</span>
           </div>
-          <div className="text-[12.5px] text-white/85 mt-3">ผู้โชคดี {sameDayCount} ท่าน · ดูรายชื่อด้านล่าง</div>
         </>
       ) : (
         /* รางวัลรายวัน (10K) — 1 คน/วัน → วันที่ → ชื่อ → เบอร์ → รางวัล */
