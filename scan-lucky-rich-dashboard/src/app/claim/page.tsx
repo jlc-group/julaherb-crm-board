@@ -34,7 +34,7 @@ const DOC_LIST: Record<'self' | 'proxy', string[]> = {
   ],
   proxy: [
     'สำเนาบัตรประชาชนของผู้โชคดี (ลงนามรับรองสำเนา)',
-    'สำเนาบัตรประชาชนของผู้รับมอบอำนาจ (ลงนามรับรองสำเนา) พร้อมบัตรตัวจริง',
+    'บัตรประชาชนตัวจริงของผู้รับมอบอำนาจ',
     'หนังสือมอบอำนาจ',
     'สินค้าจริงที่ใช้สแกน',
   ],
@@ -57,7 +57,6 @@ export default function ClaimPage() {
   const [selSlot, setSelSlot] = useState<string | null>(null)
   const [appt, setAppt] = useState<Appt | null>(null)
   const [justBooked, setJustBooked] = useState(false) // เพิ่งจอง → โชว์แถบ "บันทึกแล้ว" ในหน้า (ไม่มี popup)
-  const [showTerms, setShowTerms] = useState(false) // พับ/กางเงื่อนไขการรับรางวัล
 
   async function check() {
     setErr('')
@@ -160,8 +159,6 @@ export default function ClaimPage() {
   const allowedMonths = Array.from(
     new Set((verified?.prizes ?? []).map((p) => getRound(p.round)?.prizeMonthISO).filter(Boolean) as string[]),
   )
-  // ภาษีหัก ณ ที่จ่าย 5% รวมของผู้โชคดีคนนี้
-  const taxTotal = (verified?.prizes ?? []).reduce((sum, p) => sum + taxOf(p.prizeLabel), 0)
 
   return (
     <MobileShell icon="🎁" backHref="/winners">
@@ -280,15 +277,6 @@ export default function ClaimPage() {
               <div className="bg-white rounded-2xl border border-[var(--border)] p-4 space-y-3">
                 <div className="text-[14px] font-bold text-[var(--dark)]">วิธีรับ & เอกสารที่ต้องเตรียม</div>
 
-                {/* ภาษีหัก ณ ที่จ่าย 5% — เตรียมเงินสดมาจ่ายก่อนรับรางวัล */}
-                <div className="rounded-xl px-3 py-2.5 flex gap-2" style={{ background: '#fffbeb', border: '1px solid #fcd34d' }}>
-                  <span className="text-[15px] leading-none mt-0.5">⚠️</span>
-                  <div className="text-[12px] text-[#92600a] leading-relaxed">
-                    เตรียม<b>เงินสด</b>จ่ายภาษีหัก ณ ที่จ่าย <b>5%</b> ของมูลค่ารางวัล <b>ก่อนรับรางวัล</b>
-                    <div className="text-[15px] font-extrabold text-[#b45309] mt-0.5">{baht(taxTotal)} บาท</div>
-                  </div>
-                </div>
-
                 <div className="flex gap-1.5 p-1 rounded-xl bg-[var(--bg-soft)] border border-[var(--border)]">
                   {([['self', 'รับด้วยตนเอง'], ['proxy', 'มอบอำนาจให้ผู้อื่นรับ']] as const).map(([mode, label]) => {
                     const active = modeChosen && pickupMode === mode
@@ -325,21 +313,34 @@ export default function ClaimPage() {
                     </div>
                   </>
                 )}
+              </div>
 
-                {/* ดูเงื่อนไขการรับรางวัล (พับเก็บได้) */}
-                <div className="pt-2 border-t border-[var(--border-soft)]">
-                  <button onClick={() => setShowTerms((v) => !v)} className="w-full flex items-center justify-between text-[12.5px] font-semibold text-[#15803d] py-1">
-                    <span><i className="ti ti-file-text mr-1.5" aria-hidden="true" />ดูเงื่อนไขการรับรางวัล</span>
-                    <i className={`ti ti-chevron-${showTerms ? 'up' : 'down'}`} aria-hidden="true" />
-                  </button>
-                  {showTerms && (
-                    <ul className="space-y-2 text-[11.5px] text-[var(--text-secondary)] leading-relaxed pt-1.5">
-                      <li className="flex gap-2"><span>💰</span><span>ต้องชำระภาษีหัก ณ ที่จ่าย <b>5%</b> ของมูลค่ารางวัล <b>เป็นเงินสด ก่อนรับรางวัล</b></span></li>
-                      <li className="flex gap-2"><span>🪪</span><span>แสดง<b>บัตรประชาชนตัวจริง</b> (ชื่อต้องตรงกับผู้โชคดี) · สิทธิ์<b>โอนให้ผู้อื่นไม่ได้</b></span></li>
-                      <li className="flex gap-2"><span>📍</span><span>สถานที่รับรางวัล: <b>บริษัท เจแอลซี กรุ๊ป จำกัด (สำนักงานใหญ่)</b><br />62 ซ.นาคนิวาส 6 ถ.นาคนิวาส แขวงลาดพร้าว เขตลาดพร้าว กรุงเทพมหานคร 10230</span></li>
-                    </ul>
-                  )}
+              {/* เงื่อนไขการรับรางวัล — การ์ดเด่น โชว์เสมอ (อยู่ใต้การ์ดวิธีรับ/เอกสาร) */}
+              <div className="rounded-2xl p-4" style={{ background: '#fffbeb', border: '1.5px solid #f59e0b' }}>
+                <div className="text-[13.5px] font-extrabold text-[#b45309] flex items-center gap-1.5 mb-2.5">
+                  <span>⚠️</span> เงื่อนไขการรับรางวัล (สำคัญ)
                 </div>
+                <ul className="space-y-2.5 text-[12px] text-[#7a4e00] leading-relaxed">
+                  {verified.prizes.map((p, i) => {
+                    const v = parseInt(p.prizeLabel.replace(/\D/g, ''), 10) || 0
+                    return (
+                      <li key={i} className="flex gap-2">
+                        <span className="flex-shrink-0">💰</span>
+                        <span>สำหรับรางวัลทอง มูลค่า <b>{baht(v)} บาท</b> ต้องเตรียม<b>เงินสด</b>จ่ายภาษีหัก ณ ที่จ่าย <b>5%</b> ของมูลค่ารางวัล ก่อนรับรางวัล = <b className="text-[#b45309]">{baht(taxOf(p.prizeLabel))} บาท</b></span>
+                      </li>
+                    )
+                  })}
+                  <li className="flex gap-2">
+                    <span className="flex-shrink-0">🪪</span>
+                    <span>แสดง<b>บัตรประชาชนตัวจริง</b> (ชื่อต้องตรงกับผู้โชคดี)
+                      <span className="block text-[11px] text-[#92600a] mt-0.5">* กรณีให้ผู้อื่นมารับแทน (มอบอำนาจ) ถือเป็นความรับผิดชอบของผู้โชคดีที่มอบอำนาจ หากเกิดความเสียหายใดๆ ทางแบรนด์จะไม่รับผิดชอบ</span>
+                    </span>
+                  </li>
+                  <li className="flex gap-2">
+                    <span className="flex-shrink-0">📍</span>
+                    <span>สถานที่รับรางวัล: <b>บริษัท เจแอลซี กรุ๊ป จำกัด (สำนักงานใหญ่)</b><br />62 ซ.นาคนิวาส 6 ถ.นาคนิวาส แขวงลาดพร้าว เขตลาดพร้าว กรุงเทพมหานคร 10230</span>
+                  </li>
+                </ul>
               </div>
 
               <div className="h-24" />
