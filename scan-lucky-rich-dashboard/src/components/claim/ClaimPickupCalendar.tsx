@@ -14,11 +14,15 @@ function monthLabel(ym: string) {
   return `${TH_MONTH[m]} ${beYear(Number(y))}`
 }
 
-export default function ClaimPickupCalendar({ initial, onChange }: {
+export default function ClaimPickupCalendar({ initial, onChange, allowedMonths }: {
   initial?: { date: string; slotId: string } | null
   onChange: (date: string | null, slotId: string | null) => void
+  allowedMonths?: string[] // จำกัดเดือนที่จองได้ — ผู้โชคดีรอบไหน จองได้แค่เดือนของรอบนั้น
 }) {
-  const initIdx = initial ? PICKUP_MONTHS.indexOf(initial.date.slice(0, 7)) : -1
+  // เดือนที่เลือกได้ (ถ้าระบุ allowedMonths ใช้เฉพาะที่อยู่ในนั้น เรียงตามปฏิทิน)
+  const allowed = allowedMonths?.length ? PICKUP_MONTHS.filter((m) => allowedMonths.includes(m)) : PICKUP_MONTHS
+  const months = allowed.length ? allowed : PICKUP_MONTHS
+  const initIdx = initial ? months.indexOf(initial.date.slice(0, 7)) : -1
   const [mIdx, setMIdx] = useState(initIdx >= 0 ? initIdx : 0)
   const [selected, setSelected] = useState<string | null>(initial?.date ?? null)
   const [slot, setSlot] = useState<string | null>(initial?.slotId ?? null)
@@ -31,7 +35,7 @@ export default function ClaimPickupCalendar({ initial, onChange }: {
       .catch(() => {})
   }, [])
 
-  const ym = PICKUP_MONTHS[mIdx]
+  const ym = months[mIdx] ?? months[0]
   const [year, month] = ym.split('-').map(Number)
   const pickupDays = new Set(getPickupDays(year, month))
 
@@ -43,7 +47,7 @@ export default function ClaimPickupCalendar({ initial, onChange }: {
 
   function gotoMonth(delta: number) {
     const next = mIdx + delta
-    if (next < 0 || next >= PICKUP_MONTHS.length) return
+    if (next < 0 || next >= months.length) return
     setMIdx(next)
     setSelected(null)
     setSlot(null)
@@ -71,13 +75,17 @@ export default function ClaimPickupCalendar({ initial, onChange }: {
         <span className="text-[10.5px] font-semibold text-[#15803d] bg-[#f0fdf4] border border-[#bbf7d0] rounded-full px-2 py-1 flex-shrink-0">จ.–ศ. เท่านั้น</span>
       </div>
 
-      {/* month nav */}
+      {/* month nav — ซ่อนปุ่มเลื่อนถ้าจองได้เดือนเดียว (ผู้โชคดีถูกล็อกเดือนตามรอบ) */}
       <div className="flex items-center justify-between mb-2">
-        <button onClick={() => gotoMonth(-1)} disabled={mIdx === 0} aria-label="เดือนก่อนหน้า"
-          className="w-8 h-8 rounded-full border border-[var(--border)] text-[#15803d] text-[18px] leading-none flex items-center justify-center disabled:opacity-30 active:scale-95 transition">‹</button>
+        {months.length > 1 ? (
+          <button onClick={() => gotoMonth(-1)} disabled={mIdx === 0} aria-label="เดือนก่อนหน้า"
+            className="w-8 h-8 rounded-full border border-[var(--border)] text-[#15803d] text-[18px] leading-none flex items-center justify-center disabled:opacity-30 active:scale-95 transition">‹</button>
+        ) : <span className="w-8" />}
         <div className="text-[14px] font-bold text-[#14532d]">{monthLabel(ym)}</div>
-        <button onClick={() => gotoMonth(1)} disabled={mIdx === PICKUP_MONTHS.length - 1} aria-label="เดือนถัดไป"
-          className="w-8 h-8 rounded-full border border-[var(--border)] text-[#15803d] text-[18px] leading-none flex items-center justify-center disabled:opacity-30 active:scale-95 transition">›</button>
+        {months.length > 1 ? (
+          <button onClick={() => gotoMonth(1)} disabled={mIdx === months.length - 1} aria-label="เดือนถัดไป"
+            className="w-8 h-8 rounded-full border border-[var(--border)] text-[#15803d] text-[18px] leading-none flex items-center justify-center disabled:opacity-30 active:scale-95 transition">›</button>
+        ) : <span className="w-8" />}
       </div>
 
       {/* weekday header */}
@@ -134,8 +142,7 @@ export default function ClaimPickupCalendar({ initial, onChange }: {
               const on = slot === s.id
               const c = selected ? counts[selected] : undefined
               const booked = c ? (s.id === 'afternoon' ? c.afternoon : c.morning) : 0
-              const left = Math.max(0, s.capacity - booked)
-              const full = left <= 0
+              const full = booked >= s.capacity
               return (
                 <button
                   key={s.id}
@@ -148,8 +155,7 @@ export default function ClaimPickupCalendar({ initial, onChange }: {
                   <div className="text-[13px] font-bold text-[#14532d]">{s.period}</div>
                   <div className="text-[11px] text-[var(--text-secondary)]">{s.time}</div>
                   <div className="mt-1 text-[11px] font-semibold">
-                    {full ? <span className="text-[#b91c1c]">เต็มแล้ว</span> : <span className="text-[#15803d]">เหลือ {left} ที่</span>}
-                    <span className="text-[10px] text-[var(--text-muted)] font-normal"> · จองแล้ว {booked}/{s.capacity}</span>
+                    {full ? <span className="text-[#b91c1c]">เต็มแล้ว</span> : <span className="text-[#15803d]">ยังว่าง</span>}
                   </div>
                 </button>
               )

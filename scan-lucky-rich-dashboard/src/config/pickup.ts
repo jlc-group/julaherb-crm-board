@@ -83,6 +83,12 @@ function resolveWeek(mondayISO: string): string[] {
   return used.filter(inWindow)
 }
 
+// override วันรับรางวัลของบางเดือน (กำหนดเอง) — แทนที่ผลอัตโนมัติทั้งเดือน
+export const PICKUP_OVERRIDES: Record<string, string[]> = {
+  // ธ.ค. 2569 ใช้วันที่กำหนดเอง 1/2/3/14/15/16 (ทุกวันเป็น จ.–พฤ. ไม่ชนวันหยุด/วันจับ)
+  '2026-12': ['2026-12-01', '2026-12-02', '2026-12-03', '2026-12-14', '2026-12-15', '2026-12-16'],
+}
+
 // คำนวณวันรับรางวัลทั้งหมดในช่วงแคมเปญ (ครั้งเดียว)
 export const ALL_PICKUP_DATES: string[] = (() => {
   const out: string[] = []
@@ -96,11 +102,16 @@ export const ALL_PICKUP_DATES: string[] = (() => {
   const sorted = Array.from(new Set(out)).sort()
   // จำกัด PICKUP_DAYS_PER_MONTH วัน/เดือน — เก็บวันแรก ๆ ของแต่ละเดือน
   const perMonth: Record<string, number> = {}
-  return sorted.filter((d) => {
+  const capped = sorted.filter((d) => {
     const ym = d.slice(0, 7)
     perMonth[ym] = (perMonth[ym] ?? 0) + 1
     return perMonth[ym] <= PICKUP_DAYS_PER_MONTH
   })
+  // แทนที่เดือนที่กำหนด override ทั้งเดือน (ลบของเดิม → ใส่วันที่กำหนดเอง)
+  const ovMonths = new Set(Object.keys(PICKUP_OVERRIDES))
+  const merged = capped.filter((d) => !ovMonths.has(d.slice(0, 7)))
+  for (const days of Object.values(PICKUP_OVERRIDES)) merged.push(...days)
+  return Array.from(new Set(merged)).sort()
 })()
 
 const PICKUP_SET = new Set(ALL_PICKUP_DATES)

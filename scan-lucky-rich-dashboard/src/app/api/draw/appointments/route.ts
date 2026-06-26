@@ -7,6 +7,8 @@ import fs from 'fs'
 import path from 'path'
 import { fail } from '../../_utils'
 import type { DrawAppointment, AppointmentStatus } from '@/config/draw-rounds'
+import { getRound } from '@/config/draw-rounds'
+import { findWinnerPrizes } from '@/lib/claims-store'
 import { ALL_PICKUP_DATES, slotById } from '@/config/pickup'
 
 export const runtime = 'nodejs'
@@ -109,6 +111,16 @@ export async function POST(req: NextRequest) {
 
   // ── เช็ควันที่ต้องเป็น "วันรับรางวัล" จริง (กันจองวันหยุด/วันจับ/นอกช่วง) ──
   if (!PICKUP_DATES.has(date)) return fail('วันที่นี้ไม่เปิดรับรางวัล — กรุณาเลือกวันจากปฏิทิน', 400)
+
+  // ── ผูกสิทธิ์ตามรอบ: ผู้โชคดีรอบไหน จองได้แค่ "เดือนรับรางวัล" ของรอบนั้น ──
+  // re-derive จากเบอร์จริง (กันเลี่ยงฝั่ง client) · ไม่พบผู้โชคดี = ปล่อยผ่าน (เช่น admin/seed)
+  const myPrizes = findWinnerPrizes(phone).prizes
+  if (myPrizes.length) {
+    const allowedMonths = new Set(myPrizes.map((p) => getRound(p.round)?.prizeMonthISO).filter(Boolean) as string[])
+    if (allowedMonths.size && !allowedMonths.has(date.slice(0, 7))) {
+      return fail('วันที่นี้ไม่อยู่ในเดือนที่คุณมีสิทธิ์รับรางวัล — กรุณาเลือกวันในเดือนของรอบที่ได้รับรางวัล', 400)
+    }
+  }
 
   // ── เช็คโควตาช่วงเวลา (เช้า 3 / บ่าย 5) — กันจองเกิน คนล้นหน้างาน ──
   const cap = slotById(slotId)?.capacity ?? 0
