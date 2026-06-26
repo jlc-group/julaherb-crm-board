@@ -4,8 +4,8 @@ import { useEffect, useState } from 'react'
 import MobileShell from '@/components/public/MobileShell'
 import { DRAW_ROUNDS, winnerAnnounceISO } from '@/config/draw-rounds'
 
-// วันเวลาประกาศผลรอบแรก (ผู้โชคดีรายวันใบแรก) = 1 ก.ค. 2569 10:00 น. (เวลาไทย)
-const FIRST_ANNOUNCE = new Date(`${winnerAnnounceISO(DRAW_ROUNDS[0].round, '10K', 1)}T10:00:00+07:00`)
+// วันเวลาประกาศผลรอบแรก (ผู้โชคดีรายวันใบแรก) = 1 ก.ค. 2569 10:45 น. (เวลาไทย)
+const FIRST_ANNOUNCE = new Date(`${winnerAnnounceISO(DRAW_ROUNDS[0].round, '10K', 1)}T10:45:00+07:00`)
 const BRAND = '#15803d'
 const BRAND_BG = 'var(--brand-grad)' // ไล่สีแบรนด์ (เขียวเข้ม→อ่อน)
 const CARD_GRAD = 'linear-gradient(160deg,#08461f 0%,#137d38 46%,#54bf3c 100%)' // การ์ดแกรนด์ (ชุดเดียวกับ /claim)
@@ -106,7 +106,7 @@ export default function WinnersPage() {
           <p className="text-[12.5px] font-semibold text-[#16a34a] mt-1">ประจำเดือน{activeLabel}</p>
         ) : (
           <p className="text-[12px] text-[var(--text-muted)] mt-1 flex items-center justify-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#16a34a]" /> อัปเดตทุกวัน 10:00 น.
+            <span className="w-1.5 h-1.5 rounded-full bg-[#16a34a]" /> อัปเดตทุกวัน 10:45 น. เป็นต้นไป
           </p>
         )}
       </div>
@@ -136,15 +136,15 @@ export default function WinnersPage() {
         <div className="float-up pb-24">
           <div className="rounded-2xl border border-[var(--border)] bg-white p-5 mb-3 text-center">
             <i className="ti ti-clock text-[24px] text-[var(--text-muted)]" aria-hidden="true" />
-            <div className="text-[14px] text-[var(--text)] mt-2 leading-relaxed">ยังไม่เริ่มประกาศผล<br />ติดตามผลได้ทุกวัน <b>10:00 น.</b></div>
+            <div className="text-[14px] text-[var(--text)] mt-2 leading-relaxed">ยังไม่เริ่มประกาศผล<br />ติดตามผลได้ทุกวัน <b>10:45 น.</b> เป็นต้นไป</div>
           </div>
           <div className="rounded-2xl border border-[var(--border)] bg-white p-4 mb-4">
             <div className="text-[12.5px] font-semibold text-[var(--dark)]">เริ่มประกาศผลในอีก</div>
-            <div className="text-[11px] text-[var(--text-muted)] mt-0.5 mb-3">รอบแรก 1 ก.ค. 2569 · เวลา 10:00 น.</div>
+            <div className="text-[11px] text-[var(--text-muted)] mt-0.5 mb-3">รอบแรก 1 ก.ค. 2569 · เวลา 10:45 น. เป็นต้นไป</div>
             <Countdown target={FIRST_ANNOUNCE} />
           </div>
           <p className="text-center text-[11px] text-[var(--text-muted)] mt-6 leading-relaxed">
-            ประกาศผลทุกวัน 10:00 น. ทาง ไทยรัฐออนไลน์ และ LINE OA<br />จุฬาเฮิร์บ สานฝันคนไทย
+            ประกาศผลทุกวัน 10:45 น. เป็นต้นไป ทาง ไทยรัฐออนไลน์ และ LINE OA<br />จุฬาเฮิร์บ สานฝันคนไทย
           </p>
         </div>
       ) : (
@@ -153,7 +153,7 @@ export default function WinnersPage() {
           <MonthSwitcher months={PRIZE_MONTHS} active={activeMonth} onPick={pickMonth} />
 
           {latest ? (
-            <MonthHeroCard w={latest} />
+            <MonthHeroCard w={latest} sameDayCount={monthWinners.filter((x) => x.announceISO === latest.announceISO).length} />
           ) : (
             <div className="rounded-2xl border border-[var(--border)] bg-white p-6 text-center">
               <div className="text-[13.5px] text-[var(--text-secondary)] leading-relaxed">เดือน{activeLabel}<br />ยังไม่มีการประกาศผล</div>
@@ -183,7 +183,7 @@ export default function WinnersPage() {
           )}
 
           <p className="text-center text-[11px] text-[var(--text-muted)] mt-6 leading-relaxed">
-            ประกาศผลทุกวัน 10:00 น. ทาง ไทยรัฐออนไลน์ และ LINE OA<br />จุฬาเฮิร์บ สานฝันคนไทย
+            ประกาศผลทุกวัน 10:45 น. เป็นต้นไป ทาง ไทยรัฐออนไลน์ และ LINE OA<br />จุฬาเฮิร์บ สานฝันคนไทย
           </p>
         </div>
       )}
@@ -276,24 +276,37 @@ function PreviewDatePicker({ dates, value, onChange, shownCount, total }: {
   )
 }
 
-function MonthHeroCard({ w }: { w: PubWinner }) {
+function MonthHeroCard({ w, sameDayCount = 1 }: { w: PubWinner; sameDayCount?: number }) {
+  const big = isBigPrize(w.tier)
   return (
     <div className="rounded-3xl overflow-hidden text-center text-white px-5 pt-6 pb-6" style={{ background: CARD_GRAD, boxShadow: '0 10px 30px rgba(8,70,31,0.28)' }}>
       <span className="inline-flex items-center justify-center w-14 h-14 rounded-full text-[30px]" style={{ background: GOLD, boxShadow: '0 4px 14px rgba(0,0,0,0.18)' }}>
         🏆
       </span>
-      {/* 1) วันที่ */}
-      <div className="mt-3">
-        <span className="inline-block px-4 py-1.5 rounded-xl font-bold text-[12.5px]" style={{ background: 'rgba(255,224,138,0.18)', border: '1px solid rgba(255,224,138,0.5)', color: '#ffe08a' }}>{w.announceLabel}</span>
-      </div>
-      {/* 2) ชื่อ */}
-      <div className="text-[26px] font-extrabold leading-tight mt-2.5">{w.name || '(ผู้โชคดี)'}</div>
-      {/* 3) เบอร์โทร */}
-      <div className="text-[12px] text-white/80 mt-1 tracking-wide">{w.phoneMasked}</div>
-      {/* 4) รางวัล */}
-      <div className="mt-3.5">
-        <span className="inline-flex items-center px-5 py-1.5 rounded-full font-bold text-[15px] text-[#5a3a00]" style={{ background: GOLD }}>{w.prizeLabel}</span>
-      </div>
+      {big ? (
+        /* รางวัลใหญ่ (100K/1M) — มีหลายคนต่อรอบ → ไม่โชว์ชื่อ/เบอร์ เน้นรางวัลประจำเดือน + ของรางวัล */
+        <>
+          <div className="mt-3">
+            <span className="inline-block px-4 py-1.5 rounded-xl font-bold text-[13px]" style={{ background: 'rgba(255,224,138,0.18)', border: '1px solid rgba(255,224,138,0.5)', color: '#ffe08a' }}>{w.announceLabel}</span>
+          </div>
+          <div className="mt-3.5">
+            <span className="inline-flex items-center px-6 py-2 rounded-full font-extrabold text-[20px] text-[#5a3a00]" style={{ background: GOLD }}>{w.prizeLabel}</span>
+          </div>
+          <div className="text-[12.5px] text-white/85 mt-3">ผู้โชคดี {sameDayCount} ท่าน · ดูรายชื่อด้านล่าง</div>
+        </>
+      ) : (
+        /* รางวัลรายวัน (10K) — 1 คน/วัน → วันที่ → ชื่อ → เบอร์ → รางวัล */
+        <>
+          <div className="mt-3">
+            <span className="inline-block px-4 py-1.5 rounded-xl font-bold text-[12.5px]" style={{ background: 'rgba(255,224,138,0.18)', border: '1px solid rgba(255,224,138,0.5)', color: '#ffe08a' }}>{w.announceLabel}</span>
+          </div>
+          <div className="text-[26px] font-extrabold leading-tight mt-2.5">{w.name || '(ผู้โชคดี)'}</div>
+          <div className="text-[12px] text-white/80 mt-1 tracking-wide">{w.phoneMasked}</div>
+          <div className="mt-3.5">
+            <span className="inline-flex items-center px-5 py-1.5 rounded-full font-bold text-[15px] text-[#5a3a00]" style={{ background: GOLD }}>{w.prizeLabel}</span>
+          </div>
+        </>
+      )}
     </div>
   )
 }
