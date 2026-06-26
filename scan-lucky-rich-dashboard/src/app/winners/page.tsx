@@ -8,6 +8,8 @@ import { DRAW_ROUNDS, winnerAnnounceISO } from '@/config/draw-rounds'
 const FIRST_ANNOUNCE = new Date(`${winnerAnnounceISO(DRAW_ROUNDS[0].round, '10K', 1)}T10:00:00+07:00`)
 const BRAND = '#15803d'
 const BRAND_BG = 'var(--brand-grad)' // ไล่สีแบรนด์ (เขียวเข้ม→อ่อน)
+const CARD_GRAD = 'linear-gradient(160deg,#08461f 0%,#137d38 46%,#54bf3c 100%)' // การ์ดแกรนด์ (ชุดเดียวกับ /claim)
+const GOLD = 'linear-gradient(135deg,#fde08a,#f1ad24)'
 
 interface PubWinner {
   announceISO: string
@@ -276,17 +278,19 @@ function PreviewDatePicker({ dates, value, onChange, shownCount, total }: {
 
 function MonthHeroCard({ w }: { w: PubWinner }) {
   return (
-    <div className="rounded-2xl border border-[var(--border)] bg-white p-5 text-center">
-      <span className="inline-flex items-center gap-1.5 text-[11.5px] font-semibold px-2.5 py-1 rounded-full" style={{ background: '#dcfce7', color: BRAND }}>
-        <i className="ti ti-trophy" aria-hidden="true" /> ผู้โชคดีล่าสุด
+    <div className="rounded-3xl overflow-hidden text-center text-white px-5 pt-6 pb-6" style={{ background: CARD_GRAD, boxShadow: '0 10px 30px rgba(8,70,31,0.28)' }}>
+      <span className="inline-flex items-center justify-center w-14 h-14 rounded-full text-[30px]" style={{ background: GOLD, boxShadow: '0 4px 14px rgba(0,0,0,0.18)' }}>
+        🏆
       </span>
-      <div className="text-[26px] font-bold text-[var(--dark)] leading-tight mt-2.5">{w.name || '(ผู้โชคดี)'}</div>
-      <div className="text-[12.5px] text-[var(--text-secondary)] mt-0.5 tracking-wide">{w.phoneMasked}</div>
-      <div className="mt-3 inline-flex items-center gap-2 rounded-xl border border-[var(--border)] px-3.5 py-2">
-        <span className="text-[11px] text-[var(--text-secondary)]">รางวัล</span>
-        <span className="text-[15px] font-bold text-[#b45309]">{w.prizeLabel}</span>
+      <div className="text-[12px] text-[#ffe9a8] mt-2.5 tracking-wide">ผู้โชคดีล่าสุด</div>
+      <div className="text-[26px] font-extrabold leading-tight mt-1">{w.name || '(ผู้โชคดี)'}</div>
+      <div className="text-[12px] text-white/80 mt-1 tracking-wide">{w.phoneMasked}</div>
+      <div className="mt-3.5">
+        <span className="inline-flex items-center px-5 py-1.5 rounded-full font-bold text-[15px] text-[#5a3a00]" style={{ background: GOLD }}>{w.prizeLabel}</span>
       </div>
-      <div className="text-[11px] text-[var(--text-muted)] mt-2">{w.announceLabel}</div>
+      <div className="mt-3">
+        <span className="inline-block px-4 py-1.5 rounded-xl font-bold text-[12.5px]" style={{ background: 'rgba(255,224,138,0.18)', border: '1px solid rgba(255,224,138,0.5)', color: '#ffe08a' }}>{w.announceLabel}</span>
+      </div>
     </div>
   )
 }
