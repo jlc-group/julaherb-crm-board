@@ -275,7 +275,10 @@ export default function ClaimPage() {
               <ClaimPickupCalendar initial={appt} onChange={(d, s) => { setSelDate(d); setSelSlot(s) }} allowedMonths={allowedMonths} />
 
               <div className="bg-white rounded-2xl border border-[var(--border)] p-4 space-y-3">
-                <div className="text-[14px] font-bold text-[var(--dark)]">วิธีรับ & เอกสารที่ต้องเตรียม</div>
+                <div className="flex items-center gap-2">
+                  <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#15803d] text-white text-[12px] font-bold flex-shrink-0">3</span>
+                  <div className="text-[14px] font-bold text-[var(--dark)]">วิธีรับ &amp; เอกสารที่ต้องเตรียม</div>
+                </div>
 
                 <div className="flex gap-1.5 p-1 rounded-xl bg-[var(--bg-soft)] border border-[var(--border)]">
                   {([['self', 'รับด้วยตนเอง'], ['proxy', 'มอบอำนาจให้ผู้อื่นรับ']] as const).map(([mode, label]) => {

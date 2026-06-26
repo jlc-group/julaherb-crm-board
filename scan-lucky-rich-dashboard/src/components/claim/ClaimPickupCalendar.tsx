@@ -67,7 +67,7 @@ export default function ClaimPickupCalendar({ initial, onChange, allowedMonths }
     <div className="bg-white rounded-2xl border border-[var(--border)] p-4">
       {/* header */}
       <div className="flex items-start gap-2 mb-3">
-        <span className="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-[#dcfce7] text-[#15803d] text-[15px]"><i className="ti ti-calendar" aria-hidden="true" /></span>
+        <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#15803d] text-white text-[12px] font-bold flex-shrink-0">1</span>
         <div className="flex-1">
           <div className="text-[15px] font-bold text-[#14532d]">นัดหมายรับรางวัล</div>
           <div className="text-[11.5px] text-[var(--text-secondary)]">เลือกวันและเวลาที่สะดวก</div>
@@ -136,7 +136,13 @@ export default function ClaimPickupCalendar({ initial, onChange, allowedMonths }
       {/* slot picker */}
       {selected && (
         <div className="mt-4 pt-4 border-t border-[var(--border-soft)]">
-          <div className="text-[12.5px] font-bold text-[#14532d] mb-2"><i className="ti ti-calendar-event mr-1" aria-hidden="true" />{pickupDateLabel(selected)} — เลือกช่วงเวลา</div>
+          <div className="flex items-center gap-2 mb-2">
+            <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#15803d] text-white text-[12px] font-bold flex-shrink-0">2</span>
+            <div>
+              <div className="text-[12.5px] font-bold text-[#14532d] leading-tight">เลือกช่วงเวลา</div>
+              <div className="text-[10.5px] text-[var(--text-secondary)]">{pickupDateLabel(selected)}</div>
+            </div>
+          </div>
           <div className="grid grid-cols-2 gap-2">
             {PICKUP_SLOTS.map((s) => {
               const on = slot === s.id
