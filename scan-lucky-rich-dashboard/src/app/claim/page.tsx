@@ -460,7 +460,7 @@ function AppointmentSummary({
     docs.forEach((d, i) => lines.push((i + 1) + '. ' + d.title + (d.hint ? ' (' + d.hint + ')' : '')))
     lines.push('')
     lines.push('⚠️ เงื่อนไข & สิ่งที่ต้องเตรียม')
-    prizes.forEach((p) => lines.push('- เตรียมเงินสดจ่ายภาษีหัก ณ ที่จ่าย 5% ของ ' + p.prizeLabel + ' = ' + baht(taxOf(p.prizeLabel)) + ' บาท'))
+    prizes.forEach((p) => lines.push('- เตรียมชำระภาษีหัก ณ ที่จ่าย 5% ของมูลค่ารางวัล (' + p.prizeLabel + ' = ' + baht(taxOf(p.prizeLabel)) + ' บาท)'))
     lines.push('- ' + (mode === 'proxy'
       ? 'มอบอำนาจ: ผู้รับแทนใช้บัตรประชาชนตัวจริงของตน + สำเนาบัตรของผู้โชคดี (รับรองสำเนาถูกต้อง) + หนังสือมอบอำนาจ'
       : 'รับเอง: ผู้โชคดีแสดงบัตรประชาชนตัวจริง (ชื่อตรงกับผู้โชคดี)'))
@@ -564,7 +564,7 @@ function AppointmentSummary({
               {prizes.map((p, i) => (
                 <li key={i} className="flex gap-1.5">
                   <span className="flex-shrink-0">💰</span>
-                  <span>เตรียม<b>เงินสด</b>จ่ายภาษีหัก ณ ที่จ่าย <b>5%</b> ของ {p.prizeLabel} = <b className="text-[#ffe08a]">{baht(taxOf(p.prizeLabel))} บาท</b></span>
+                  <span>เตรียม<b>ชำระภาษีหัก ณ ที่จ่าย 5%</b> ของมูลค่ารางวัล ({p.prizeLabel} = <b className="text-[#ffe08a]">{baht(taxOf(p.prizeLabel))} บาท</b>)</span>
                 </li>
               ))}
               <li className="flex gap-1.5">
