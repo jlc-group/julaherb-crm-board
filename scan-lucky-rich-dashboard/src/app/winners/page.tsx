@@ -91,7 +91,10 @@ export default function WinnersPage() {
     .filter((w) => monthOf(w.announceISO) === activeMonth)
     .sort((a, b) => (a.announceISO < b.announceISO ? 1 : a.announceISO > b.announceISO ? -1 : 0))
   const latest = monthWinners[0]
-  const visible = expanded ? monthWinners : monthWinners.slice(0, 5)
+  // แยกรางวัลใหญ่ (100K/1M) ออกเป็นก้อนต่างหาก · ที่เหลือเป็นรายวัน (10K)
+  const bigWinners = monthWinners.filter((w) => isBigPrize(w.tier))
+  const dailyWinners = monthWinners.filter((w) => !isBigPrize(w.tier))
+  const visibleDaily = expanded ? dailyWinners : dailyWinners.slice(0, 5)
 
   function pickMonth(iso: string) {
     setSelectedMonth(iso)
@@ -160,23 +163,39 @@ export default function WinnersPage() {
             </div>
           )}
 
-          {monthWinners.length > 0 && (
+          {/* ── รางวัลใหญ่ (100K/1M) — ก้อนทองต่างหาก เด่นกว่ารายวัน ── */}
+          {bigWinners.length > 0 && (
+            <div className="mt-5">
+              <div className="flex items-center justify-between mb-2 px-1">
+                <span className="text-[13px] font-bold text-[#b45309]">🏆 รางวัลใหญ่ประจำเดือน</span>
+                <span className="text-[11px] text-[#a16207]">{bigWinners.length} รางวัล</span>
+              </div>
+              <div className="rounded-2xl overflow-hidden border-2 border-[#f1ad24]" style={{ background: 'linear-gradient(160deg,#fffaf0,#fdebbf)', boxShadow: '0 6px 18px rgba(241,173,36,0.22)' }}>
+                {bigWinners.map((w, i) => (
+                  <BigWinnerRow key={i} w={w} />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* ── ผู้โชคดีรายวัน (ทอง 10K) — วันที่อยู่ซ้าย ── */}
+          {dailyWinners.length > 0 && (
             <>
               <div className="flex items-center justify-between mt-5 mb-2 px-1">
-                <span className="text-[12px] font-semibold text-[var(--text-secondary)]">ผลรางวัลทั้งเดือน</span>
-                <span className="text-[11px] text-[var(--text-muted)]">{monthWinners.length} รายการ</span>
+                <span className="text-[12px] font-semibold text-[var(--text-secondary)]">ผู้โชคดีรายวัน</span>
+                <span className="text-[11px] text-[var(--text-muted)]">{dailyWinners.length} รายการ</span>
               </div>
               <div className="bg-white rounded-2xl border border-[var(--border)] divide-y divide-[var(--border)] overflow-hidden">
-                {visible.map((w, i) => (
+                {visibleDaily.map((w, i) => (
                   <WinnerRow key={i} w={w} />
                 ))}
               </div>
-              {monthWinners.length > 5 && (
+              {dailyWinners.length > 5 && (
                 <button
                   onClick={() => setExpanded((v) => !v)}
                   className="w-full mt-2 py-2.5 rounded-xl border border-[var(--border)] text-[var(--text-secondary)] text-[12.5px] font-semibold active:scale-[0.99] transition"
                 >
-                  {expanded ? 'ย่อรายการ' : `ดูทั้งหมด ${monthWinners.length} รายการ`}
+                  {expanded ? 'ย่อรายการ' : `ดูทั้งหมด ${dailyWinners.length} รายการ`}
                 </button>
               )}
             </>
@@ -311,17 +330,33 @@ function MonthHeroCard({ w, sameDayCount = 1 }: { w: PubWinner; sameDayCount?: n
   )
 }
 
+// แถวรายวัน (ทอง 10K) — วันที่เป็นชิปทางซ้าย (เด่น มองง่าย) แล้วตามด้วยชื่อ/เบอร์/รางวัล
 function WinnerRow({ w }: { w: PubWinner }) {
-  const big = isBigPrize(w.tier)
+  const [, m, d] = w.announceISO.split('-').map(Number)
   return (
-    <div className="flex items-center justify-between gap-2 px-4 py-3" style={big ? { background: '#fffbeb' } : undefined}>
-      <div className="min-w-0">
-        <div className="text-[13.5px] font-semibold text-[var(--dark)] truncate">
-          {big && <i className="ti ti-crown text-[#b45309] mr-1" aria-hidden="true" />}{w.name || '(ผู้โชคดี)'}
-        </div>
-        <div className="text-[11px] text-[var(--text-muted)] mt-0.5 truncate">{w.announceLabel} · {w.phoneMasked}</div>
+    <div className="flex items-center gap-3 px-4 py-3">
+      <div className="flex-shrink-0 w-[42px] text-center rounded-lg bg-[#f0fdf4] border border-[#dcfce7] py-1">
+        <div className="text-[16px] font-extrabold text-[#15803d] leading-none">{d}</div>
+        <div className="text-[10px] text-[#16a34a] mt-0.5">{TH_ABBR[(m || 1) - 1]}</div>
+      </div>
+      <div className="min-w-0 flex-1">
+        <div className="text-[13.5px] font-semibold text-[var(--dark)] truncate">{w.name || '(ผู้โชคดี)'}</div>
+        <div className="text-[11px] text-[var(--text-muted)] mt-0.5 truncate">{w.phoneMasked}</div>
       </div>
       <span className="flex-shrink-0 text-[11px] font-semibold text-[#b45309] bg-[#fef3c7] rounded-lg px-2.5 py-1 whitespace-nowrap">{w.prizeLabel}</span>
+    </div>
+  )
+}
+
+// แถวรางวัลใหญ่ (100K/1M) — โทนทอง เด่นกว่ารายวัน
+function BigWinnerRow({ w }: { w: PubWinner }) {
+  return (
+    <div className="flex items-center justify-between gap-2 px-4 py-3.5 border-b border-[#fde68a] last:border-0">
+      <div className="min-w-0">
+        <div className="text-[14px] font-bold text-[#7a4e00] truncate">👑 {w.name || '(ผู้โชคดี)'}</div>
+        <div className="text-[11px] text-[#a16207] mt-0.5 truncate">{w.phoneMasked}</div>
+      </div>
+      <span className="flex-shrink-0 text-[12px] font-extrabold text-[#5a3a00] rounded-lg px-3 py-1.5 whitespace-nowrap" style={{ background: GOLD }}>{w.prizeLabel}</span>
     </div>
   )
 }
