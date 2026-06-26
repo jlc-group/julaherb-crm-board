@@ -76,5 +76,6 @@ export function purgeClaimFiles(phoneLast9: string) {
 export function adminKeyOk(req: NextRequest): boolean {
   const key = process.env.ADMIN_KEY
   if (!key) return true // ยังไม่ตั้ง = local mode เปิด
-  return req.headers.get('x-admin-key') === key
+  // รับทั้ง header (x-admin-key) และ cookie (adminKey จากการปลดล็อก ?key=) — ให้ preview เปิดในเบราว์เซอร์ที่ปลดล็อกแล้วได้
+  return req.headers.get('x-admin-key') === key || req.cookies.get('adminKey')?.value === key
 }

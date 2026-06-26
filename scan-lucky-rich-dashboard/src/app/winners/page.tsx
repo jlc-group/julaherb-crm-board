@@ -41,12 +41,19 @@ const PRIZE_MONTHS: PrizeMonth[] = (() => {
 const isBigPrize = (tier: string) => tier === '100K' || tier === '1M'
 const monthOf = (iso: string) => iso.slice(0, 7)
 
+const TH_ABBR = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.']
+const thDate = (iso: string) => {
+  const [y, m, d] = iso.split('-').map(Number)
+  return `${d} ${TH_ABBR[(m || 1) - 1]} ${(y || 0) + 543}`
+}
+
 export default function WinnersPage() {
   const [data, setData] = useState<PubData | null>(null)
   const [loading, setLoading] = useState(true)
   const [err, setErr] = useState('')
   const [selectedMonth, setSelectedMonth] = useState<string | null>(null)
   const [expanded, setExpanded] = useState(false)
+  const [simDate, setSimDate] = useState<string | null>(null) // โหมด preview: จำลองว่า "วันนี้" คือวันไหน (แอดมินกดดูข้ามวัน)
 
   useEffect(() => {
     const preview = new URLSearchParams(window.location.search).get('preview') === '1'
@@ -59,10 +66,22 @@ export default function WinnersPage() {
       .finally(() => setLoading(false))
   }, [])
 
-  const winners = data?.winners ?? []
-  const hasAny = winners.length > 0
+  const allWinners = data?.winners ?? []
+  const preview = !!data?.preview
+  // วันประกาศที่ไม่ซ้ำ เรียงน้อย→มาก (ใช้กับตัวเลือกจำลองวันที่ฝั่งแอดมิน)
+  const announceDates = Array.from(new Set(allWinners.map((w) => w.announceISO).filter(Boolean))).sort()
 
-  const latestMonth = hasAny ? winners.map((w) => monthOf(w.announceISO)).sort().slice(-1)[0] : null
+  // preview: ตั้งวันจำลองเริ่มต้น = วันประกาศแรก
+  useEffect(() => {
+    if (preview && simDate === null && announceDates.length) setSimDate(announceDates[0])
+  }, [preview, simDate, announceDates.length])
+
+  // preview + เลือกวัน → จำลองมุมมองลูกค้า ณ วันนั้น (announceISO ≤ simDate · เงื่อนไขเดียวกับ gate ฝั่ง server)
+  // ลูกค้าปกติ (ไม่มี preview) → เห็นทั้งหมดที่ API ส่งมา (ซึ่ง gate วันจริงอยู่แล้ว)
+  const winners = preview && simDate ? allWinners.filter((w) => w.announceISO <= simDate) : allWinners
+  const hasAny = allWinners.length > 0
+
+  const latestMonth = winners.length ? winners.map((w) => monthOf(w.announceISO)).sort().slice(-1)[0] : null
   const activeMonth = selectedMonth ?? latestMonth ?? PRIZE_MONTHS[0].iso
   const activeLabel = PRIZE_MONTHS.find((m) => m.iso === activeMonth)?.label ?? ''
 
@@ -92,8 +111,18 @@ export default function WinnersPage() {
 
       {data?.preview && (
         <div className="mb-3 text-[12px] text-[var(--text-secondary)] bg-[var(--bg-soft)] border border-[var(--border)] rounded-xl px-3 py-2 text-center">
-          โหมดพรีวิว (แอดมิน) — แสดงทุกเดือนรวมที่ยังไม่ถึงกำหนด · ลูกค้าจะไม่เห็นรายการอนาคต
+          โหมดพรีวิว (แอดมิน) — เลือกวันเพื่อดูว่าลูกค้าจะเห็นรายชื่ออะไรบ้างในวันนั้น
         </div>
+      )}
+
+      {preview && hasAny && simDate && (
+        <PreviewDatePicker
+          dates={announceDates}
+          value={simDate}
+          onChange={(d) => { setSimDate(d); setExpanded(false) }}
+          shownCount={winners.length}
+          total={allWinners.length}
+        />
       )}
 
       {loading ? (
@@ -206,6 +235,41 @@ function MonthSwitcher({ months, active, onPick }: { months: PrizeMonth[]; activ
       <button aria-label="เดือนถัดไป" onClick={() => go(1)} className="flex-shrink-0 w-8 h-8 rounded-full border border-[var(--border)] bg-white text-[#15803d] flex items-center justify-center active:scale-95 transition">
         <i className="ti ti-chevron-right text-[18px]" aria-hidden="true" />
       </button>
+    </div>
+  )
+}
+
+// ตัวเลือกจำลองวันที่ — แอดมินกดดูข้ามวันว่า "ถ้าวันนี้คือวันที่ X ลูกค้าจะเห็นกี่รายชื่อ" (โหมด preview เท่านั้น)
+function PreviewDatePicker({ dates, value, onChange, shownCount, total }: {
+  dates: string[]; value: string; onChange: (d: string) => void; shownCount: number; total: number
+}) {
+  const idx = dates.indexOf(value)
+  const go = (delta: number) => {
+    const n = Math.min(dates.length - 1, Math.max(0, idx + delta))
+    onChange(dates[n])
+  }
+  return (
+    <div className="mb-3 rounded-xl border border-[#f4d58a] bg-[#fffdf5] p-3">
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-[11.5px] font-semibold text-[#92600a]">จำลองวันที่ (แอดมิน)</span>
+        <span className="text-[10.5px] text-[#a16207]">ลูกค้าจะเห็น {shownCount}/{total} รายชื่อ</span>
+      </div>
+      <div className="flex items-center gap-2">
+        <button onClick={() => go(-1)} disabled={idx <= 0} aria-label="วันก่อนหน้า"
+          className="flex-shrink-0 w-9 h-9 rounded-full border border-[#e7c66a] bg-white text-[#b45309] text-[20px] leading-none flex items-center justify-center disabled:opacity-30 active:scale-95 transition">‹</button>
+        <div className="flex-1 text-center">
+          <div className="text-[15px] font-bold text-[#7a4e00] leading-tight">{thDate(value)}</div>
+          <div className="text-[10px] text-[#a16207] mt-0.5">เสมือนว่านี่คือ "วันนี้" · เลื่อน ‹ › ดูข้ามวัน</div>
+        </div>
+        <button onClick={() => go(1)} disabled={idx >= dates.length - 1} aria-label="วันถัดไป"
+          className="flex-shrink-0 w-9 h-9 rounded-full border border-[#e7c66a] bg-white text-[#b45309] text-[20px] leading-none flex items-center justify-center disabled:opacity-30 active:scale-95 transition">›</button>
+      </div>
+      <div className="flex gap-1.5 mt-2.5">
+        <button onClick={() => onChange(dates[0])}
+          className="flex-1 py-1.5 rounded-lg border border-[#e7c66a] bg-white text-[11px] font-semibold text-[#92600a] active:scale-[0.98] transition">วันแรก</button>
+        <button onClick={() => onChange(dates[dates.length - 1])}
+          className="flex-1 py-1.5 rounded-lg border border-[#e7c66a] bg-white text-[11px] font-semibold text-[#92600a] active:scale-[0.98] transition">วันสุดท้าย (รวม 100K)</button>
+      </div>
     </div>
   )
 }
