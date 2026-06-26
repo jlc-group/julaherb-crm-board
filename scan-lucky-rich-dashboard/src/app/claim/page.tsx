@@ -157,6 +157,19 @@ export default function ClaimPage() {
     setJustBooked(false)
   }
 
+  // ลบนัดหมายของเบอร์นี้ (ใช้ทดสอบ/แก้ไขเอง) — ลบทั้ง localStorage + server แล้วเปิดจองใหม่
+  async function deleteAppt() {
+    if (!window.confirm('ยืนยันลบนัดหมายนี้? (สามารถจองใหม่ได้ภายหลัง)')) return
+    try { localStorage.removeItem(apptKey(phone)) } catch {}
+    try { await fetch('/api/draw/appointments?phone=' + encodeURIComponent(phone), { method: 'DELETE' }) } catch {}
+    setAppt(null)
+    setJustBooked(false)
+    setSelDate(null)
+    setSelSlot(null)
+    setModeChosen(false)
+    setBooking(true) // เปิดหน้าจองใหม่ทันที
+  }
+
   // เดือนที่ผู้โชคดีคนนี้จองได้ = เดือนรับรางวัลของรอบที่ได้ (รอบไหน → เดือนนั้น)
   const allowedMonths = Array.from(
     new Set((verified?.prizes ?? []).map((p) => getRound(p.round)?.prizeMonthISO).filter(Boolean) as string[]),
@@ -211,7 +224,7 @@ export default function ClaimPage() {
             /* ─────────── ซีน ② ผู้โชคดี / สรุปนัดหมาย ─────────── */
             <>
               {appt ? (
-                <AppointmentSummary appt={appt} name={verified.name} prizes={verified.prizes} mode={pickupMode} justBooked={justBooked} onChangeAppt={openBooking} onUseOther={resetAll} />
+                <AppointmentSummary appt={appt} name={verified.name} prizes={verified.prizes} mode={pickupMode} justBooked={justBooked} onChangeAppt={openBooking} onUseOther={resetAll} onDelete={deleteAppt} />
               ) : (
                 <>
                   <div className="rounded-3xl overflow-hidden text-center text-white px-5 pt-7 pb-6" style={{ background: CARD_GRAD, boxShadow: '0 10px 30px rgba(12,90,44,0.28)' }}>
@@ -416,8 +429,8 @@ function DocItem({ step, doc }: { step: number; doc: DocDef }) {
 
 // สรุปนัดหมาย — ฝังในหน้า (ทั้งหลังจอง justBooked=true และเช็คย้อนหลัง=false) · ไม่มี popup แล้ว
 function AppointmentSummary({
-  appt, name, prizes, mode, justBooked, onChangeAppt, onUseOther,
-}: { appt: Appt; name: string; prizes: Prize[]; mode: 'self' | 'proxy'; justBooked: boolean; onChangeAppt: () => void; onUseOther: () => void }) {
+  appt, name, prizes, mode, justBooked, onChangeAppt, onUseOther, onDelete,
+}: { appt: Appt; name: string; prizes: Prize[]; mode: 'self' | 'proxy'; justBooked: boolean; onChangeAppt: () => void; onUseOther: () => void; onDelete: () => void }) {
   const slot = slotById(appt.slotId)
   const [copied, setCopied] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -447,11 +460,13 @@ function AppointmentSummary({
     docs.forEach((d, i) => lines.push((i + 1) + '. ' + d.title + (d.hint ? ' (' + d.hint + ')' : '')))
     lines.push('')
     lines.push('⚠️ เงื่อนไข & สิ่งที่ต้องเตรียม')
-    prizes.forEach((p) => lines.push('- เตรียมเงินสดจ่ายภาษีหัก ณ ที่จ่ายตามกฎหมาย 5% ของ ' + p.prizeLabel + ' = ' + baht(taxOf(p.prizeLabel)) + ' บาท'))
+    prizes.forEach((p) => lines.push('- เตรียมเงินสดจ่ายภาษีหัก ณ ที่จ่าย 5% ของ ' + p.prizeLabel + ' = ' + baht(taxOf(p.prizeLabel)) + ' บาท'))
     lines.push('- ' + (mode === 'proxy'
-      ? 'ผู้รับมอบอำนาจแสดงบัตรประชาชนตัวจริงของตนเอง พร้อมสำเนาบัตรประชาชนของผู้โชคดี (ลงนามรับรองสำเนาถูกต้อง) — ผู้โชคดีไม่ต้องมาด้วยตนเอง'
-      : 'ผู้โชคดีมารับด้วยตนเอง โดยแสดงบัตรประชาชนตัวจริง (ชื่อต้องตรงกับผู้โชคดี)'))
-    lines.push('- สถานที่รับรางวัล: บริษัท เจแอลซี กรุ๊ป จำกัด (สำนักงานใหญ่) 62 ซ.นาคนิวาส 6 ถ.นาคนิวาส แขวงลาดพร้าว เขตลาดพร้าว กรุงเทพมหานคร 10230')
+      ? 'มอบอำนาจ: ผู้รับแทนใช้บัตรประชาชนตัวจริงของตน + สำเนาบัตรของผู้โชคดี (รับรองสำเนาถูกต้อง) + หนังสือมอบอำนาจ'
+      : 'รับเอง: ผู้โชคดีแสดงบัตรประชาชนตัวจริง (ชื่อตรงกับผู้โชคดี)'))
+    lines.push('- สถานที่: บริษัท เจแอลซี กรุ๊ป จำกัด · 62 ซ.นาคนิวาส 6 ถ.นาคนิวาส แขวง/เขตลาดพร้าว กทม. 10230')
+    lines.push('- เก็บหลักฐานร่วมกิจกรรม (บรรจุภัณฑ์/กล่อง/หลอด/สติกเกอร์ หรือหลักฐานสแกน QR)')
+    lines.push('- รางวัลแลก/ทอน/เปลี่ยนเป็นเงินสดไม่ได้ และโอนกรรมสิทธิ์ไม่ได้')
     lines.push('')
     lines.push('* เจ้าหน้าที่ตรวจเอกสารตัวจริงที่จุดรับรางวัล กรุณาเตรียมให้ครบก่อนเดินทาง')
     return lines.join('\n')
@@ -549,18 +564,26 @@ function AppointmentSummary({
               {prizes.map((p, i) => (
                 <li key={i} className="flex gap-1.5">
                   <span className="flex-shrink-0">💰</span>
-                  <span>เตรียม<b>เงินสด</b>จ่ายภาษีหัก ณ ที่จ่ายตามกฎหมาย <b>5%</b> ของ {p.prizeLabel} = <b className="text-[#ffe08a]">{baht(taxOf(p.prizeLabel))} บาท</b></span>
+                  <span>เตรียม<b>เงินสด</b>จ่ายภาษีหัก ณ ที่จ่าย <b>5%</b> ของ {p.prizeLabel} = <b className="text-[#ffe08a]">{baht(taxOf(p.prizeLabel))} บาท</b></span>
                 </li>
               ))}
               <li className="flex gap-1.5">
                 <span className="flex-shrink-0">🪪</span>
                 <span>{mode === 'proxy'
-                  ? 'ผู้รับมอบอำนาจแสดงบัตรประชาชนตัวจริงของตนเอง พร้อมสำเนาบัตรประชาชนของผู้โชคดี (ลงนามรับรองสำเนาถูกต้อง) — ผู้โชคดีไม่ต้องมาด้วยตนเอง'
-                  : 'ผู้โชคดีมารับด้วยตนเอง โดยแสดงบัตรประชาชนตัวจริง (ชื่อต้องตรงกับผู้โชคดี)'}</span>
+                  ? <><b>มอบอำนาจ:</b> ผู้รับแทนใช้บัตรประชาชนตัวจริงของตน + สำเนาบัตรของผู้โชคดี (รับรองสำเนาถูกต้อง) + หนังสือมอบอำนาจ</>
+                  : <><b>รับเอง:</b> ผู้โชคดีแสดงบัตรประชาชนตัวจริง (ชื่อตรงกับผู้โชคดี)</>}</span>
               </li>
               <li className="flex gap-1.5">
                 <span className="flex-shrink-0">📍</span>
-                <span>สถานที่รับรางวัล: <b>บริษัท เจแอลซี กรุ๊ป จำกัด (สำนักงานใหญ่)</b><br />62 ซ.นาคนิวาส 6 ถ.นาคนิวาส แขวงลาดพร้าว เขตลาดพร้าว กรุงเทพมหานคร 10230</span>
+                <span><b>บริษัท เจแอลซี กรุ๊ป จำกัด</b> · 62 ซ.นาคนิวาส 6 ถ.นาคนิวาส แขวง/เขตลาดพร้าว กทม. 10230</span>
+              </li>
+              <li className="flex gap-1.5">
+                <span className="flex-shrink-0">📦</span>
+                <span>เก็บหลักฐานร่วมกิจกรรม (บรรจุภัณฑ์/กล่อง/หลอด/สติกเกอร์ หรือหลักฐานสแกน QR)</span>
+              </li>
+              <li className="flex gap-1.5">
+                <span className="flex-shrink-0">🔒</span>
+                <span>รางวัลแลก/ทอน/เปลี่ยนเป็นเงินสดไม่ได้ และโอนกรรมสิทธิ์ไม่ได้</span>
               </li>
             </ul>
           </div>
@@ -581,6 +604,8 @@ function AppointmentSummary({
           <button onClick={onChangeAppt} className="py-1">เปลี่ยนนัดหมาย</button>
           <span className="text-[var(--border)]">|</span>
           <button onClick={onUseOther} className="py-1">ใช้เบอร์อื่น</button>
+          <span className="text-[var(--border)]">|</span>
+          <button onClick={onDelete} className="py-1 text-[#b91c1c]">ลบนัดหมาย</button>
         </div>
       </div>
     </div>
