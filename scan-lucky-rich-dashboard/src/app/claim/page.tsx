@@ -446,6 +446,13 @@ function AppointmentSummary({
     lines.push('เอกสารที่ต้องเตรียม:')
     docs.forEach((d, i) => lines.push((i + 1) + '. ' + d.title + (d.hint ? ' (' + d.hint + ')' : '')))
     lines.push('')
+    lines.push('⚠️ เงื่อนไข & สิ่งที่ต้องเตรียม')
+    prizes.forEach((p) => lines.push('- เตรียมเงินสดจ่ายภาษีหัก ณ ที่จ่ายตามกฎหมาย 5% ของ ' + p.prizeLabel + ' = ' + baht(taxOf(p.prizeLabel)) + ' บาท'))
+    lines.push('- ' + (mode === 'proxy'
+      ? 'ผู้รับมอบอำนาจแสดงบัตรประชาชนตัวจริงของตนเอง พร้อมสำเนาบัตรประชาชนของผู้โชคดี (ลงนามรับรองสำเนาถูกต้อง) — ผู้โชคดีไม่ต้องมาด้วยตนเอง'
+      : 'ผู้โชคดีมารับด้วยตนเอง โดยแสดงบัตรประชาชนตัวจริง (ชื่อต้องตรงกับผู้โชคดี)'))
+    lines.push('- สถานที่รับรางวัล: บริษัท เจแอลซี กรุ๊ป จำกัด (สำนักงานใหญ่) 62 ซ.นาคนิวาส 6 ถ.นาคนิวาส แขวงลาดพร้าว เขตลาดพร้าว กรุงเทพมหานคร 10230')
+    lines.push('')
     lines.push('* เจ้าหน้าที่ตรวจเอกสารตัวจริงที่จุดรับรางวัล กรุณาเตรียมให้ครบก่อนเดินทาง')
     return lines.join('\n')
   }
@@ -533,6 +540,29 @@ function AppointmentSummary({
                 </li>
               ))}
             </ol>
+          </div>
+
+          {/* เงื่อนไข & สิ่งที่ต้องเตรียม — ให้ลูกค้าเซฟรูปไปเตรียมเงิน/เอกสาร/เดินทาง */}
+          <div className="rounded-xl p-3 mt-3" style={{ background: 'rgba(255,224,138,0.15)', border: '1px solid rgba(255,224,138,0.5)' }}>
+            <div className="text-[12.5px] font-bold text-[#ffe9a8] flex items-center gap-1.5">⚠️ เงื่อนไข &amp; สิ่งที่ต้องเตรียม</div>
+            <ul className="mt-2 space-y-2 text-[11.5px] text-white/95 leading-relaxed">
+              {prizes.map((p, i) => (
+                <li key={i} className="flex gap-1.5">
+                  <span className="flex-shrink-0">💰</span>
+                  <span>เตรียม<b>เงินสด</b>จ่ายภาษีหัก ณ ที่จ่ายตามกฎหมาย <b>5%</b> ของ {p.prizeLabel} = <b className="text-[#ffe08a]">{baht(taxOf(p.prizeLabel))} บาท</b></span>
+                </li>
+              ))}
+              <li className="flex gap-1.5">
+                <span className="flex-shrink-0">🪪</span>
+                <span>{mode === 'proxy'
+                  ? 'ผู้รับมอบอำนาจแสดงบัตรประชาชนตัวจริงของตนเอง พร้อมสำเนาบัตรประชาชนของผู้โชคดี (ลงนามรับรองสำเนาถูกต้อง) — ผู้โชคดีไม่ต้องมาด้วยตนเอง'
+                  : 'ผู้โชคดีมารับด้วยตนเอง โดยแสดงบัตรประชาชนตัวจริง (ชื่อต้องตรงกับผู้โชคดี)'}</span>
+              </li>
+              <li className="flex gap-1.5">
+                <span className="flex-shrink-0">📍</span>
+                <span>สถานที่รับรางวัล: <b>บริษัท เจแอลซี กรุ๊ป จำกัด (สำนักงานใหญ่)</b><br />62 ซ.นาคนิวาส 6 ถ.นาคนิวาส แขวงลาดพร้าว เขตลาดพร้าว กรุงเทพมหานคร 10230</span>
+              </li>
+            </ul>
           </div>
         </div>
       </div>
