@@ -30,3 +30,7 @@ Report Update per Month/
 file update รายวัน/
 *.docx
 *.csv
+
+# ⚠️ Daily print-export — config มี admin key + runlog (ห้าม commit)
+scripts/daily-print-export.config.local.json
+scripts/daily-print-export.runlog.txt
