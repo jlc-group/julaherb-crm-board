@@ -16,6 +16,7 @@ import BaselineComparison from '@/components/ui/BaselineComparison'
 import TimeOfDayChart from '@/components/ui/TimeOfDayChart'
 import TrendLineChart from '@/components/ui/TrendLineChart'
 import WeekdayMatchedCard from '@/components/ui/WeekdayMatchedCard'
+import YearOverviewCard from '@/components/ui/YearOverviewCard'
 
 import { DAILY_ENTRIES } from '@/lib/daily-update-data'  // ใช้สำหรับ chart components ที่ต้องการ timeOfDay/peakHours fields (ยังไม่มี API endpoint รองรับ)
 import { numFmt, getCampaignToday } from '@/lib/utils'
@@ -104,6 +105,9 @@ export default function OverviewTab() {
 
       {/* ── 3. ALERT BAR (outage จริงจาก API) ── */}
       <AlertBar outages={apiUptime.data?.outages} />
+
+      {/* ── ภาพรวมการสแกนทั้งปี (สไลด์ 2) — All Scan รายเดือน + forecast (hero context) ── */}
+      <YearOverviewCard />
 
       {/* ════════════════════════════════════════════════════
           ZONE 1 — KPI Snapshot (per-day)
