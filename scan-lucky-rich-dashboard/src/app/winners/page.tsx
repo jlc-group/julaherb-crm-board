@@ -58,8 +58,12 @@ export default function WinnersPage() {
   const [simDate, setSimDate] = useState<string | null>(null) // โหมด preview: จำลองว่า "วันนี้" คือวันไหน (แอดมินกดดูข้ามวัน)
 
   useEffect(() => {
-    const preview = new URLSearchParams(window.location.search).get('preview') === '1'
-    const adminKey = localStorage.getItem('adminKey') || ''
+    const qs = new URLSearchParams(window.location.search)
+    const preview = qs.get('preview') === '1'
+    // adminKey: รับจาก ?key= ใน URL ก่อน (ลิ้งค์ preview เดียวจบ) → ไม่งั้นใช้ที่เก็บไว้ใน localStorage
+    const urlKey = qs.get('key') || ''
+    if (urlKey) { try { localStorage.setItem('adminKey', urlKey) } catch {} }
+    const adminKey = urlKey || localStorage.getItem('adminKey') || ''
     const url = preview ? '/api/winners/public?all=1' : '/api/winners/public'
     fetch(url, { headers: preview && adminKey ? { 'x-admin-key': adminKey } : {} })
       .then((r) => r.json())
