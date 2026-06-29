@@ -17,6 +17,7 @@ import UnifiedDateRange, { defaultRange, type DateRangeV2 } from '@/components/u
 import Top5SkuCard from '@/components/ui/Top5SkuCard'
 import SkuTrendLineChart from '@/components/ui/SkuTrendLineChart'
 import ApiSourceBadge from '@/components/ui/ApiSourceBadge'
+import ProductImageGrid from '@/components/ui/ProductImageGrid'
 
 import { buildSkuTable, getTierBuckets } from '@/lib/sku-redemption'
 import type { SkuRow, SkuStatus } from '@/lib/sku-redemption'
@@ -301,6 +302,9 @@ export default function ProductsTab() {
           <Top5SkuCard day={day} rows={displayRows} rangeLabel={dayTag} />
         </div>
       </div>
+
+      {/* Top สินค้าพร้อมรูป (สไลด์ 10) — แมพ SKU → รูปจาก public/products */}
+      <ProductImageGrid rows={sortedDisplay} rangeLabel={dayTag} />
 
       {/* SKU Trend Line — เลือก SKU ดูกราฟเส้นรายวัน (scale ถึงสิ้นปี) */}
       <div className="mb-1"><ApiSourceBadge endpoint="/api/sku/[sku]/timeseries" params="from&to (per selected SKU)" /></div>
