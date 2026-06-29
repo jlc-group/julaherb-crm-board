@@ -34,7 +34,7 @@ interface SkuRankDay { date: string; rank: number; scans: number }
 interface SkuRankHistoryRow { sku: string; displayName: string; days: SkuRankDay[]; trend: 'up' | 'down' | 'flat' | 'mixed' }
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, LineElement, PointElement, ArcElement, Tooltip, Legend, Filler)
-ChartJS.defaults.font.family = "'Noto Sans Thai', sans-serif"
+ChartJS.defaults.font.family = "'Inter', 'Noto Sans Thai', sans-serif"
 ChartJS.defaults.font.size = 11
 ChartJS.defaults.color = '#6b7280'
 

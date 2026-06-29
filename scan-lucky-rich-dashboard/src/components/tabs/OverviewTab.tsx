@@ -26,7 +26,7 @@ import { useApi } from '@/lib/hooks/useApi'
 import type { ScansTotalsResponse, MembersDailyResponse, UptimeResponse, DailyRow } from '@/lib/api/types'
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, LineElement, PointElement, ArcElement, Tooltip, Legend, Filler)
-ChartJS.defaults.font.family = "'Noto Sans Thai', sans-serif"
+ChartJS.defaults.font.family = "'Inter', 'Noto Sans Thai', sans-serif"
 ChartJS.defaults.font.size = 11
 ChartJS.defaults.color = '#6b7280'
 

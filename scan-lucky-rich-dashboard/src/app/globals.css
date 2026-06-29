@@ -1,5 +1,5 @@
 /* ⚠️ @import ต้องอยู่บนสุดก่อน @tailwind — ไม่งั้นเบราว์เซอร์ข้าม (ฟอนต์/ไอคอนไม่โหลด) */
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700;800;900&family=Mali:wght@500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@300;400;500;600;700;800;900&family=Mali:wght@500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap');
 @import url('https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.44.0/dist/tabler-icons.min.css');
 
 @tailwind base;
@@ -81,8 +81,8 @@
 }
 
 body {
-  /* DB Heavent ถ้าเครื่องมีฟอนต์ (ไม่ใช่ฟอนต์ฟรีบน web) → ไม่มีใช้ Noto Sans Thai */
-  font-family: 'DB Heavent', 'Noto Sans Thai', sans-serif;
+  /* Inter = อังกฤษ/ตัวเลข (web · อ่านง่าย) · ไทยตกไป DB Heavent (ถ้าเครื่องมี) → Noto Sans Thai */
+  font-family: 'Inter', 'DB Heavent', 'Noto Sans Thai', sans-serif;
   background: var(--bg);
   color: var(--text);
   min-height: 100vh;

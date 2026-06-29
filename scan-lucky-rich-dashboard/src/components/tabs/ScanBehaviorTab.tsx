@@ -19,7 +19,7 @@ import { VERIFICATION_KPIS, SAME_DAY_REPEAT, FUNNEL_DATA, TV_LIFT } from '@/lib/
 import { REAL_CAMPAIGN } from '@/lib/real-data'
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, LineElement, PointElement, ArcElement, Tooltip, Legend, Filler)
-ChartJS.defaults.font.family = "'Noto Sans Thai', sans-serif"
+ChartJS.defaults.font.family = "'Inter', 'Noto Sans Thai', sans-serif"
 ChartJS.defaults.font.size = 11
 ChartJS.defaults.color = '#6b7280'
 

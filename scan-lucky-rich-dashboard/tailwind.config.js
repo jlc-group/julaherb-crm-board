@@ -14,7 +14,7 @@ module.exports = {
         danger: '#e74c3c',
       },
       fontFamily: {
-        sans: ['Noto Sans Thai', 'sans-serif'],
+        sans: ['Inter', 'Noto Sans Thai', 'sans-serif'],
       },
     },
   },
