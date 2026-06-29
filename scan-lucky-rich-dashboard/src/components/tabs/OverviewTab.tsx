@@ -17,6 +17,8 @@ import TimeOfDayChart from '@/components/ui/TimeOfDayChart'
 import TrendLineChart from '@/components/ui/TrendLineChart'
 import WeekdayMatchedCard from '@/components/ui/WeekdayMatchedCard'
 import YearOverviewCard from '@/components/ui/YearOverviewCard'
+import WeeklyMomentumCard from '@/components/ui/WeeklyMomentumCard'
+import MonthlyScanRightsCard from '@/components/ui/MonthlyScanRightsCard'
 
 import { DAILY_ENTRIES } from '@/lib/daily-update-data'  // ใช้สำหรับ chart components ที่ต้องการ timeOfDay/peakHours fields (ยังไม่มี API endpoint รองรับ)
 import { numFmt, getCampaignToday } from '@/lib/utils'
@@ -388,6 +390,13 @@ export default function OverviewTab() {
       <BaselineComparison from={range.from} to={range.to} />
       <div className="mb-1"><ApiSourceBadge endpoint="/api/baseline/compare" params="from&to" /></div>
       <WeekdayMatchedCard from={range.from} to={range.to} />
+
+      {/* Momentum รายสัปดาห์ + เทียบรายเดือน (คำนวณทั้งแคมเปญ ไม่อิง date range ด้านบน) */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <WeeklyMomentumCard />
+        <MonthlyScanRightsCard />
+      </div>
+
       <RecommendationsZone />
 
       {/* Footer: where did the other widgets go? */}
