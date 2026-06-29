@@ -13,6 +13,7 @@ import SegmentMixCard from '@/components/ui/SegmentMixCard'
 import EngagementDistribution from '@/components/ui/EngagementDistribution'
 import HeavyUsersCard from '@/components/ui/HeavyUsersCard'
 import TopProvincesCard from '@/components/ui/TopProvincesCard'
+import NewVsReturningCard from '@/components/ui/NewVsReturningCard'
 import InsightInline from '@/components/ui/InsightInline'
 import ApiSourceBadge from '@/components/ui/ApiSourceBadge'
 
@@ -158,6 +159,9 @@ export default function CustomersTab() {
       <ZoneTitle num="B" title="Mix + Segmentation" dayTag={dayTag} />
       <div className="mb-1"><ApiSourceBadge endpoint="/api/customers/engagement" params="from&to → RFM derived" /></div>
       <SegmentMixCard day={day} />
+
+      {/* New vs Returning เทียบเดือน (สไลด์ 7) — คำนวณทั้งแคมเปญจาก /api/members/daily */}
+      <div className="mt-4"><NewVsReturningCard /></div>
 
       {/* ════════════════════════════════════════════════════
           C — Behavior + Retention

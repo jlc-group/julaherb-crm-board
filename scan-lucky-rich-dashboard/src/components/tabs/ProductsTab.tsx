@@ -18,6 +18,7 @@ import Top5SkuCard from '@/components/ui/Top5SkuCard'
 import SkuTrendLineChart from '@/components/ui/SkuTrendLineChart'
 import ApiSourceBadge from '@/components/ui/ApiSourceBadge'
 import ProductImageGrid from '@/components/ui/ProductImageGrid'
+import CategoryMixCard from '@/components/ui/CategoryMixCard'
 
 import { buildSkuTable, getTierBuckets } from '@/lib/sku-redemption'
 import type { SkuRow, SkuStatus } from '@/lib/sku-redemption'
@@ -362,6 +363,9 @@ export default function ProductsTab() {
       </div>
       <div className="mt-4">
         <CrossScanPairsCard />
+      </div>
+      <div className="mt-4">
+        <CategoryMixCard rows={sortedDisplay} />
       </div>
 
       {/* ════════════════════════════════════════════════════
