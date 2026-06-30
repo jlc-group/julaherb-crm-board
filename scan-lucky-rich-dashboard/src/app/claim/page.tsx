@@ -344,7 +344,7 @@ export default function ClaimPage() {
                     return (
                       <li key={i} className="flex gap-2">
                         <span className="flex-shrink-0">💰</span>
-                        <span>ผู้ได้รับรางวัลทอง มูลค่า <b>{baht(v)} บาท</b> มีหน้าที่ชำระภาษีเงินได้<b>หัก ณ ที่จ่ายตามกฎหมาย ในอัตราร้อยละ 5</b> ของมูลค่ารางวัล เป็นเงิน <b className="text-[#b45309]">{baht(taxOf(p.prizeLabel))} บาท</b> โดยชำระเป็น<b>เงินสด</b> ณ วันรับรางวัล ก่อนรับมอบของรางวัล</span>
+                        <span>ผู้ได้รับรางวัลทอง มูลค่า <b>{baht(v)} บาท</b> มีหน้าที่ชำระภาษีเงินได้<b>หัก ณ ที่จ่ายตามกฎหมาย ในอัตราร้อยละ 5</b> ของมูลค่ารางวัล เป็นเงิน <b className="text-[#b45309]">{baht(taxOf(p.prizeLabel))} บาท</b> โดยชำระ ณ วันรับรางวัล ก่อนรับมอบของรางวัล</span>
                       </li>
                     )
                   })}
