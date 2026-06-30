@@ -213,13 +213,26 @@ export default function WinnersPage() {
 
       {/* ── ปุ่มลอย: ตรวจสอบสิทธิ์ของฉัน ── */}
       <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] z-40 px-4 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))] bg-gradient-to-t from-white via-white/95 to-transparent pointer-events-none">
-        <a
-          href="/claim"
-          className="pointer-events-auto flex items-center justify-center gap-2 w-full py-4 rounded-2xl text-white font-bold text-[15px] active:scale-[0.98] transition"
-          style={{ background: BRAND_BG }}
-        >
-          <i className="ti ti-search" aria-hidden="true" /> ตรวจสอบสิทธิ์ของฉัน
-        </a>
+        {hasAny ? (
+          <a
+            href="/claim"
+            className="pointer-events-auto flex items-center justify-center gap-2 w-full py-4 rounded-2xl text-white font-bold text-[15px] active:scale-[0.98] transition"
+            style={{ background: BRAND_BG }}
+          >
+            <i className="ti ti-search" aria-hidden="true" /> ตรวจสอบสิทธิ์ของฉัน
+          </a>
+        ) : (
+          /* ยังไม่เริ่มประกาศ (ยังไม่มีรายชื่อ) → ปิดปุ่ม จนถึง 11:00 รอบแรก พร้อมรายชื่อแรก */
+          <button
+            type="button"
+            disabled
+            aria-disabled="true"
+            title="เปิดให้ตรวจสอบเมื่อเริ่มประกาศผล 11:00 น."
+            className="pointer-events-auto flex items-center justify-center gap-2 w-full py-4 rounded-2xl font-bold text-[15px] cursor-not-allowed text-[var(--text-muted)] bg-[var(--bg-soft)] border border-[var(--border)]"
+          >
+            <i className="ti ti-lock" aria-hidden="true" /> ตรวจสอบสิทธิ์ได้ 11:00 น.
+          </button>
+        )}
       </div>
     </MobileShell>
   )
