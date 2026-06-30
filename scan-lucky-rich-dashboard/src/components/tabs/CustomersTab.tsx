@@ -15,6 +15,7 @@ import TopProvincesCard from '@/components/ui/TopProvincesCard'
 import NewVsReturningCard from '@/components/ui/NewVsReturningCard'
 import NewVsReturningHero from '@/components/ui/NewVsReturningHero'
 import SegmentRfmCard from '@/components/ui/SegmentRfmCard'
+import AgeDistributionCard from '@/components/ui/AgeDistributionCard'
 import ApiSourceBadge from '@/components/ui/ApiSourceBadge'
 
 import { DAILY_ENTRIES } from '@/lib/daily-update-data'  // ใช้สำหรับ SegmentMixCard, EngagementDistribution, HeavyUsersCard, TopProvincesCard ที่ต้องการ DailyEntry shape
@@ -155,9 +156,14 @@ export default function CustomersTab() {
       {/* ════════════════════════════════════════════════════
           B — Mix + Segmentation (3 donuts + RFM minis)
       ════════════════════════════════════════════════════ */}
-      <ZoneTitle num="B" title="พฤติกรรมการสแกน — ความถี่/คน" dayTag={dayTag} />
-      <div className="mb-1"><ApiSourceBadge endpoint="/api/customers/engagement" params="from&to" /></div>
-      <EngagementDistribution from={range.from} to={range.to} rangeLabel={dayTag} />
+      <ZoneTitle num="B" title="พฤติกรรม + กลุ่มอายุลูกค้า" dayTag={dayTag} />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div>
+          <div className="mb-1"><ApiSourceBadge endpoint="/api/customers/engagement" params="from&to" /></div>
+          <EngagementDistribution from={range.from} to={range.to} rangeLabel={dayTag} />
+        </div>
+        <AgeDistributionCard />
+      </div>
 
       {/* ════════════════════════════════════════════════════
           C — Value Segments (RFM จริง · ทั้งระบบ) + เทียบรายเดือน
