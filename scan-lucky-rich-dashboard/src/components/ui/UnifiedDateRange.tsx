@@ -112,7 +112,6 @@ export default function UnifiedDateRange({
 }: Props) {
   const [draftFrom, setDraftFrom] = useState(value.from)
   const [draftTo, setDraftTo]     = useState(value.to)
-  const [editMode, setEditMode]   = useState(false)
 
   useEffect(() => {
     setDraftFrom(value.from)
@@ -120,10 +119,6 @@ export default function UnifiedDateRange({
   }, [value.from, value.to])
 
   const dayCount = useMemo(() => daysBetween(value.from, value.to), [value.from, value.to])
-  const rangeLabel = useMemo(() => {
-    if (value.from === value.to) return thaiShort(value.from)
-    return `${thaiShort(value.from)} → ${thaiShort(value.to)}`
-  }, [value.from, value.to])
 
   const dowRange = useMemo(() => {
     if (value.from === value.to) return thaiDow(value.from)
@@ -136,96 +131,66 @@ export default function UnifiedDateRange({
     : value.preset
 
   function applyPreset(p: PresetKey) {
-    if (p === 'custom') {
-      setEditMode(true)
-      return
-    }
+    if (p === 'custom') return // เลือก "กำหนดเอง" → แก้วันที่ในช่องได้เลย
     const r = computeRangeV2(p, today, campaignStart, campaignEnd)
     onChange({ preset: p, ...r })
-    setEditMode(false)
   }
 
-  function applyCustom() {
-    if (!draftFrom || !draftTo) return
-    const from = draftFrom <= draftTo ? draftFrom : draftTo
-    const to   = draftFrom <= draftTo ? draftTo : draftFrom
-    onChange({ preset: 'custom', from, to })
-    setEditMode(false)
-  }
-
+  // minimal บรรทัดเดียว: [ปฏิทิน] [ช่วง ▾] [from → to] [X วัน] ........ [● Live]
   return (
-    <div className="card p-3">
-      {/* Row 1: Date inputs + summary */}
-      <div className="flex flex-wrap items-center gap-3 mb-2">
-        <i className="ti ti-calendar-event text-[var(--brand-500)] text-lg flex-shrink-0" />
+    <div className="card px-3 py-2 flex flex-wrap items-center gap-x-3 gap-y-2 text-[12px]">
+      <i className="ti ti-calendar-event text-[var(--brand-500)] text-base flex-shrink-0" />
 
-        <div className="flex items-center gap-2 text-[12px]">
-          <span className="text-[var(--text-muted)] uppercase text-[10px] tracking-wider">จาก</span>
-          <input
-            type="date"
-            value={draftFrom}
-            min={campaignStart}
-            max={campaignEnd}
-            onChange={e => {
-              setDraftFrom(e.target.value)
-              if (e.target.value && draftTo) {
-                onChange({ preset: 'custom', from: e.target.value, to: draftTo })
-              }
-            }}
-            className="px-2 py-1 text-[12px] border border-[var(--border)] rounded focus:outline-none focus:border-[var(--brand-500)] num"
-          />
-          <span className="text-[var(--text-muted)]">→</span>
-          <span className="text-[var(--text-muted)] uppercase text-[10px] tracking-wider">ถึง</span>
-          <input
-            type="date"
-            value={draftTo}
-            min={campaignStart}
-            max={campaignEnd}
-            onChange={e => {
-              setDraftTo(e.target.value)
-              if (e.target.value && draftFrom) {
-                onChange({ preset: 'custom', from: draftFrom, to: e.target.value })
-              }
-            }}
-            className="px-2 py-1 text-[12px] border border-[var(--border)] rounded focus:outline-none focus:border-[var(--brand-500)] num"
-          />
-        </div>
-
-        {/* Summary chip */}
-        <div className="flex items-center gap-2 text-[11.5px] px-3 py-1 rounded-full"
-             style={{ background: 'var(--brand-50)', color: 'var(--brand-700)' }}>
-          <i className="ti ti-clock-hour-3 text-[12px]" />
-          <span className="font-bold num">{dayCount} วัน</span>
-          <span className="opacity-60">•</span>
-          <span>{dowRange}</span>
-        </div>
-
-        <div className="ml-auto flex items-center gap-1.5 text-[10.5px] text-[var(--text-muted)]">
-          <span className="live-dot" />
-          <span>Live</span>
-        </div>
+      {/* ทางลัด = dropdown (ยุบจาก 9 ปุ่ม → บรรทัดเดียว) */}
+      <div className="relative flex-shrink-0">
+        <select
+          value={activePreset}
+          onChange={e => applyPreset(e.target.value as PresetKey)}
+          aria-label="เลือกช่วงเวลา"
+          className="appearance-none pl-3 pr-7 py-1.5 rounded-full text-[12px] font-semibold cursor-pointer focus:outline-none"
+          style={{ background: 'var(--brand-500)', color: '#fff' }}
+        >
+          {PRESETS.map(p => (
+            <option key={p.key} value={p.key} style={{ color: '#111', background: '#fff' }}>{p.label}</option>
+          ))}
+        </select>
+        <i className="ti ti-chevron-down absolute right-2.5 top-1/2 -translate-y-1/2 text-white text-[11px] pointer-events-none" />
       </div>
 
-      {/* Row 2: Preset chips */}
-      <div className="flex flex-wrap gap-1.5 items-center pt-2 border-t border-[var(--border-soft)]">
-        <span className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider mr-1">ทางลัด</span>
-        {PRESETS.map(p => {
-          const active = activePreset === p.key
-          return (
-            <button
-              key={p.key}
-              onClick={() => applyPreset(p.key)}
-              className={`px-2.5 py-1 rounded-full text-[11px] font-semibold transition-all ${
-                active
-                  ? 'bg-[var(--brand-500)] text-white shadow-sm'
-                  : 'bg-[var(--bg-soft)] text-[var(--text-secondary)] hover:bg-[var(--brand-50)] hover:text-[var(--brand-700)] border border-[var(--border)]'
-              }`}
-            >
-              {p.icon && <i className={`ti ${p.icon} mr-1`} />}
-              {p.label}
-            </button>
-          )
-        })}
+      {/* ช่องวันที่ */}
+      <div className="flex items-center gap-1.5">
+        <input
+          type="date"
+          value={draftFrom}
+          min={campaignStart}
+          max={campaignEnd}
+          onChange={e => { setDraftFrom(e.target.value); if (e.target.value && draftTo) onChange({ preset: 'custom', from: e.target.value, to: draftTo }) }}
+          className="px-2 py-1 text-[12px] border border-[var(--border)] rounded focus:outline-none focus:border-[var(--brand-500)] num"
+        />
+        <span className="text-[var(--text-muted)]">→</span>
+        <input
+          type="date"
+          value={draftTo}
+          min={campaignStart}
+          max={campaignEnd}
+          onChange={e => { setDraftTo(e.target.value); if (e.target.value && draftFrom) onChange({ preset: 'custom', from: draftFrom, to: e.target.value }) }}
+          className="px-2 py-1 text-[12px] border border-[var(--border)] rounded focus:outline-none focus:border-[var(--brand-500)] num"
+        />
+      </div>
+
+      {/* สรุปจำนวนวัน */}
+      <div className="flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded-full"
+           style={{ background: 'var(--brand-50)', color: 'var(--brand-700)' }}>
+        <i className="ti ti-clock-hour-3 text-[11px]" />
+        <span className="font-bold num">{dayCount} วัน</span>
+        <span className="opacity-60">•</span>
+        <span>{dowRange}</span>
+      </div>
+
+      {/* Live */}
+      <div className="ml-auto flex items-center gap-1.5 text-[10.5px] text-[var(--text-muted)]">
+        <span className="live-dot" />
+        <span>Live</span>
       </div>
     </div>
   )
