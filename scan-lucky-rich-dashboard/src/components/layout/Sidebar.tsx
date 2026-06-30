@@ -21,6 +21,7 @@ const NAV_GROUPS: { label: string; items: { id: TabId; label: string; icon: stri
     items: [
       { id: 'customers',  label: 'Customers', icon: 'ti-users' },
       { id: 'products',   label: 'Products',  icon: 'ti-package' },
+      { id: 'explorer',   label: 'Explorer',  icon: 'ti-filter-search' },
     ],
   },
   {
