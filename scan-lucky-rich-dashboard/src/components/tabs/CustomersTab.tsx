@@ -9,11 +9,12 @@ import {
 import TabHeader from '@/components/ui/TabHeader'
 import UnifiedDateRange, { defaultRange, type DateRangeV2 } from '@/components/ui/UnifiedDateRange'
 import ZoneTitle from '@/components/ui/ZoneTitle'
-import SegmentMixCard from '@/components/ui/SegmentMixCard'
 import EngagementDistribution from '@/components/ui/EngagementDistribution'
 import HeavyUsersCard from '@/components/ui/HeavyUsersCard'
 import TopProvincesCard from '@/components/ui/TopProvincesCard'
 import NewVsReturningCard from '@/components/ui/NewVsReturningCard'
+import NewVsReturningHero from '@/components/ui/NewVsReturningHero'
+import SegmentRfmCard from '@/components/ui/SegmentRfmCard'
 import InsightInline from '@/components/ui/InsightInline'
 import ApiSourceBadge from '@/components/ui/ApiSourceBadge'
 
@@ -109,6 +110,9 @@ export default function CustomersTab() {
         <UnifiedDateRange value={range} onChange={setRange} today={getCampaignToday()} />
       </div>
 
+      {/* ── HERO: ลูกค้าใหม่ vs เก่า (distinct) — อันดับ 1 ── */}
+      <NewVsReturningHero from={range.from} to={range.to} />
+
       {/* ════════════════════════════════════════════════════
           A — ภาพรวมลูกค้า (aggregate by date range)
       ════════════════════════════════════════════════════ */}
@@ -140,33 +144,19 @@ export default function CustomersTab() {
           <div className="text-[26px] font-bold leading-tight">{heavyCount}</div>
           <div className="text-[11px] text-[var(--text-muted)] mt-1">{'>'} 30 scans / วัน รวม</div>
         </div>
-        <div className="kpi-accent kpi-success" title="การเปลี่ยนแปลง newSignup ของ Day แรก vs ล่าสุด">
+        <div className="kpi-accent kpi-success" title="มัธยฐานจำนวนครั้งที่สแกนต่อคน (robust กว่าค่าเฉลี่ย)">
           <div className="text-[11px] text-[var(--text-secondary)] font-semibold uppercase tracking-wider mb-1">
-            📈 Signup Δ {apiBadge(apiMembers.loading, apiMembers.error, !!apiMembers.data)}
+            📊 สแกน/คน {apiBadge(apiEngagement.loading, apiEngagement.error, !!apiEngagement.data)}
           </div>
-          <div className={`text-[26px] font-bold leading-tight ${newSignupGrowth >= 0 ? 'text-[var(--positive)]' : 'text-[var(--danger)]'}`}>
-            {newSignupGrowth >= 0 ? '+' : ''}{newSignupGrowth.toFixed(1)}%
-          </div>
-          <div className="text-[11px] text-[var(--text-muted)] mt-1">
-            {selectedDays.length >= 2 ? `${selectedDays[0].newSignup} → ${selectedDays[selectedDays.length-1].newSignup}` : 'ต้องเลือก ≥ 2 วัน'}
-          </div>
+          <div className="text-[26px] font-bold leading-tight">{apiEngagement.data?.medianScansPerUser ?? '—'}</div>
+          <div className="text-[11px] text-[var(--text-muted)] mt-1">มัธยฐาน · เฉลี่ย {apiEngagement.data?.avgScansPerUser != null ? apiEngagement.data.avgScansPerUser.toFixed(1) : '—'}</div>
         </div>
       </div>
 
       {/* ════════════════════════════════════════════════════
           B — Mix + Segmentation (3 donuts + RFM minis)
       ════════════════════════════════════════════════════ */}
-      <ZoneTitle num="B" title="Mix + Segmentation" dayTag={dayTag} />
-      <div className="mb-1"><ApiSourceBadge endpoint="/api/customers/engagement" params="from&to → RFM derived" /></div>
-      <SegmentMixCard day={day} />
-
-      {/* New vs Returning เทียบเดือน (สไลด์ 7) — คำนวณทั้งแคมเปญจาก /api/members/daily */}
-      <div className="mt-4"><NewVsReturningCard /></div>
-
-      {/* ════════════════════════════════════════════════════
-          C — Behavior + Retention
-      ════════════════════════════════════════════════════ */}
-      <ZoneTitle num="C" title="Behavior + Retention" dayTag={dayTag} />
+      <ZoneTitle num="B" title="พฤติกรรม + Retention" dayTag={dayTag} />
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div>
           <div className="mb-1"><ApiSourceBadge endpoint="/api/customers/engagement" params="from&to" /></div>
@@ -176,6 +166,15 @@ export default function CustomersTab() {
           <div className="mb-1"><ApiSourceBadge endpoint="/api/customers/retention" params="date" /></div>
           <CohortRetentionCard />
         </div>
+      </div>
+
+      {/* ════════════════════════════════════════════════════
+          C — Value Segments (RFM จริง · ทั้งระบบ) + เทียบรายเดือน
+      ════════════════════════════════════════════════════ */}
+      <ZoneTitle num="C" title="Value Segments + เทียบรายเดือน" />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <SegmentRfmCard />
+        <NewVsReturningCard />
       </div>
 
       {/* ════════════════════════════════════════════════════
