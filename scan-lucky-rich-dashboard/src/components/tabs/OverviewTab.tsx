@@ -13,12 +13,14 @@ import AlertBar from '@/components/ui/AlertBar'
 import ApiSourceBadge from '@/components/ui/ApiSourceBadge'
 import RecommendationsZone from '@/components/ui/RecommendationsZone'
 import BaselineComparison from '@/components/ui/BaselineComparison'
-import TimeOfDayChart from '@/components/ui/TimeOfDayChart'
 import TrendLineChart from '@/components/ui/TrendLineChart'
 import WeekdayMatchedCard from '@/components/ui/WeekdayMatchedCard'
 import YearOverviewCard from '@/components/ui/YearOverviewCard'
 import WeeklyMomentumCard from '@/components/ui/WeeklyMomentumCard'
 import MonthlyScanRightsCard from '@/components/ui/MonthlyScanRightsCard'
+import ScanHeatmap from '@/components/ui/ScanHeatmap'
+import ScanFunnel from '@/components/ui/ScanFunnel'
+import RetentionCohort from '@/components/ui/RetentionCohort'
 
 import { DAILY_ENTRIES } from '@/lib/daily-update-data'  // ใช้สำหรับ chart components ที่ต้องการ timeOfDay/peakHours fields (ยังไม่มี API endpoint รองรับ)
 import { numFmt, getCampaignToday } from '@/lib/utils'
@@ -378,14 +380,23 @@ export default function OverviewTab() {
       {/* ════════════════════════════════════════════════════
           C — เวลาที่สแกน (TimeOfDay only)
       ════════════════════════════════════════════════════ */}
-      <ZoneTitle num="C" title="เวลาที่สแกน" dayTag={dayTag} />
-      <div className="mb-1"><ApiSourceBadge endpoint="/api/scans/time-of-day" params="from&to" /></div>
-      <TimeOfDayChart days={selectedDays} rangeLabel={dayTag} />
+      <ZoneTitle num="C" title="เวลาที่สแกน (วัน × ชั่วโมง)" dayTag={dayTag} />
+      {/* Heatmap วัน × ชั่วโมง (ย้ายมาจาก Scan Behavior · แทน TimeOfDayChart เดิมที่ดูซ้ำ) */}
+      <ScanHeatmap />
 
       {/* ════════════════════════════════════════════════════
-          D — เทียบเดือน + แผน
+          D — พฤติกรรม & Retention การสแกน (ย้ายมาจาก Scan Behavior)
       ════════════════════════════════════════════════════ */}
-      <ZoneTitle num="D" title="เทียบเดือน + แผน" />
+      <ZoneTitle num="D" title="พฤติกรรม & Retention การสแกน" />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <ScanFunnel />
+        <RetentionCohort />
+      </div>
+
+      {/* ════════════════════════════════════════════════════
+          E — เทียบเดือน + แผน
+      ════════════════════════════════════════════════════ */}
+      <ZoneTitle num="E" title="เทียบเดือน + แผน" />
       <div className="mb-1"><ApiSourceBadge endpoint="/api/baseline/compare" params="from&to" /></div>
       <BaselineComparison from={range.from} to={range.to} />
       <div className="mb-1"><ApiSourceBadge endpoint="/api/baseline/compare" params="from&to" /></div>

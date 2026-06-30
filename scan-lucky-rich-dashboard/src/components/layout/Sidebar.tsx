@@ -14,7 +14,6 @@ const NAV_GROUPS: { label: string; items: { id: TabId; label: string; icon: stri
     items: [
       { id: 'crm-center', label: 'CRM Center',    icon: 'ti-heart-handshake' },
       { id: 'overview',   label: 'Scan Overview', icon: 'ti-chart-pie' },
-      { id: 'scan-behavior', label: 'Scan Behavior', icon: 'ti-chart-histogram' },
     ],
   },
   {
