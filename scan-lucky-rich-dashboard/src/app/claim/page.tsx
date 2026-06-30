@@ -590,6 +590,14 @@ function AppointmentSummary({
         </div>
       </div>
 
+      {/* ── แจ้งส่งให้แอดมิน LINE OA ยืนยันตัวตน (นอกการ์ดรูป — ไม่ติดไปในภาพที่เซฟ) ── */}
+      <div className="mt-3 rounded-2xl p-3 flex gap-2.5 items-start" style={{ background: '#ecfdf5', border: '1.5px solid #15803d' }}>
+        <span className="text-[20px] flex-shrink-0" aria-hidden="true">📲</span>
+        <div className="text-[12.5px] text-[#14532d] leading-relaxed">
+          หลังบันทึกนัดหมาย กรุณาส่งภาพหน้าจอนี้ให้แอดมินทาง <b>LINE OA</b> <b>ทันที</b> เพื่อยืนยันตัวตนของผู้โชคดี
+        </div>
+      </div>
+
       {/* ── ปุ่ม (นอกส่วนจับรูป) ── */}
       <div className="pt-3">
         <div className="flex gap-2">
