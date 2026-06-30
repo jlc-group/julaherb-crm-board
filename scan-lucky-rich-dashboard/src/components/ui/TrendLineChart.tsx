@@ -191,7 +191,7 @@ export default function TrendLineChart({ days, rangeLabel }: Props) {
                   anchor: 'end',
                   offset: 6,
                   color: (ctx: any) => ctx.dataset.borderColor,
-                  font: { size: 10, weight: 'bold', family: "'Mali', 'Noto Sans Thai', sans-serif" },
+                  font: { size: 10, weight: 'bold', family: "'Inter', 'Noto Sans Thai', sans-serif" },
                   // จุดเยอะ (>12) → ย่อเป็น k กันตัวเลขทับกัน, จุดน้อย → เลขเต็ม
                   formatter: (v: number, ctx: any) => {
                     const many = (ctx?.dataset?.data?.length ?? 0) > 12

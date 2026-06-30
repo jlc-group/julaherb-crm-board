@@ -143,9 +143,10 @@ body {
    Typography helpers
 ============================================================ */
 .num {
-  font-family: 'Mali', 'Noto Sans Thai', sans-serif;
+  font-family: 'Inter', 'Noto Sans Thai', sans-serif;
   font-weight: 700;
   letter-spacing: -0.01em;
+  font-feature-settings: 'tnum' 1; /* ตัวเลขความกว้างเท่ากัน อ่านง่ายในตาราง */
 }
 
 /* ============================================================
