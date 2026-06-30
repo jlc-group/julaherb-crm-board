@@ -47,36 +47,38 @@ export default function MonthlyScanRightsCard() {
         <h3 className="text-[13px] font-bold text-[var(--dark)]">📊 สแกน & สิทธิ์ รายเดือน (เทียบเดือนก่อนหน้า)</h3>
         <span className="ml-auto px-1.5 py-0.5 rounded text-[8.5px] font-bold bg-green-100 text-green-800">🟢 API</span>
       </div>
-      <div className="text-[10.5px] text-[var(--text-secondary)] mb-3">เฉพาะช่วงแคมเปญ (ตั้งแต่ 16 พ.ค.) · เดือนไม่เต็มมีป้าย “บางส่วน”</div>
+      <div className="text-[10.5px] text-[var(--text-secondary)] mb-3">เฉพาะช่วงแคมเปญ (16 พ.ค.+) · <b>% โต เทียบ “เฉลี่ย/วัน”</b> (ยุติธรรม เพราะบางเดือนไม่เต็ม)</div>
 
       <div className="overflow-x-auto">
         <table className="w-full text-[11.5px]">
           <thead>
             <tr className="text-[var(--text-secondary)] text-[10px] uppercase tracking-wider bg-[var(--bg-soft)] border-b-2 border-[var(--border)]">
               <th className="text-left py-1.5 px-2">เดือน</th>
-              <th className="text-right py-1.5 px-2">สแกนสำเร็จ</th>
+              <th className="text-right py-1.5 px-2">สแกน/วัน</th>
               <th className="text-right py-1.5 px-2">% โต</th>
-              <th className="text-right py-1.5 px-2">สิทธิ์ (สเปก)</th>
+              <th className="text-right py-1.5 px-2">สิทธิ์/วัน</th>
               <th className="text-right py-1.5 px-2">% โต</th>
-              <th className="text-center py-1.5 px-2">วัน</th>
+              <th className="text-right py-1.5 px-2">รวม</th>
             </tr>
           </thead>
           <tbody>
             {months.map((m, i) => {
               const prev = months[i - 1]
-              const scanPct = prev ? pct(m.scans, prev.scans) : null
-              const rightPct = prev ? pct(m.rights, prev.rights) : null
+              const aScan = m.scans / m.days
+              const aRight = m.rights / m.days
+              const scanPct = prev ? pct(aScan, prev.scans / prev.days) : null
+              const rightPct = prev ? pct(aRight, prev.rights / prev.days) : null
               return (
                 <tr key={m.ym} className="border-b border-[var(--border-soft)] hover:bg-[var(--bg-soft)]">
                   <td className="py-1.5 px-2 font-semibold text-[var(--dark)]">
                     {m.label}
                     {m.partial && <span className="ml-1.5 text-[9px] font-normal text-amber-700 bg-amber-50 border border-amber-200 rounded px-1 py-0.5">บางส่วน</span>}
                   </td>
-                  <td className="text-right py-1.5 px-2 num font-bold text-[var(--green-700)]">{numFmt(m.scans)}</td>
+                  <td className="text-right py-1.5 px-2 num font-bold text-[var(--green-700)]">{numFmt(Math.round(aScan))}</td>
                   <td className="text-right py-1.5 px-2 num font-bold" style={{ color: pctColor(scanPct) }}>{fmtPct(scanPct)}</td>
-                  <td className="text-right py-1.5 px-2 num font-bold text-[#b45309]">{numFmt(m.rights)}</td>
+                  <td className="text-right py-1.5 px-2 num font-bold text-[#b45309]">{numFmt(Math.round(aRight))}</td>
                   <td className="text-right py-1.5 px-2 num font-bold" style={{ color: pctColor(rightPct) }}>{fmtPct(rightPct)}</td>
-                  <td className="text-center py-1.5 px-2 text-[var(--text-muted)]">{m.days}</td>
+                  <td className="text-right py-1.5 px-2 num text-[10.5px] text-[var(--text-muted)]">{numFmt(m.scans)}<span className="opacity-60"> · {m.days}ว.</span></td>
                 </tr>
               )
             })}

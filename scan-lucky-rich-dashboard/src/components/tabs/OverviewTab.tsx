@@ -18,9 +18,7 @@ import WeekdayMatchedCard from '@/components/ui/WeekdayMatchedCard'
 import YearOverviewCard from '@/components/ui/YearOverviewCard'
 import WeeklyMomentumCard from '@/components/ui/WeeklyMomentumCard'
 import MonthlyScanRightsCard from '@/components/ui/MonthlyScanRightsCard'
-import ScanHeatmap from '@/components/ui/ScanHeatmap'
-import ScanFunnel from '@/components/ui/ScanFunnel'
-import RetentionCohort from '@/components/ui/RetentionCohort'
+import ScanHeatmapLive from '@/components/ui/ScanHeatmapLive'
 
 import { DAILY_ENTRIES } from '@/lib/daily-update-data'  // ใช้สำหรับ chart components ที่ต้องการ timeOfDay/peakHours fields (ยังไม่มี API endpoint รองรับ)
 import { numFmt, getCampaignToday } from '@/lib/utils'
@@ -34,6 +32,7 @@ ChartJS.defaults.color = '#6b7280'
 
 export default function OverviewTab() {
   const [range, setRange] = useState<DateRangeV2>(() => defaultRange({ preset: 'campaign', today: getCampaignToday() }))
+  const [tablesOpen, setTablesOpen] = useState(false) // พับตารางรายวัน (minimal)
 
   // Resolve range → days array → primary day
   const selectedDays = useMemo(
@@ -109,9 +108,6 @@ export default function OverviewTab() {
 
       {/* ── 3. ALERT BAR (outage จริงจาก API) ── */}
       <AlertBar outages={apiUptime.data?.outages} />
-
-      {/* ── ภาพรวมการสแกนทั้งปี (สไลด์ 2) — All Scan รายเดือน + forecast (hero context) ── */}
-      <YearOverviewCard />
 
       {/* ════════════════════════════════════════════════════
           ZONE 1 — KPI Snapshot (per-day)
@@ -201,9 +197,18 @@ export default function OverviewTab() {
       })()}
 
       {/* ════════════════════════════════════════════════════
-          ZONE 2 — Trend + ตารางสแกน + ตารางสมาชิก (รายวันตาม range)
+          B — Weekly Momentum + เทียบรายเดือน (ย้ายขึ้นบน · real API · คำนวณทั้งแคมเปญ)
       ════════════════════════════════════════════════════ */}
-      <ZoneTitle num="B" title="แนวโน้ม + ตารางรายวัน (สแกน / สมาชิก)" dayTag={dayTag} />
+      <ZoneTitle num="B" title="Weekly Momentum + เทียบรายเดือน" />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <WeeklyMomentumCard />
+        <MonthlyScanRightsCard />
+      </div>
+
+      {/* ════════════════════════════════════════════════════
+          C — แนวโน้ม + ตารางรายวัน (พับเก็บ)
+      ════════════════════════════════════════════════════ */}
+      <ZoneTitle num="C" title="แนวโน้มการสแกน" dayTag={dayTag} />
       <div className="mb-1"><ApiSourceBadge endpoint="/api/scans/timeseries" params="from&to" /></div>
       <TrendLineChart days={dailyRows} rangeLabel={dayTag} />
       <div className="text-[10.5px] text-[var(--text-muted)] -mt-2 mb-1 flex items-start gap-1.5 px-1">
@@ -214,6 +219,16 @@ export default function OverviewTab() {
         </span>
       </div>
 
+      {/* ── ปุ่มพับ/กางตารางรายวัน (minimal: ดีฟอลต์พับ) ── */}
+      <button
+        onClick={() => setTablesOpen(o => !o)}
+        className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--bg-soft)] text-[12.5px] font-semibold text-[var(--text-secondary)] hover:bg-[var(--brand-50)] hover:text-[var(--brand-700)] transition"
+      >
+        <i className={`ti ti-chevron-${tablesOpen ? 'up' : 'down'} text-base`} />
+        {tablesOpen ? 'ซ่อนตารางรายวัน' : `ดูตารางรายวัน (สแกน + สมาชิก · ${rangeDayCount} วัน)`}
+      </button>
+
+      {tablesOpen && (<>
       {/* ───────────────────────────────────────────────────
           📱 ตาราง A — สถิติสแกน (ครั้ง / events)
       ─────────────────────────────────────────────────── */}
@@ -375,23 +390,13 @@ export default function OverviewTab() {
           <span>"รวมวันนี้" อาจ ≠ "ผู้สแกน" เพราะ <b>สมาชิก = ทุก activity (login/scan/redeem)</b> ส่วน <b>ผู้สแกน = สแกนจริง</b> เท่านั้น</span>
         </div>
       </div>
-
-
-      {/* ════════════════════════════════════════════════════
-          C — เวลาที่สแกน (TimeOfDay only)
-      ════════════════════════════════════════════════════ */}
-      <ZoneTitle num="C" title="เวลาที่สแกน (วัน × ชั่วโมง)" dayTag={dayTag} />
-      {/* Heatmap วัน × ชั่วโมง (ย้ายมาจาก Scan Behavior · แทน TimeOfDayChart เดิมที่ดูซ้ำ) */}
-      <ScanHeatmap />
+      </>)}
 
       {/* ════════════════════════════════════════════════════
-          D — พฤติกรรม & Retention การสแกน (ย้ายมาจาก Scan Behavior)
+          D — Heatmap เวลาที่สแกน (วัน × ชั่วโมง · real API)
       ════════════════════════════════════════════════════ */}
-      <ZoneTitle num="D" title="พฤติกรรม & Retention การสแกน" />
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <ScanFunnel />
-        <RetentionCohort />
-      </div>
+      <ZoneTitle num="D" title="เวลาที่สแกน (วัน × ชั่วโมง)" dayTag={dayTag} />
+      <ScanHeatmapLive from={range.from} to={range.to} />
 
       {/* ════════════════════════════════════════════════════
           E — เทียบเดือน + แผน
@@ -402,11 +407,8 @@ export default function OverviewTab() {
       <div className="mb-1"><ApiSourceBadge endpoint="/api/baseline/compare" params="from&to" /></div>
       <WeekdayMatchedCard from={range.from} to={range.to} />
 
-      {/* Momentum รายสัปดาห์ + เทียบรายเดือน (คำนวณทั้งแคมเปญ ไม่อิง date range ด้านบน) */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <WeeklyMomentumCard />
-        <MonthlyScanRightsCard />
-      </div>
+      {/* ภาพรวมทั้งปี (slide data · รอ API) — context ท้ายหน้า */}
+      <YearOverviewCard />
 
       <RecommendationsZone />
 
