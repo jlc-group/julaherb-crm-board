@@ -491,6 +491,15 @@ export async function getSegments(): Promise<SegmentsResponse> {
   return { segments }
 }
 
+// ─── normalize SKU — รวม variant ช่องทางบันทึก (ซอง SCH- / หลอด TUB- / ฯลฯ) → base code
+//     backend ส่งรหัสไม่นิ่ง: สินค้าตัวเดียวถูกบันทึกเป็น SCH-L3-8G (ต้นแคมเปญ) แล้วเปลี่ยนเป็น L3-8G
+//     → ตัด prefix 3 ตัวอักษรนำหน้า รวมเป็น base · ยกเว้น BOX-/SET- (แพ็คกล่อง/เซ็ต — เก็บแยก)
+const KEEP_PREFIX = new Set(['BOX', 'SET'])
+export function normalizeSku(sku: string): string {
+  const m = /^([A-Z]{3})-(.+)$/.exec(sku)
+  return m && !KEEP_PREFIX.has(m[1]) ? m[2] : sku
+}
+
 export async function getSkuList(): Promise<SkuListResponse> {
   const res = await sv<{ data: any[] }>('/products', { limit: 200 })
   const skus: SkuMaster[] = (res.data ?? []).map((p: any) => ({
@@ -502,7 +511,13 @@ export async function getSkuList(): Promise<SkuListResponse> {
     pointsPerScan: p.points_per_scan ?? 0,
     rightsPerScan: p.rights_per_scan ?? p.tickets_per_scan ?? 1, // /products ยังไม่คืน field นี้ → default 1 (ขอ backend เพิ่ม)
   }))
-  return { skus }
+  // รวม variant ซอง/หลอด → base (เก็บตัวที่เป็น base เป็นหลัก) — กัน L3-8G + SCH-L3-8G ซ้ำ
+  const dedup = new Map<string, SkuMaster>()
+  for (const s of skus) {
+    const key = normalizeSku(s.sku)
+    if (!dedup.has(key) || s.sku === key) dedup.set(key, { ...s, sku: key })
+  }
+  return { skus: Array.from(dedup.values()) }
 }
 
 // ─── SKU per-day — saversureV2 `/dashboard/sku-performance?from=&to=` (รวมราย SKU
@@ -517,7 +532,7 @@ export async function getSkuPerDay(from: DateString, to: DateString): Promise<Sk
   const perf = r.data ?? []
 
   // ถ้า backend ไม่มีข้อมูลในช่วงนี้ → fallback คืน SKU list พร้อม scans=0
-  const rows: SkuRow[] = perf.length > 0
+  let rows: SkuRow[] = perf.length > 0
     ? perf.map((m) => {
         const master = skuMap.get(m.sku)
         const perScan = master?.rightsPerScan ?? 1
@@ -539,6 +554,17 @@ export async function getSkuPerDay(from: DateString, to: DateString): Promise<Sk
         specTickets: 0,
         sharePct: 0,
       }))
+
+  // รวม variant (ซอง SCH- / หลอด TUB-) เข้า base code ก่อนคำนวณ — กันยอดน้อยกว่าจริง
+  rows = Array.from(
+    rows.reduce((map, row) => {
+      const key = normalizeSku(row.sku)
+      const cur = map.get(key)
+      if (cur) { cur.scans += row.scans; cur.specTickets += row.specTickets }
+      else map.set(key, { ...row, sku: key, displayName: skuMap.get(key)?.displayName ?? row.displayName })
+      return map
+    }, new Map<string, SkuRow>()).values(),
+  )
 
   // คำนวณ sharePct + activeSkus + deadSkus
   const totalSpec = rows.reduce((sum, r) => sum + r.specTickets, 0)
@@ -563,21 +589,26 @@ export async function getSkuPerDay(from: DateString, to: DateString): Promise<Sk
 //     (รายวันจริงจาก daily_product_summary — ไม่ใช่จุดเดียว)
 interface SvSkuTsRow { date: DateString; scans: number }
 export async function getSkuTimeseries(sku: string, from: DateString, to: DateString): Promise<SkuTimeseriesResponse> {
-  // perScan + displayName จาก SKU master
+  // perScan + displayName จาก SKU master (เทียบด้วย base code)
+  const base = normalizeSku(sku)
   const skuList = await getSkuList()
-  const master = skuList.skus.find(s => s.sku === sku)
+  const master = skuList.skus.find(s => s.sku === base)
   const perScan = master?.rightsPerScan ?? 1
 
-  const r = await sv<{ data: SvSkuTsRow[] }>('/dashboard/sku-timeseries', { sku, from, to })
-  const points = (r.data ?? []).map(p => ({
-    date: p.date,
-    scans: p.scans ?? 0,
-    specTickets: (p.scans ?? 0) * perScan,
-    uniqueUsers: 0, // sku-timeseries ไม่คืน unique users ราย SKU ราย วัน
+  // รวม series ของ variant (base + ซอง SCH- + หลอด TUB-) — กันตกข้อมูลช่วงที่บันทึกเป็น prefix
+  const variants = [base, `SCH-${base}`, `TUB-${base}`]
+  const results = await Promise.all(
+    variants.map(v => sv<{ data: SvSkuTsRow[] }>('/dashboard/sku-timeseries', { sku: v, from, to })
+      .then(r => r.data ?? []).catch(() => [] as SvSkuTsRow[])),
+  )
+  const byDate = new Map<string, number>()
+  for (const data of results) for (const p of data) byDate.set(p.date, (byDate.get(p.date) ?? 0) + (p.scans ?? 0))
+  const points = Array.from(byDate.entries()).sort(([a], [b]) => a.localeCompare(b)).map(([date, scans]) => ({
+    date, scans, specTickets: scans * perScan, uniqueUsers: 0,
   }))
   return {
-    sku,
-    displayName: master?.displayName ?? sku,
+    sku: base,
+    displayName: master?.displayName ?? base,
     perScan,
     from, to,
     points,
@@ -1013,7 +1044,16 @@ export async function getSkuDailyMatrix(from: DateString, to: DateString): Promi
   const r = await sv<{ data: Array<{ date: string; sku: string; name: string; scans: number }> }>(
     '/dashboard/sku-daily-matrix', { from, to }
   )
-  return { from, to, data: (r.data ?? []).map(p => ({ date: p.date, sku: p.sku, name: p.name, scans: p.scans })) }
+  // รวม variant (ซอง SCH- / หลอด TUB-) เข้า base code ต่อ (วัน, sku)
+  const map = new Map<string, { date: string; sku: string; name: string; scans: number }>()
+  for (const p of (r.data ?? [])) {
+    const key = normalizeSku(p.sku)
+    const k = `${p.date}|${key}`
+    const cur = map.get(k)
+    if (cur) cur.scans += p.scans
+    else map.set(k, { date: p.date, sku: key, name: p.name, scans: p.scans })
+  }
+  return { from, to, data: Array.from(map.values()) }
 }
 
 // ─── RFM distribution (tenant snapshot — ไม่มี date range) ──────
