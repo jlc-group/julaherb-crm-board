@@ -113,7 +113,7 @@ export default function WinnersPage() {
           <p className="text-[12.5px] font-semibold text-[#16a34a] mt-1">ประจำเดือน{activeLabel}</p>
         ) : (
           <p className="text-[12px] text-[var(--text-muted)] mt-1 flex items-center justify-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#16a34a]" /> อัปเดตทุกวัน 11:00 น. เป็นต้นไป
+            <span className="w-1.5 h-1.5 rounded-full bg-[#16a34a]" /> ติดตามผลผู้โชคดีรายวัน
           </p>
         )}
       </div>
@@ -147,11 +147,11 @@ export default function WinnersPage() {
           </div>
           <div className="rounded-2xl border border-[var(--border)] bg-white p-4 mb-4">
             <div className="text-[12.5px] font-semibold text-[var(--dark)]">เริ่มประกาศผลในอีก</div>
-            <div className="text-[11px] text-[var(--text-muted)] mt-0.5 mb-3">รอบแรก 1 ก.ค. 2569 · เวลา 11:00 น. เป็นต้นไป</div>
+            <div className="text-[11px] text-[var(--text-muted)] mt-0.5 mb-3">รอบแรก 1 ก.ค. 2569</div>
             <Countdown target={FIRST_ANNOUNCE} />
           </div>
           <p className="text-center text-[11px] text-[var(--text-muted)] mt-6 leading-relaxed">
-            ประกาศผลทุกวัน 11:00 น. เป็นต้นไป ทาง ไทยรัฐออนไลน์ และ LINE OA<br />จุฬาเฮิร์บ สานฝันคนไทย
+            ประกาศผลทุกวันทาง LINE OA<br />จุฬาเฮิร์บ สานฝันคนไทย
           </p>
         </div>
       ) : (
@@ -206,7 +206,7 @@ export default function WinnersPage() {
           )}
 
           <p className="text-center text-[11px] text-[var(--text-muted)] mt-6 leading-relaxed">
-            ประกาศผลทุกวัน 11:00 น. เป็นต้นไป ทาง ไทยรัฐออนไลน์ และ LINE OA<br />จุฬาเฮิร์บ สานฝันคนไทย
+            ประกาศผลทุกวันทาง LINE OA<br />จุฬาเฮิร์บ สานฝันคนไทย
           </p>
         </div>
       )}

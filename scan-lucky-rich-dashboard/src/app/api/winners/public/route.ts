@@ -7,7 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { readWinners, adminKeyOk } from '@/lib/claims-store'
 import { winnerAnnounceISOBySlot, prizeAnnounceBySlot, slotParts } from '@/config/draw-rounds'
-import { maskPhone6 } from '@/lib/utils'
+import { maskPhone3 } from '@/lib/utils'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -31,11 +31,14 @@ export async function GET(req: NextRequest) {
       tier,
       prizeLabel: w.prizeLabel,
       name: w.name,
-      phoneMasked: maskPhone6(w.phone),
+      phoneMasked: maskPhone3(w.phone),
     }
   })
 
-  const winners = (preview ? mapped : mapped.filter((w) => w.announceISO && w.announceISO <= todayISO))
+  // ⏰ gate ตามเวลาจริง: รายชื่อโผล่เมื่อถึง 11:00 น. (เวลาไทย) ของวันประกาศ — ไม่ใช่แค่ข้ามวันเที่ยงคืน
+  const nowMs = Date.now()
+  const isAnnounced = (iso: string) => nowMs >= new Date(`${iso}T11:00:00+07:00`).getTime()
+  const winners = (preview ? mapped : mapped.filter((w) => w.announceISO && isAnnounced(w.announceISO)))
     .sort((a, b) => (a.announceISO < b.announceISO ? 1 : a.announceISO > b.announceISO ? -1 : 0)) // ใหม่ → เก่า
 
   return NextResponse.json({ todayISO, preview, winners }, { headers: { 'Cache-Control': 'no-store' } })

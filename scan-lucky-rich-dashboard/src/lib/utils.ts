@@ -15,6 +15,16 @@ export function maskPhone6(phone: string): string {
 }
 
 /**
+ * Mask หน้าประกาศผลผู้โชคดี — โชว์ 3 ตัวหน้า ปิด 7 ตัวท้าย
+ *   "0967491234" → "096 xxxxxxx"
+ */
+export function maskPhone3(phone: string): string {
+  const d = (phone || '').replace(/\D/g, '')
+  if (d.length < 3) return 'xxx xxxxxxx'
+  return `${d.slice(0, 3)} xxxxxxx`
+}
+
+/**
  * ตัดชื่อสินค้าให้เหลือชื่อหน้า (สำหรับสลิป)
  *   "กันแดดทานตะวันทาตัว 100 กรัม (L21-100G)" → "กันแดดทานตะวันทาตัว"
  *   "X - หลอด (Y)" → "X"
