@@ -15,7 +15,6 @@ import TopProvincesCard from '@/components/ui/TopProvincesCard'
 import NewVsReturningCard from '@/components/ui/NewVsReturningCard'
 import NewVsReturningHero from '@/components/ui/NewVsReturningHero'
 import SegmentRfmCard from '@/components/ui/SegmentRfmCard'
-import InsightInline from '@/components/ui/InsightInline'
 import ApiSourceBadge from '@/components/ui/ApiSourceBadge'
 
 import { DAILY_ENTRIES } from '@/lib/daily-update-data'  // ใช้สำหรับ SegmentMixCard, EngagementDistribution, HeavyUsersCard, TopProvincesCard ที่ต้องการ DailyEntry shape
@@ -156,17 +155,9 @@ export default function CustomersTab() {
       {/* ════════════════════════════════════════════════════
           B — Mix + Segmentation (3 donuts + RFM minis)
       ════════════════════════════════════════════════════ */}
-      <ZoneTitle num="B" title="พฤติกรรม + Retention" dayTag={dayTag} />
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div>
-          <div className="mb-1"><ApiSourceBadge endpoint="/api/customers/engagement" params="from&to" /></div>
-          <EngagementDistribution from={range.from} to={range.to} rangeLabel={dayTag} />
-        </div>
-        <div>
-          <div className="mb-1"><ApiSourceBadge endpoint="/api/customers/retention" params="date" /></div>
-          <CohortRetentionCard />
-        </div>
-      </div>
+      <ZoneTitle num="B" title="พฤติกรรมการสแกน — ความถี่/คน" dayTag={dayTag} />
+      <div className="mb-1"><ApiSourceBadge endpoint="/api/customers/engagement" params="from&to" /></div>
+      <EngagementDistribution from={range.from} to={range.to} rangeLabel={dayTag} />
 
       {/* ════════════════════════════════════════════════════
           C — Value Segments (RFM จริง · ทั้งระบบ) + เทียบรายเดือน
@@ -219,59 +210,3 @@ export default function CustomersTab() {
   )
 }
 
-// ────────────────────────────────────────────────
-// Cohort Retention (kept as embedded — uses week-cohort)
-// ────────────────────────────────────────────────
-function CohortRetentionCard() {
-  const rows = [
-    { name: '16 พ.ค. cohort', w0: 100, w1: 48, w2: null, w3: null, count: 440 },
-    { name: '17 พ.ค. cohort', w0: 100, w1: 45, w2: null, w3: null, count: 460 },
-    { name: '18 พ.ค. cohort', w0: 100, w1: null, w2: null, w3: null, count: 480 },
-    { name: '19 พ.ค. cohort', w0: 100, w1: null, w2: null, w3: null, count: 308 },
-  ]
-  return (
-    <div className="card p-4">
-      <h3 className="text-[14px] font-bold text-[var(--dark)] mb-1">📅 Cohort Retention</h3>
-      <p className="text-[11.5px] text-[var(--text-muted)] mb-3">W0 / W1 / W2 / W3 — % กลับมาสแกนซ้ำ</p>
-      <div className="overflow-x-auto">
-        <table className="w-full text-[11.5px]">
-          <thead>
-            <tr className="text-[var(--text-secondary)] text-[10px] uppercase tracking-wider bg-[var(--bg-soft)]">
-              <th className="text-left  py-2 px-3 font-bold">Cohort</th>
-              <th className="text-center py-2 px-3 font-bold">W0</th>
-              <th className="text-center py-2 px-3 font-bold">W1</th>
-              <th className="text-center py-2 px-3 font-bold">W2</th>
-              <th className="text-center py-2 px-3 font-bold">W3</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map(c => (
-              <tr key={c.name} className="border-b border-[var(--border-soft)]">
-                <td className="py-2 px-3 font-medium text-[var(--dark)]">
-                  {c.name} <span className="text-[9px] text-[var(--text-muted)]">({c.count})</span>
-                </td>
-                {[c.w0, c.w1, c.w2, c.w3].map((v, i) => (
-                  <td key={i} className="text-center py-2 px-3">
-                    {v !== null ? (
-                      <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold ${
-                        v >= 70 ? 'bg-[var(--brand-500)] text-white' :
-                        v >= 40 ? 'bg-[var(--brand-100)] text-[var(--brand-800)]' :
-                                  'bg-yellow-100 text-yellow-800'
-                      }`}>{v}%</span>
-                    ) : (
-                      <span className="text-[var(--text-muted)]">—</span>
-                    )}
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      <InsightInline html="W1 retention ~45-48% — ตั้ง <b>2nd-scan bonus</b> ใน Day 2-3 เพื่อ activate กลุ่ม drop-off" />
-      <div className="mt-2 text-[10px] text-[var(--text-muted)] italic">
-        ⏳ W2+ data ยังไม่พอ — รอ data ถึง 30 พ.ค.
-      </div>
-    </div>
-  )
-}
