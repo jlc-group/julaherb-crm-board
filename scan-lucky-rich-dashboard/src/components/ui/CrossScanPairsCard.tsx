@@ -27,12 +27,15 @@ export default function CrossScanPairsCard() {
           bothScanned: p.bothScanned,
         }))
       : CROSS_SCAN_PAIRS
+  const usingApi = Boolean(api.data?.pairs?.length)
 
   if (pairs.length === 0) return null
   return (
     <ChartCard title="Top 10 SKU สินค้าที่สแกนคู่กัน" icon="ti-arrows-shuffle" full>
       <div className="mb-1">
-        <ApiSourceBadge endpoint="/api/sku/co-scan" params="limit=10" />
+        {usingApi
+          ? <ApiSourceBadge endpoint="/api/sku/co-scan" params="limit=10" />
+          : <span className="inline-flex items-center gap-1 text-[9.5px] font-bold text-amber-800 bg-amber-50 border border-amber-200 rounded px-2 py-0.5">🟠 fallback snapshot · CROSS_SCAN_PAIRS</span>}
       </div>
       <div className="overflow-x-auto">
         <table className="w-full text-[12px]">

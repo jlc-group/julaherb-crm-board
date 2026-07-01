@@ -62,7 +62,9 @@ export default function EngagementDistribution({ from, to, rangeLabel }: Props) 
       <div className="text-[10.5px] text-[var(--text-muted)] mb-2 flex items-center gap-2">
         <span>{rangeLabel ? `📅 ${rangeLabel}` : `📅 ${from} – ${to}`}</span>
         <span className="inline-block px-1.5 py-0.5 rounded text-[8px] font-bold bg-green-100 text-green-800">🟢 API</span>
+        <span className="inline-block px-1.5 py-0.5 rounded text-[8px] font-bold bg-amber-100 text-amber-800" title="ยังเป็นข้อมูลทั้งระบบ saversure ไม่ใช่เฉพาะแคมเปญ">🌐 ทั้งระบบ</span>
       </div>
+      <div className="text-[10px] text-amber-700 mb-2">⚠️ ใช้ดูแนวโน้ม engagement ชั่วคราว — backend ยังไม่ได้จำกัด scope เฉพาะแคมเปญ</div>
 
       {/* Engagement KPIs */}
       <div className="grid grid-cols-3 gap-2 mb-3">

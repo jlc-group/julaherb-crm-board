@@ -130,12 +130,12 @@ export default function CustomersTab() {
             {usersIsDistinct ? `คนไม่ซ้ำ · สแกนสะสม ${numFmt(sumDailyUsers)}` : `ผู้สแกนสะสม · ${selectedDays.length} วัน`}
           </div>
         </div>
-        <div className="kpi-accent kpi-engage" title="% ของ user ที่กลับมาสแกนซ้ำ (2+ ครั้ง)">
+        <div className="kpi-accent kpi-engage" title="% ของ user ที่กลับมาสแกนซ้ำ (2+ ครั้ง) · engagement API ยังเป็น scope ทั้งระบบ saversure">
           <div className="text-[11px] text-[var(--text-secondary)] font-semibold uppercase tracking-wider mb-1">
             🔁 Repeat Rate {apiBadge(apiEngagement.loading, apiEngagement.error, !!apiEngagement.data)}
           </div>
           <div className="text-[26px] font-bold leading-tight">{repeatRate}%</div>
-          <div className="text-[11px] text-[var(--text-muted)] mt-1">industry avg 25-30%</div>
+          <div className="text-[11px] text-[var(--text-muted)] mt-1">{apiEngagement.data ? 'scope ทั้งระบบ · ' : ''}industry avg 25-30%</div>
         </div>
         <div className="kpi-accent kpi-new" title="ผู้ใช้ที่สแกน 30+ ครั้ง — อาจเป็นสายเก็บหรือ fraud">
           <div className="text-[11px] text-[var(--text-secondary)] font-semibold uppercase tracking-wider mb-1">
@@ -149,7 +149,7 @@ export default function CustomersTab() {
             📊 สแกน/คน {apiBadge(apiEngagement.loading, apiEngagement.error, !!apiEngagement.data)}
           </div>
           <div className="text-[26px] font-bold leading-tight">{apiEngagement.data?.medianScansPerUser ?? '—'}</div>
-          <div className="text-[11px] text-[var(--text-muted)] mt-1">มัธยฐาน · เฉลี่ย {apiEngagement.data?.avgScansPerUser != null ? apiEngagement.data.avgScansPerUser.toFixed(1) : '—'}</div>
+          <div className="text-[11px] text-[var(--text-muted)] mt-1">มัธยฐาน · เฉลี่ย {apiEngagement.data?.avgScansPerUser != null ? apiEngagement.data.avgScansPerUser.toFixed(1) : '—'}{apiEngagement.data ? ' · ทั้งระบบ' : ''}</div>
         </div>
       </div>
 
@@ -157,6 +157,10 @@ export default function CustomersTab() {
           B — Mix + Segmentation (3 donuts + RFM minis)
       ════════════════════════════════════════════════════ */}
       <ZoneTitle num="B" title="พฤติกรรม + กลุ่มอายุลูกค้า" dayTag={dayTag} />
+      <div className="card p-2.5 text-[11px] flex items-start gap-2" style={{ background: '#fffbeb', borderLeft: '3px solid #f59e0b' }}>
+        <span>⚠️</span>
+        <span>Engagement / RFM / segments เป็น API จริง แต่ตอนนี้ยังเป็น <b>ทั้งระบบ saversure</b> ไม่ใช่เฉพาะแคมเปญ — ใช้ดูแนวโน้มชั่วคราวจนกว่า backend เปิด campaign-scoped endpoint</span>
+      </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div>
           <div className="mb-1"><ApiSourceBadge endpoint="/api/customers/engagement" params="from&to" /></div>

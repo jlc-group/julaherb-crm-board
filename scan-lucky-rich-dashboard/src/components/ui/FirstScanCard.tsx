@@ -8,6 +8,7 @@ export default function FirstScanCard() {
       <div className="flex items-center gap-2 mb-3">
         <i className="ti ti-door-enter text-lg text-[var(--primary)]" />
         <h3 className="text-[13px] font-bold text-[var(--dark)]">Entry Product</h3>
+        <span className="px-1.5 py-0.5 rounded text-[8.5px] font-bold bg-amber-100 text-amber-800">🟠 static</span>
         <span className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider ml-auto">First Scan</span>
       </div>
 
@@ -33,7 +34,7 @@ export default function FirstScanCard() {
 
       <div className="mt-3 text-[11px] text-[var(--text-secondary)] flex items-start gap-1.5">
         <i className="ti ti-key mt-0.5 text-[var(--primary)]" />
-        <span><b className="text-[var(--dark)]">L3-8G</b> เป็น entry ของ <b className="text-[var(--primary)]">42%</b> ของ new users — keystone SKU</span>
+        <span><b className="text-[var(--dark)]">L3-8G</b> เป็น entry ของ <b className="text-[var(--primary)]">42%</b> ของ new users — static snapshot รอ first-scan API</span>
       </div>
     </div>
   )

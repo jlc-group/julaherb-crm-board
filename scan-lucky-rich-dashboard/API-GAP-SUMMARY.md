@@ -84,16 +84,17 @@
 
 ---
 
-## ✅ ภาคผนวก — ส่วนที่ "มี API แล้ว" (อ้างอิง · ไม่ต้องทำ)
-ทำงานผ่าน saversureV2 ครบ:
+## ✅ ภาคผนวก — ส่วนที่มี route/API แล้ว (อ้างอิง · ดู scope ใน audit)
+ทำงานผ่าน saversureV2 หรือ internal dashboard route แล้วบางส่วน:
 `/dashboard/campaign-daily` · `/dashboard/campaign-report` · `/dashboard/sku-performance` · `/dashboard/sku-timeseries` · `/dashboard/sku-daily-matrix` · `/dashboard/sku-co-scan` · `/dashboard/scans-by-hour` · `/dashboard/scans-by-day-hour` · `/dashboard/verification-stats` · `/dashboard/engagement-distribution` · `/dashboard/crm/rfm-distribution` · `/dashboard/print-slips` · `/crm/segments` · `/products` · `/customers/search` · `/monitor/incidents` · `/auth/login`
 
-→ ครอบคลุม: ภาพรวมสแกน, สินค้า/SKU, ลูกค้า/engagement/RFM, heatmap, ระบบ uptime, print-slip (รหัสสแกน + สินค้า)
+⚠️ ยังต้องดู scope/แหล่งข้อมูล: `engagement` / `rfm` / `segments` ยังเป็นทั้งระบบ saversure ไม่ใช่เฉพาะแคมเปญ, ส่วน draw/claim/winners ยังเป็น local JSON/files. รายละเอียดล่าสุดอยู่ใน [`docs/api-gap-audit.md`](./docs/api-gap-audit.md)
 
 ---
 
 ## สรุปลำดับความสำคัญสำหรับ DEV
-1. **ด่วน (ระบบรับรางวัลใช้งานจริง):** draw-winners, draw-appointments, draw-claims + ที่อยู่ลูกค้า (กลุ่ม 1 + 2.1)
-2. **รอง:** Risk fraud API, analytics เพิ่มเติม (กลุ่ม 3)
+1. **P0 CRM scope:** ทำ `engagement` / `rfm` / `segments` ให้เฉพาะแคมเปญก่อนใช้ตัวเลขใน CRM/Report แบบเต็มความมั่นใจ
+2. **ด่วน (ระบบรับรางวัลใช้งานจริง):** draw-winners, draw-appointments, draw-claims + storage/PII retention (กลุ่ม 1)
+3. **รอง:** Risk fraud API, Explorer drill-down, age/gender, analytics เพิ่มเติม
 
 > หมายเหตุ: ของกลุ่ม 1 ตอนนี้ dashboard ทำงานได้ด้วยไฟล์ local ชั่วคราว — พอ backend มี endpoint แล้วเปลี่ยนให้ adapter ชี้ไป saversureV2 แทน (โครงสร้าง data shape ด้านบนออกแบบให้ map ตรงได้เลย)

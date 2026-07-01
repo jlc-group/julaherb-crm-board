@@ -1,6 +1,7 @@
 'use client'
 /**
- * ❤️ CRM Center — แผนดูแลลูกค้าเชิงรุก 3 OBJ จาก data จริง (live)
+ * ❤️ CRM Center — แผนดูแลลูกค้าเชิงรุก 3 OBJ จาก dashboard API
+ * หมายเหตุ: engagement/segments ยังเป็น scope ทั้งระบบจนกว่า backend เปิด campaign-scoped endpoint
  * 1. Acquisition  2. Engagement/Level-up  3. Retention + Referral
  * ดึง data ที่มีอยู่มา size โอกาส + แนะนำ play (ไม่ยิง action จริง — ทีม CRM กดใน saversure)
  */

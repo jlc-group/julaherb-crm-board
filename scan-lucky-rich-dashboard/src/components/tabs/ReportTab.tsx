@@ -1,7 +1,8 @@
 'use client'
 /**
  * 📑 ReportTab — เด็คนำเสนอแบบ carousel (16:9 แนวนอน · กดซ้าย-ขวา)
- * รวมเนื้อหา 2 เด็ค: Campaign Report + CRM Strategy จาก data จริง (live)
+ * รวมเนื้อหา 2 เด็ค: Campaign Report + CRM Strategy จาก dashboard API
+ * หมายเหตุ: CRM engagement/segments ยังเป็น scope ทั้งระบบจนกว่า backend เปิด campaign-scoped endpoint
  * โหลดได้: PDF (browser print) + PPTX (pptxgenjs)
  */
 import { useState, useEffect } from 'react'
@@ -195,6 +196,7 @@ export default function ReportTab() {
         <div className="text-[42px] font-extrabold leading-tight mb-3">ดูแลลูกค้าเชิงรุก</div>
         <div className="text-[15px]" style={{ color: '#f2d99b' }}>Acquisition · Engagement · Retention & Referral</div>
         <div className="text-[13px] opacity-70 mt-5">จากฐานลูกค้า {numFmt(distinct)} ราย · repeat {repeatPct}%</div>
+        <div className="text-[10.5px] opacity-60 mt-2">หมายเหตุ: repeat/segments ยังเป็น scope ทั้งระบบ saversure</div>
       </div>) },
     { tag: 'CRM', title: 'ภาพรวมฐานลูกค้า', subtitle: 'Customer Base', accent: AMBER, body: (
       <div className="grid grid-cols-5 gap-3 h-full items-center px-2">
@@ -235,7 +237,7 @@ export default function ReportTab() {
             </div>))}
         </div>
         <div className="text-[14px] font-bold text-[var(--green-700)]">↩ referral = สะพานเชื่อม retention กลับไป acquisition (วนโต)</div>
-        <div className="text-[11px] text-[var(--text-muted)]">ตัวเลข live จาก saversureV2 · action ทำผ่าน LINE OA / saversure (ทีม CRM)</div>
+        <div className="text-[11px] text-[var(--text-muted)]">สแกน/สมาชิกมาจาก API แคมเปญ · engagement/segments ยังเป็นทั้งระบบ · action ทำผ่าน LINE OA / saversure (ทีม CRM)</div>
       </div>) },
   ]
 
@@ -253,7 +255,7 @@ export default function ReportTab() {
       <div className="print:hidden flex items-center gap-3 flex-wrap">
         <div>
           <h2 className="text-[16px] font-extrabold text-[var(--dark)]">📑 Report — เด็คนำเสนอ (กดซ้าย-ขวา)</h2>
-          <p className="text-[11px] text-[var(--text-muted)]">{total} สไลด์ (Campaign + CRM) • ข้อมูล {from} → {to} ({dayCount} วัน)</p>
+          <p className="text-[11px] text-[var(--text-muted)]">{total} สไลด์ (Campaign + CRM) • ข้อมูล {from} → {to} ({dayCount} วัน) • ⚠️ CRM engagement/segments ยังเป็นทั้งระบบ</p>
         </div>
         <div className="ml-auto flex gap-2">
           <button onClick={() => window.print()} disabled={loading} className="px-4 py-2 rounded-md text-white font-semibold text-[13px] hover:opacity-90 disabled:opacity-50" style={{ background: GREEN }}>
