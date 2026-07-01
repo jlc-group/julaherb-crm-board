@@ -9,7 +9,7 @@
 ## สิ่งที่ต้องเตรียมก่อน (data layer)
 | มิติ | สถานะปัจจุบัน | ต้องทำ |
 |---|---|---|
-| **อายุ** | `dob` มีใน `users` แล้ว · `db-source` คำนวณ `EXTRACT(YEAR FROM AGE(dob))` | **expose `age`** ผ่าน API (อย่าส่ง dob ดิบ — ส่งเป็น age/ช่วงอายุ) |
+| **อายุ** | `dob` อยู่ใน `users` · ⚠️ **ต้องเช็คกับ backend** ว่าเก็บ dob เต็ม (วัน/เดือน/ปี) หรือ **แค่ปีเกิด** | **คำนวณเอง: age = ปีปัจจุบัน − ปีเกิด** แล้ว expose `age`/ช่วงอายุ (อย่าส่ง dob ดิบ) · ถ้ามีแค่ปีเกิด → age คลาดได้ ±1 ปี (โอเคสำหรับจัดกลุ่มช่วงอายุ) |
 | **เพศ** | ❌ ไม่มีใน schema | **เพิ่มคอลัมน์ `gender`** ใน `users` แล้วเริ่มเก็บ |
 | **ไซส์ (ซอง/หลอด)** | มีใน product master (gram) | ส่ง `size_tier` ใน `/products` (option) |
 | **per-customer / churn** | อ่านได้จาก rollup/snapshot | aggregate จาก rollup — **ห้ามแตะ `scan_history` ดิบ** (hot table) |
