@@ -14,7 +14,6 @@ import InsightInline from '@/components/ui/InsightInline'
 import ZoneTitle from '@/components/ui/ZoneTitle'
 import TabHeader from '@/components/ui/TabHeader'
 import UnifiedDateRange, { defaultRange, type DateRangeV2 } from '@/components/ui/UnifiedDateRange'
-import Top5SkuCard from '@/components/ui/Top5SkuCard'
 import SkuTrendLineChart from '@/components/ui/SkuTrendLineChart'
 import ApiSourceBadge from '@/components/ui/ApiSourceBadge'
 import ProductImageGrid from '@/components/ui/ProductImageGrid'
@@ -294,15 +293,9 @@ export default function ProductsTab() {
           B — Top Performers (Hero + Top 5 per-day)
       ════════════════════════════════════════════════════ */}
       <ZoneTitle num="B" title="Top Performers" dayTag={dayTag} />
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div>
-          <div className="mb-1"><ApiSourceBadge endpoint="/api/sku/per-day" params="from&to → rows[0]" /></div>
-          <HeroSkuCard rows={displayRows} rangeLabel={dayTag} dayCount={rangeDayCount} />
-        </div>
-        <div>
-          <div className="mb-1"><ApiSourceBadge endpoint="/api/sku/per-day" params="from&to → rows.slice(0,5)" /></div>
-          <Top5SkuCard day={day} rows={displayRows} rangeLabel={dayTag} />
-        </div>
+      <div>
+        <div className="mb-1"><ApiSourceBadge endpoint="/api/sku/per-day" params="from&to → rows[0]" /></div>
+        <HeroSkuCard rows={displayRows} rangeLabel={dayTag} dayCount={rangeDayCount} />
       </div>
 
       {/* ตารางจัดอันดับสินค้า — sortable + sparkline + growth% + ดัชนีกระจุกตัว (Kalodata-style) */}
