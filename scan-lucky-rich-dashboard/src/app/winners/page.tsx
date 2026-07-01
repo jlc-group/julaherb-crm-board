@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import MobileShell from '@/components/public/MobileShell'
 import { DRAW_ROUNDS, winnerAnnounceISO } from '@/config/draw-rounds'
 
@@ -57,7 +57,9 @@ export default function WinnersPage() {
   const [expanded, setExpanded] = useState(false)
   const [simDate, setSimDate] = useState<string | null>(null) // โหมด preview: จำลองว่า "วันนี้" คือวันไหน (แอดมินกดดูข้ามวัน)
 
-  useEffect(() => {
+  // โหลดข้อมูล — เรียกซ้ำได้ · background=true → เงียบ (ไม่ตั้ง loading/error กันจอกระพริบ/ล้างจอ)
+  const load = useCallback((opts?: { background?: boolean }) => {
+    const bg = opts?.background === true
     const qs = new URLSearchParams(window.location.search)
     const preview = qs.get('preview') === '1'
     // adminKey: รับจาก ?key= ใน URL ก่อน (ลิ้งค์ preview เดียวจบ) → ไม่งั้นใช้ที่เก็บไว้ใน localStorage
@@ -65,12 +67,53 @@ export default function WinnersPage() {
     if (urlKey) { try { localStorage.setItem('adminKey', urlKey) } catch {} }
     const adminKey = urlKey || localStorage.getItem('adminKey') || ''
     const url = preview ? '/api/winners/public?all=1' : '/api/winners/public'
-    fetch(url, { headers: preview && adminKey ? { 'x-admin-key': adminKey } : {} })
+    fetch(url, { headers: preview && adminKey ? { 'x-admin-key': adminKey } : {}, cache: 'no-store' })
       .then((r) => r.json())
-      .then((b: PubData) => setData(b))
-      .catch((e) => setErr(String(e?.message ?? e)))
-      .finally(() => setLoading(false))
+      .then((b: PubData) => { setData(b); setErr('') })
+      .catch((e) => { if (!bg) setErr(String(e?.message ?? e)) }) // background error → คงข้อมูลเดิมไว้
+      .finally(() => { if (!bg) setLoading(false) })
   }, [])
+
+  // โหลดครั้งแรกตอนเปิดหน้า
+  useEffect(() => { load() }, [load])
+
+  // ⏰ refresh อัตโนมัติเมื่อถึง 11:00 น. (เวลาไทย) — รายชื่อ/ปุ่มเด้งเองไม่ต้อง refresh มือ
+  //    ครอบทั้งรอบแรกและรายวัน · ข้ามในโหมด preview (แอดมิน) · เพิ่มอย่างเดียว ไม่แตะ render เดิม
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get('preview') === '1') return
+    let cancelled = false
+    let timer: ReturnType<typeof setTimeout> | undefined
+    let poll: ReturnType<typeof setInterval> | undefined
+    // เวลา 11:00 น. (Asia/Bangkok · ไทยไม่มี DST) ครั้งถัดไป — absolute ไม่พึ่ง timezone เครื่องลูกค้า
+    const next11 = () => {
+      const bkkToday = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Bangkok' }).format(new Date())
+      const today11 = new Date(`${bkkToday}T11:00:00+07:00`).getTime()
+      return Date.now() < today11 ? today11 : today11 + 86_400_000
+    }
+    const arm = () => {
+      if (cancelled) return
+      timer = setTimeout(() => {
+        if (cancelled) return
+        load({ background: true })                    // ถึง 11:00 → ดึงข้อมูลใหม่เงียบๆ
+        let tries = 0                                  // poll สั้นๆ เผื่อ server เผยแพร่ช้ากว่า 11:00 เล็กน้อย
+        poll = setInterval(() => {
+          if (cancelled) return
+          load({ background: true })
+          if (++tries >= 8) { clearInterval(poll); arm() } // ~2 นาที แล้ว re-arm สำหรับ 11:00 วันถัดไป
+        }, 15_000)
+      }, Math.max(1000, next11() - Date.now() + 2000)) // +2s buffer เผื่อนาฬิกา server คลาด
+    }
+    arm()
+    // กลับมาที่แท็บ (เคยสลับไปแอปอื่น) → รีเฟรชครั้งหนึ่ง กันกรณี timer ถูก throttle ตอนอยู่ background
+    const onVisible = () => { if (document.visibilityState === 'visible') load({ background: true }) }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => {
+      cancelled = true
+      if (timer) clearTimeout(timer)
+      if (poll) clearInterval(poll)
+      document.removeEventListener('visibilitychange', onVisible)
+    }
+  }, [load])
 
   const allWinners = data?.winners ?? []
   const preview = !!data?.preview
