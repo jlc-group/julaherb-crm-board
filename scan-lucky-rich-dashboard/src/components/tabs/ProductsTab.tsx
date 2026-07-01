@@ -19,6 +19,7 @@ import SkuTrendLineChart from '@/components/ui/SkuTrendLineChart'
 import ApiSourceBadge from '@/components/ui/ApiSourceBadge'
 import ProductImageGrid from '@/components/ui/ProductImageGrid'
 import CategoryMixCard from '@/components/ui/CategoryMixCard'
+import SkuRankPanel from '@/components/ui/SkuRankPanel'
 
 import { buildSkuTable, getTierBuckets } from '@/lib/sku-redemption'
 import type { SkuRow, SkuStatus } from '@/lib/sku-redemption'
@@ -303,6 +304,10 @@ export default function ProductsTab() {
           <Top5SkuCard day={day} rows={displayRows} rangeLabel={dayTag} />
         </div>
       </div>
+
+      {/* ตารางจัดอันดับสินค้า — sortable + sparkline + growth% + ดัชนีกระจุกตัว (Kalodata-style) */}
+      <div className="mb-1"><ApiSourceBadge endpoint="/api/sku/daily-matrix" params="from&to" /></div>
+      <SkuRankPanel from={range.from} to={range.to} />
 
       {/* Top สินค้าพร้อมรูป (สไลด์ 10) — แมพ SKU → รูปจาก public/products */}
       <ProductImageGrid rows={sortedDisplay} rangeLabel={dayTag} />
