@@ -1,5 +1,4 @@
 'use client'
-import { useState } from 'react'
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, LineElement, PointElement, ArcElement, Tooltip, Legend, Filler } from 'chart.js'
 import { Line } from 'react-chartjs-2'
 import KpiCard from '@/components/ui/KpiCard'
@@ -61,7 +60,7 @@ export default function RiskTab() {
 
   return (
     <div>
-      <DemoBanner reason="RiskTab ยังไม่มี API endpoint dedicated (ต้องการ /api/customers/risk?date= สำหรับ fraud scoring + velocity alerts) — บางส่วนใช้ /api/customers/heavy-users ได้ในอนาคต" />
+      <DemoBanner reason="RiskTab ยังไม่มี API endpoint dedicated (ต้องการ /api/customers/risk?date= สำหรับ fraud scoring + velocity/multi-account/geo mismatch) — ตารางหน้านี้ยังเป็น mock/static และยังไม่ได้ wire /api/customers/heavy-users โดยตรง" />
       {/* ── KPI Grid ── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
         <KpiCard label="Flagged Users Today" value="3" valueStyle={{ color: 'var(--danger)' }} />

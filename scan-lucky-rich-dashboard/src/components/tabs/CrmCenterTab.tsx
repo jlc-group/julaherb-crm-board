@@ -47,6 +47,13 @@ export default function CrmCenterTab() {
     <div className="space-y-4 pt-4 pb-10">
       <TabHeader icon="❤️" title="CRM Center" subtitle="แผนดูแลลูกค้าเชิงรุก — ดึง data จริงมา size โอกาส + แนะนำ action (LINE OA / saversure)" />
 
+      <div className="card p-3 text-[11.5px] flex items-start gap-2" style={{ background: '#fffbeb', borderLeft: '4px solid #f59e0b' }}>
+        <span>⚠️</span>
+        <span>
+          <b>Scope note:</b> ลูกค้าทั้งหมด/สมาชิก/จังหวัดมาจากแคมเปญจริง แต่ <b>engagement</b> และ <b>segments</b> ยังเป็น snapshot ทั้งระบบ saversure — ใช้เป็นแนวทาง CRM ชั่วคราวจนกว่า backend เปิด campaign-scoped endpoint
+        </span>
+      </div>
+
       {/* ── HERO strip ── */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         <Hero label="ลูกค้าทั้งหมด" value={numFmt(distinct)} sub="distinct" tone="green" />
@@ -117,7 +124,7 @@ export default function CrmCenterTab() {
 
       <div className="text-[10.5px] text-[var(--text-muted)] flex items-start gap-1.5 px-1">
         <span>ℹ️</span>
-        <span>ตัวเลขทั้งหมด live จาก saversureV2 · tab นี้เป็น <b>แผน + ตัวเลข targeting</b> — การยิง LINE broadcast/trigger จริงทำในระบบ saversure (ทีม CRM) · ⚠️ ยังไม่มี sales → คำนวณ LTV/ROI ไม่ได้</span>
+        <span>ตัวเลขดึงจาก saversureV2 ผ่าน dashboard API · tab นี้เป็น <b>แผน + ตัวเลข targeting</b> — ⚠️ engagement/segments ยังเป็นทั้งระบบ ไม่ใช่เฉพาะแคมเปญ · การยิง LINE broadcast/trigger จริงทำในระบบ saversure (ทีม CRM) · ยังไม่มี sales → คำนวณ LTV/ROI ไม่ได้</span>
       </div>
     </div>
   )

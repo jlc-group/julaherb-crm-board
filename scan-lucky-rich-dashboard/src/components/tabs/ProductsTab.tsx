@@ -240,8 +240,8 @@ export default function ProductsTab() {
                style={{ background: '#f0fdf4', borderColor: '#16a34a', borderWidth: 1, borderRadius: 8 }}>
             <span className="text-base flex-shrink-0">🟢</span>
             <div className="flex-1 text-green-800">
-              <b>SKU ใช้ข้อมูลจริงจาก API</b>
-              <span className="text-green-700"> — Hero / Top5 / Tier Mix คำนวณตาม date range ที่เลือก ({dayTag}) · Master table และ Rank Movement ยังใช้ snapshot ถึง 24 พ.ค.</span>
+              <b>SKU หลักใช้ข้อมูลจริงจาก API</b>
+              <span className="text-green-700"> — Hero / Top5 / Tier Mix / Rank Movement ใช้ API ตาม date range เมื่อ endpoint มีข้อมูล · First Scan + Master Table ยังเป็น static snapshot ถึง 24 พ.ค.</span>
             </div>
           </div>
         : <div className="card p-2.5 text-[11px] flex items-start gap-2"
@@ -372,7 +372,11 @@ export default function ProductsTab() {
       <ZoneTitle num="D" title="Rank Dynamics" />
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div>
-          <div className="mb-1"><ApiSourceBadge endpoint="/api/sku/per-day" params="from=X&to=X (per day) → first appearance" /></div>
+          <div className="mb-1">
+            <span className="inline-flex items-center gap-1 text-[9.5px] font-bold text-amber-800 bg-amber-50 border border-amber-200 rounded px-2 py-0.5">
+              🟠 static snapshot · FIRST_SCAN_SKUS
+            </span>
+          </div>
           <FirstScanCard />
         </div>
         <RankMovementCard apiData={apiRankHistory.data} loading={apiRankHistory.loading} range={range} />
@@ -397,7 +401,11 @@ export default function ProductsTab() {
           </span>
         </div>
       )}
-      <div className="mb-1"><ApiSourceBadge endpoint="/api/sku/per-day" params="from&to → all 97 SKUs with daily breakdown" /></div>
+      <div className="mb-1">
+        <span className="inline-flex items-center gap-1 text-[9.5px] font-bold text-amber-800 bg-amber-50 border border-amber-200 rounded px-2 py-0.5">
+          🟠 static snapshot · PRODUCTS_MASTER + PER_SKU_DAILY (16–24 พ.ค.)
+        </span>
+      </div>
       <ProductMasterTable visibleDays={selectedDayKeys} />
 
       {/* ════════════════════════════════════════════════════

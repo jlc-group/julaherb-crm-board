@@ -2,6 +2,7 @@
 
 > สำหรับทีม DEV (saversureV2) · อัปเดต 2026-06-22
 > Dashboard อ่านข้อมูลผ่าน adapter → saversureV2 (`DATA_SOURCE=api`) แต่ **บางฟีเจอร์ยังไม่มี endpoint** เลยเก็บเป็นไฟล์ JSON บนเครื่อง dashboard ชั่วคราว (`data/*.json`) — รายการด้านล่างคือสิ่งที่ต้องทำเป็น API จริง
+> **หมายเหตุ 2026-07-01:** ฉบับละเอียด/สถานะล่าสุดอยู่ที่ [`docs/api-gap-audit.md`](./docs/api-gap-audit.md) ซึ่งแยก source เป็น backend real / internal local / static / mock แล้ว
 
 ---
 

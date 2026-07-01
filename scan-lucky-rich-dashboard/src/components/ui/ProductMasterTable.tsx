@@ -168,6 +168,7 @@ export default function ProductMasterTable({ visibleDays }: Props) {
       <div className="flex items-center gap-2 flex-wrap">
         <i className="ti ti-table text-[var(--brand-500)] text-lg" />
         <h3 className="text-[14px] font-bold text-[var(--dark)]">SKU × Day Matrix</h3>
+        <span className="px-1.5 py-0.5 rounded text-[8.5px] font-bold bg-amber-100 text-amber-800">🟠 static 16–24 พ.ค.</span>
         <span className="chip">{PRODUCTS_MASTER.length} SKU</span>
         <span className="text-[11px] text-[var(--text-muted)] ml-1">
           • แสดง {filtered.length} • Hero {heroCount} • Dead {deadCount}
@@ -182,7 +183,7 @@ export default function ProductMasterTable({ visibleDays }: Props) {
 
       {/* Caption */}
       <div className="text-[10.5px] text-[var(--text-muted)] italic flex items-center gap-2">
-        <span>Jula's Herb × ไทยรัฐ · {PRODUCTS_MASTER.length} SKUs · DB ปัจจุบันให้ 1 สิทธิ์/scan (bug) — "สิทธิ์" ในตารางคือ scans × rightsPerScan (ตามสเปก Excel)</span>
+        <span>Jula's Herb × ไทยรัฐ · {PRODUCTS_MASTER.length} SKUs · ตารางนี้ยังใช้ snapshot ใน repo (`PER_SKU_DAILY`) ไม่ใช่ live API — "สิทธิ์" คือ scans × rightsPerScan (ตามสเปก Excel)</span>
         <span className="ml-auto inline-flex items-center gap-1 text-[10.5px] text-[var(--brand-700)] bg-[var(--brand-50)] px-2 py-0.5 rounded-full font-semibold not-italic">
           <i className="ti ti-arrow-up text-[10px]" />
           ใช้ตัวกรองวันที่ด้านบน
