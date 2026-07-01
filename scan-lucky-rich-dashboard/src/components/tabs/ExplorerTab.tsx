@@ -7,7 +7,7 @@ import UnifiedDateRange, { defaultRange, type DateRangeV2 } from '@/components/u
 import ZoneTitle from '@/components/ui/ZoneTitle'
 import ScanHeatmapLive from '@/components/ui/ScanHeatmapLive'
 import HeavyUsersCard from '@/components/ui/HeavyUsersCard'
-import TopProvincesCard from '@/components/ui/TopProvincesCard'
+import ProvinceRankTable from '@/components/ui/ProvinceRankTable'
 import ApiSourceBadge from '@/components/ui/ApiSourceBadge'
 import { getCampaignToday } from '@/lib/utils'
 
@@ -46,21 +46,18 @@ export default function ExplorerTab() {
       <ZoneTitle num="A" title="เวลาที่สแกน (วัน × ชั่วโมง)" />
       <ScanHeatmapLive from={range.from} to={range.to} />
 
-      {/* B — พื้นที่ + ลูกค้าตัวท็อป */}
-      <ZoneTitle num="B" title="พื้นที่ + ลูกค้าที่สแกนเยอะ" dayTag={`snapshot ${range.to.split('-')[2]}`} />
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div>
-          <div className="mb-1"><ApiSourceBadge endpoint="/api/customers/provinces" params="date&limit" /></div>
-          <TopProvincesCard date={range.to} limit={12} />
-        </div>
-        <div>
-          <div className="mb-1"><ApiSourceBadge endpoint="/api/customers/heavy-users" params="date&limit" /></div>
-          <HeavyUsersCard date={range.to} limit={20} />
-        </div>
-      </div>
+      {/* B — พื้นที่ (จังหวัด) */}
+      <ZoneTitle num="B" title="พื้นที่ (จังหวัด)" dayTag={`snapshot ${range.to.split('-')[2]}`} />
+      <div className="mb-1"><ApiSourceBadge endpoint="/api/customers/provinces" params="date&limit" /></div>
+      <ProvinceRankTable date={range.to} />
 
-      {/* C — locked (CRM รายคน รอ backend) */}
-      <ZoneTitle num="C" title="เจาะลึกรายคน / CRM — รอ backend" />
+      {/* C — ลูกค้าที่สแกนเยอะ */}
+      <ZoneTitle num="C" title="ลูกค้าที่สแกนเยอะ (Heavy)" dayTag={`snapshot ${range.to.split('-')[2]}`} />
+      <div className="mb-1"><ApiSourceBadge endpoint="/api/customers/heavy-users" params="date&limit" /></div>
+      <HeavyUsersCard date={range.to} limit={20} />
+
+      {/* D — locked (CRM รายคน รอ backend) */}
+      <ZoneTitle num="D" title="เจาะลึกรายคน / CRM — รอ backend" />
       <div className="card p-4" style={{ borderLeft: '4px solid #cbd5e1', background: 'repeating-linear-gradient(45deg, #fff, #fff 10px, #fafbfc 10px, #fafbfc 20px)' }}>
         <div className="flex items-center gap-2 mb-2">
           <i className="ti ti-lock text-base text-slate-400" />
