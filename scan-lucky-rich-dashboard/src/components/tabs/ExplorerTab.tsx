@@ -9,7 +9,7 @@ import TabHeader from '@/components/ui/TabHeader'
 import UnifiedDateRange, { defaultRange, type DateRangeV2 } from '@/components/ui/UnifiedDateRange'
 import ZoneTitle from '@/components/ui/ZoneTitle'
 import ExplorerFilterPanel, { type SkuCatalogItem } from '@/components/ui/ExplorerFilterPanel'
-import ExplorerTopSku from '@/components/ui/ExplorerTopSku'
+import ExplorerSkuRankTable from '@/components/ui/ExplorerSkuRankTable'
 import ExplorerSkuTrend from '@/components/ui/ExplorerSkuTrend'
 import ExplorerCoScan from '@/components/ui/ExplorerCoScan'
 import ScanHeatmapLive from '@/components/ui/ScanHeatmapLive'
@@ -54,10 +54,10 @@ export default function ExplorerTab() {
         <ExplorerFilterPanel catalog={catalog} selectedSkus={selectedSkus} onChangeSkus={setSelectedSkus} sizeFilter={sizeFilter} onChangeSize={setSizeFilter} />
       </div>
 
-      {/* B — Top SKU + size mix */}
-      <ZoneTitle num="A" title="Top SKU + ซอง/หลอด" dayTag={`${range.from.split('-')[2]}–${range.to.split('-')[2]}`} />
-      <div className="mb-1"><ApiSourceBadge endpoint="/api/sku/per-day" params="from&to" /></div>
-      <ExplorerTopSku rows={rows} loading={perDay.loading} selectedSkus={selectedSkus} sizeFilter={sizeFilter} />
+      {/* A — ตารางจัดอันดับ SKU (Kalodata-style: sort + sparkline + growth%) */}
+      <ZoneTitle num="A" title="ตารางจัดอันดับ SKU" dayTag={`${range.from.split('-')[2]}–${range.to.split('-')[2]}`} />
+      <div className="mb-1"><ApiSourceBadge endpoint="/api/sku/daily-matrix" params="from&to" /></div>
+      <ExplorerSkuRankTable perDayRows={rows} loading={perDay.loading} from={range.from} to={range.to} selectedSkus={selectedSkus} sizeFilter={sizeFilter} />
 
       {/* C — เทรนด์ + คู่สแกน */}
       <ZoneTitle num="B" title="เทรนด์ + สแกนคู่กับอะไร" />
