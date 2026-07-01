@@ -79,6 +79,72 @@ hourFrom, hourTo    : 0-23 (ช่วงเวลาในวัน)
 
 ---
 
+# CRM Brief — segment / funnel / one-shot (จากบทวิเคราะห์ CRM)
+> แปลงกลยุทธ์ CRM เป็น query สเปกที่สั่งงานได้ · ปลดล็อกการ์ด "รอ backend" ในหน้า Explorer
+
+## ⚠️ กติกาการนับ (สำคัญมาก)
+ทุกตัวเลข CRM ต้องนับจาก **ผู้ใช้แคมเปญนี้เท่านั้น** (distinct ≈ **82,479 คน** ช่วง 16 พ.ค.–30 มิ.ย.)
+**ห้าม**ใช้ snapshot `customer_rfm_snapshots` / engagement ระดับแพลตฟอร์ม (≈ 783,000 คน · พอง ~9.5×)
+> อ้างอิงสเกลจริง: success 368,123 ÷ distinct 82,479 ≈ **4.5 สแกน/คน** (ไม่ใช่ 14.38 แบบ platform)
+
+---
+
+## Endpoint 3 — `GET /dashboard/crm/segments` (นับขนาด 7 เซกเมนต์ · campaign-scoped)
+พารามิเตอร์เกณฑ์ปรับได้ (default ในวงเล็บ) · นับจาก scan ในแคมเปญ
+
+| key | label | นิยาม (เป็นเกณฑ์ SQL ได้เลย) |
+|---|---|---|
+| `first_scan` | ลูกค้าใหม่ | สแกนครั้งแรกในแคมเปญ ภายใน `recentDays` (7) วันล่าสุด |
+| `one_shot` | สแกนครั้งเดียวแล้วหาย | สแกนรวม = 1 **และ** `daysSinceLast ≥ dropDays` (14) |
+| `light_repeat` | ซ้ำเบา | สแกนรวม 2–5 |
+| `mid_repeat` | ซ้ำกลาง | สแกนรวม 6–10 |
+| `heavy` | สแกนหนัก | สแกนรวม ≥ `heavyMin` (10) |
+| `l3_loyalist` | L3-8G Loyalist | สแกน `L3-8G` ≥ `loyalMin` (3) ครั้ง |
+| `at_risk` | เสี่ยงหลุด | สแกนรวม ≥ 2 **และ** `daysSinceLast` อยู่ 7–14 |
+
+```jsonc
+// response
+{ "distinctUsers": 82479, "asOf": "2026-06-30",
+  "segments": [
+    { "key": "one_shot", "label": "สแกนครั้งเดียวแล้วหาย", "users": 18234, "definition": "scans=1 & daysSinceLast>=14" }
+    // …ครบ 7
+  ] }
+```
+> 1 user นับได้หลาย segment (overlap ได้) · ส่ง `definition` มาด้วยเพื่อโปร่งใส
+
+**Endpoint 3b — `GET /dashboard/crm/segments/{key}/members`** (ดึงรายชื่อไปยิง CRM)
+params: `limit`, `cursor` → `rows[]{ userHash, totalScans, firstScan, lastScan, daysSinceLast, topSku }` + `nextCursor` (PII-safe)
+
+---
+
+## Endpoint 4 — `GET /dashboard/crm/funnel` (upsell funnel เช่น L3-8G → L3-40G)
+params: `entrySku` (L3-8G), `upsizeSku` (L3-40G), `repeatMin` (2), `from`, `to`
+```jsonc
+{ "entrySku": "L3-8G", "upsizeSku": "L3-40G",
+  "stages": [
+    { "key": "scanned_entry",     "label": "สแกน L3-8G",              "users": 40120 },
+    { "key": "repeat_entry",      "label": "สแกน L3-8G ซ้ำ (≥2)",     "users": 21030 },
+    { "key": "also_upsize",       "label": "สแกน L3-40G ด้วย",         "users": 3120 },
+    { "key": "upsell_target",     "label": "ยังไม่เคยสแกน L3-40G",     "users": 17910 }  // = repeat_entry − also_upsize
+  ] }
+```
+> `upsell_target` = กลุ่มที่ควรยิง "อัปไซส์ 40G" · เรียก 3b-style เพื่อดึง userHash ของ stage นี้
+
+---
+
+## Endpoint 5 — `GET /dashboard/crm/one-shot` (recovery cohort)
+จัดกลุ่มตาม "สัปดาห์ที่สแกนครั้งแรก" → กลับมาภายใน 3/7/14 วันไหม
+```jsonc
+{ "cohorts": [
+    { "firstScanWeek": "2026-05-16", "newUsers": 5745,
+      "returnedWithin3d": 0.41, "within7d": 0.58, "within14d": 0.66 }
+  ],
+  "currentOneShotNotReturned": 18234   // = เป้า win-back ตอนนี้
+}
+```
+
+---
+
 ## หมายเหตุการ implement
 - **อ่านจาก rollup/snapshot tables** (`daily_product_summary`, `daily_scan_hour_summary`, `customer_rfm_snapshots`, `analytics_*`) + cache — ห้าม query `scan_history` ดิบแบบ realtime
 - รหัส SKU ที่รับ/ส่ง = **base code** (รวม variant `SCH-`/`TUB-` แล้ว — dashboard ทำ `normalizeSku()` ฝั่ง client ด้วย แต่ถ้า backend รวมให้เลยจะตรงกว่า)
