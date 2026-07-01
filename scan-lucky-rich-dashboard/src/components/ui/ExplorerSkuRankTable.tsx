@@ -8,6 +8,7 @@ import { productImage, productCategory } from '@/config/product-images'
 import { skuSize, SIZE_LABEL, SIZE_COLOR, type SizeTier } from '@/lib/sku-utils'
 import RankedTable, { type RankColumn } from '@/components/ui/RankedTable'
 import Sparkline from '@/components/ui/Sparkline'
+import ConcentrationStrip from '@/components/ui/ConcentrationStrip'
 import type { SkuRow, SkuDailyMatrixResponse } from '@/lib/api/types'
 
 interface Row {
@@ -56,6 +57,12 @@ export default function ExplorerSkuRankTable({ perDayRows, loading, from, to, se
     return base.sort((a, b) => b.scans - a.scans)
   }, [perDayRows, seriesBySku, sizeFilter, selectedSkus])
 
+  const sizeMix = useMemo(() => {
+    const m: Record<SizeTier, number> = { sachet: 0, tube: 0 }
+    for (const r of rows) m[r.size] += r.scans
+    return m
+  }, [rows])
+  const mixTotal = sizeMix.sachet + sizeMix.tube
   const hasSeries = seriesBySku != null
 
   const columns: RankColumn<Row>[] = [
@@ -90,6 +97,29 @@ export default function ExplorerSkuRankTable({ perDayRows, loading, from, to, se
         คลิกหัวคอลัมน์เพื่อ sort · {numFmt(rows.length)} SKU
         {hasSeries ? ' · เทรนด์ = สแกนรายวัน · โต% = ครึ่งหลัง vs ครึ่งแรก' : ' · (เทรนด์/โต% รอ daily-matrix)'}
       </div>
+      {rows.length > 0 && (
+        <>
+          {/* ดัชนีกระจุกตัว (Top-1/3/10 + HHI) */}
+          <ConcentrationStrip values={rows.map((r) => r.scans)} />
+          {/* size-mix ซอง vs หลอด */}
+          {mixTotal > 0 && (
+            <div className="mb-3">
+              <div className="flex items-center justify-between text-[10.5px] mb-1">
+                <span className="font-semibold text-[var(--text-secondary)]">ซอง vs หลอด</span>
+                <span className="text-[var(--text-muted)]">
+                  <b style={{ color: SIZE_COLOR.sachet }}>ซอง {numFmt(sizeMix.sachet)} ({Math.round((sizeMix.sachet / mixTotal) * 100)}%)</b>
+                  {' · '}
+                  <b style={{ color: SIZE_COLOR.tube }}>หลอด {numFmt(sizeMix.tube)} ({Math.round((sizeMix.tube / mixTotal) * 100)}%)</b>
+                </span>
+              </div>
+              <div className="flex w-full h-3 rounded-full overflow-hidden border border-[var(--border)]">
+                <div style={{ width: `${(sizeMix.sachet / mixTotal) * 100}%`, background: SIZE_COLOR.sachet }} />
+                <div style={{ width: `${(sizeMix.tube / mixTotal) * 100}%`, background: SIZE_COLOR.tube }} />
+              </div>
+            </div>
+          )}
+        </>
+      )}
       {loading && !rows.length
         ? <div className="text-[12px] text-[var(--text-muted)] py-8 text-center">กำลังโหลด…</div>
         : <RankedTable columns={columns} rows={rows} rowKey={(r) => r.sku} initialSortKey="scans" topN={15} />}
