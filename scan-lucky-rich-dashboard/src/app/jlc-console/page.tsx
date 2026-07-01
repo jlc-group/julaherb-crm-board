@@ -7,7 +7,6 @@ import ScanBehaviorTab from '@/components/tabs/ScanBehaviorTab'
 import CustomersTab from '@/components/tabs/CustomersTab'
 import ProductsTab from '@/components/tabs/ProductsTab'
 import ExplorerTab from '@/components/tabs/ExplorerTab'
-import ChannelsTab from '@/components/tabs/ChannelsTab'
 import OperationsTab from '@/components/tabs/OperationsTab'
 import ClaimsTab from '@/components/tabs/ClaimsTab'
 import RiskTab from '@/components/tabs/RiskTab'
@@ -43,7 +42,6 @@ export default function DashboardPage() {
         {activeTab === 'customers' && <CustomersTab />}
         {activeTab === 'products' && <ProductsTab />}
         {activeTab === 'explorer' && <ExplorerTab />}
-        {activeTab === 'channels' && <ChannelsTab />}
         {activeTab === 'operations' && <OperationsTab onOpenClaim={goToClaim} />}
         {activeTab === 'claims' && <ClaimsTab focusPhone={claimFocus} />}
         {activeTab === 'risk' && <RiskTab />}

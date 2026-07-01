@@ -104,4 +104,4 @@ export type RFMSegment = 'Heavy' | 'Medium' | 'Light'
 export type InsightSeverity = 'info' | 'warn' | 'danger'
 
 // Tab IDs
-export type TabId = 'crm-center' | 'overview' | 'scan-behavior' | 'customers' | 'products' | 'explorer' | 'channels' | 'operations' | 'risk' | 'print-list' | 'claims' | 'report'
+export type TabId = 'crm-center' | 'overview' | 'scan-behavior' | 'customers' | 'products' | 'explorer' | 'operations' | 'risk' | 'print-list' | 'claims' | 'report'
