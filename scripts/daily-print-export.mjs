@@ -51,7 +51,8 @@ const isoLocal = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.get
 const parseISO = (s) => { const [y, m, dd] = s.split('-').map(Number); return new Date(y, m - 1, dd) }
 const addDays = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x }
 const ddmmyyyy = (iso) => { const [y, m, dd] = iso.split('-'); return `${dd}-${m}-${y}` }
-const monthDir = (iso) => MONTHS[Number(iso.split('-')[1]) - 1]
+// โฟลเดอร์เดือน = "{เลขเดือน} {MON}" เช่น "6 JUN" ให้ตรงกับคลังจริง (7 JUL, 8 AUG, ...)
+const monthDir = (iso) => { const m = Number(iso.split('-')[1]); return `${m} ${MONTHS[m - 1]}` }
 
 // ── fetch แบบมี retry + timeout ──
 async function fetchBuf(url, headers) {
