@@ -249,7 +249,7 @@ export default function WinnersPage() {
           )}
 
           <p className="text-center text-[11px] text-[var(--text-muted)] mt-6 leading-relaxed">
-            ประกาศผลทุกวันทาง LINE OA<br />จุฬาเฮิร์บ สานฝันคนไทย
+            ประกาศผลทุกวัน <b>เวลา 11:00 น.</b> ทาง LINE OA<br />จุฬาเฮิร์บ สานฝันคนไทย
           </p>
         </div>
       )}
